@@ -1,0 +1,35 @@
+volumes:
+  samplemaintainer_gitea_data:
+
+services:
+  gitea:
+    image: gitea/gitea:1.20.2
+    container_name: samplemaintainer_gitea_gitea
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - DISABLE_REGISTRATION=true
+    ports:
+      - "2222:22"
+    depends_on:
+      - giteadb
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.2"
+          memory: 256M
+    tty: true
+    user: root
+    command: --
+    entrypoint: /test.sh
+
+  giteadb:
+    image: mariadb:10.5
+    container_name: samplemaintainer_gitea_db
+    volumes:
+      - samplemaintainer_gitea_data:/data

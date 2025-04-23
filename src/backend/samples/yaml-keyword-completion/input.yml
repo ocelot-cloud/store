@@ -1,0 +1,14 @@
+services:
+  gitea:
+    image: gitea/gitea:1.20.2
+    container_name: samplemaintainer_gitea_gitea
+    volumes:
+      - samplemaintainer_gitea_data:/data
+
+  giteadb:
+    image: mariadb:10.5
+    container_name: samplemaintainer_gitea_giteadb
+
+volume:
+  samplemaintainer_gitea_data:
+    name: samplemaintainer_gitea_data

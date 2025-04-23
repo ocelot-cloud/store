@@ -1,0 +1,7 @@
+services:
+  gitea:
+    image: gitea/gitea:1.20.2
+
+configs:
+  gitea:
+    file: ./gitea/conf/app.ini

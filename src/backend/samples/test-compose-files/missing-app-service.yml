@@ -1,0 +1,4 @@
+services:
+  gitea2:
+    image: gitea/gitea:1.20.2
+    container_name: samplemaintainer_gitea_gitea

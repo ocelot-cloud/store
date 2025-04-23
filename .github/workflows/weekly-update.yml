@@ -1,0 +1,50 @@
+name: Weekly Update
+
+on:
+  schedule:
+    - cron: '0 3 * * 3'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  weekly-update:
+    runs-on: ubuntu-latest
+    environment: MY_TOKEN
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup
+
+      - name: Authenticate for private modules
+        env:
+          ACTIONS_TOKEN: ${{ secrets.ACTIONS_TOKEN }}
+        run: |
+          git config --global url."https://${ACTIONS_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+          go env -w GOPRIVATE=github.com/ocelot-cloud/*
+
+      - name: Run ci-runner update
+        run: |
+          cd src/ci-runner
+          go build
+          ./ci-runner update
+          ./ci-runner test all
+
+      - name: Commit and create PR
+        id: cpr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: "chore: weekly ci-runner update"
+          branch: weekly/ci-update
+          title: "Weekly CI Runner Update"
+          delete-branch: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable Auto-Merge
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+          merge-method: squash

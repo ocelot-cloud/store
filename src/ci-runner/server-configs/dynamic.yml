@@ -1,0 +1,47 @@
+http:
+  routers:
+    ocelot-router:
+      rule: "Host(`ocelot-cloud.org`)"
+      entryPoints:
+        - websecure
+      service: ocelot-service
+      tls:
+        certResolver: myresolver
+
+    store-ocelot-router:
+      rule: "Host(`store.ocelot-cloud.org`)"
+      entryPoints:
+        - websecure
+      service: store-ocelot-service
+      tls:
+        certResolver: myresolver
+
+    http-catchall:
+      rule: "HostRegexp(`{host:.+}`)"
+      entryPoints:
+        - web
+      middlewares:
+        - https-redirect
+      service: noop
+
+  middlewares:
+    https-redirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+  services:
+    ocelot-service:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8080"
+
+    store-ocelot-service:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8082"
+
+    noop:
+      loadBalancer:
+        servers:
+          - url: "http://0.0.0.0"

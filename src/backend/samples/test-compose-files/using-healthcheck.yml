@@ -1,0 +1,9 @@
+services:
+  gitea:
+    image: gitea/gitea:1.20.2
+    container_name: samplemaintainer_gitea_gitea
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 1m
+      timeout: 10s
+      retries: 3

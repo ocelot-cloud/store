@@ -1,0 +1,15 @@
+services:
+  gitea:
+    image: gitea/gitea:1.20.2
+    container_name: samplemaintainer_gitea_gitea
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+          pids: 100
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+          devices:
+            - capabilities: [gpu]

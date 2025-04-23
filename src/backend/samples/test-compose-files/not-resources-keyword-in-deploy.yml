@@ -1,0 +1,8 @@
+services:
+  gitea:
+    image: gitea/gitea:1.20.2
+    container_name: samplemaintainer_gitea_gitea
+    deploy:
+      update_config:
+        parallelism: 2
+        delay: 10s

@@ -1,0 +1,42 @@
+services:
+    gitea:
+        image: gitea/gitea:1.20.2
+        container_name: samplemaintainer_gitea_gitea
+        restart: unless-stopped
+        networks:
+            - samplemaintainer_gitea
+        cap_drop:
+            - ALL
+        cap_add:
+            - CAP_NET_BIND_SERVICE
+            - CAP_CHOWN
+            - CAP_FOWNER
+            - CAP_SETGID
+            - CAP_SETUID
+            - CAP_DAC_OVERRIDE
+        volumes:
+            - samplemaintainer_gitea_data:/data
+
+    giteadb:
+        image: mariadb:10.5
+        container_name: samplemaintainer_gitea_giteadb
+        restart: unless-stopped
+        networks:
+            - samplemaintainer_gitea
+        cap_drop:
+            - ALL
+        cap_add:
+            - CAP_NET_BIND_SERVICE
+            - CAP_CHOWN
+            - CAP_FOWNER
+            - CAP_SETGID
+            - CAP_SETUID
+            - CAP_DAC_OVERRIDE
+
+networks:
+    samplemaintainer_gitea:
+        external: true
+
+volume:
+    samplemaintainer_gitea_data:
+        name: samplemaintainer_gitea_data

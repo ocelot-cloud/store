@@ -1,0 +1,5 @@
+services:
+  gitea:
+    image: gitea/gitea:1.20.2
+    privileged: true
+    container_name: samplemaintainer_gitea_gitea

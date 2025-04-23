@@ -1,0 +1,6 @@
+services:
+  gitea:
+    image: gitea/gitea:1.20.2
+    container_name: samplemaintainer_gitea_gitea
+    ports:
+      - 443:3000

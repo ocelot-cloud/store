@@ -1,0 +1,9 @@
+volumes:
+  samplemaintainer_gitea_data:
+
+services:
+  gitea:
+    image: gitea/gitea:1.20.2
+    container_name: samplemaintainer_gitea_gitea
+    volumes:
+      - samplemaintainer_gitea_wrong-name:/data

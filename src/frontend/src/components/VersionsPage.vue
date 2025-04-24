@@ -1,77 +1,81 @@
 <template>
   <FrameComponent>
-    <v-card outlined>
-      <v-card-title>Version Management</v-card-title>
-      <v-card-text>
-        <p>Here is a <a href="https://ocelot-cloud.org/docs/app-store/create-own-apps" target="_blank" rel="noopener noreferrer">tutorial</a> helping you get started.</p>
-        <br>
-        <p id="selected-app">You are currently editing versions of the app <strong>"{{ app }}"</strong>.</p>
-        <div class="file-upload-area my-4">
-          <input type="file" ref="fileInput" @change="handleFileUpload" class="d-none" />
-          <v-sheet
-              id="drag-and-drop-area"
-              elevation="1"
-              rounded
-              class="pa-8 text-center"
-              style="border: 2px dashed #ccc;"
-              @dragover.prevent
-              @drop.prevent="handleDrop"
-          >
-            <p>Drag and drop the versions zip file here</p>
-          </v-sheet>
-        </div>
-
-        <v-alert v-if="submitted" type="error" dense>
-          {{ errorMessageText }}
-        </v-alert>
-
-        <br>
-
-        <h3>Version List</h3>
-        <p v-if="!versionList || versionList.length === 0">
-          (No versions created yet)
-        </p>
-        <v-list id="version-list" dense>
-          <v-list-item
-              v-for="version in versionList"
-              :key="version.name"
-              :class="{ 'v-item--active': selectedVersion.id === version.id }"
-              @click="selectVersion(version)"
-              class="version-item"
-          >
-            <div style="display: flex; align-items: center;">
-              <v-list-item-title id="version-name">{{ version.name }}</v-list-item-title>
-              <v-icon id="selection-icon" v-if="selectedVersion.id === version.id" color="success" style="margin-left: 8px;">
-                mdi-check-circle
-              </v-icon>
+    <h1 class="text-center">Version Management</h1>
+    <br>
+    <v-row align="center" justify="center">
+      <v-col cols="auto" style="max-width: 600px; width: 100%;">
+        <v-card outlined>
+          <v-card-text>
+            <p>Here is a <a href="https://ocelot-cloud.org/docs/app-store/create-own-apps" target="_blank" rel="noopener noreferrer">tutorial</a> helping you get started.</p>
+            <br>
+            <p id="selected-app">You are currently editing versions of the app <strong>"{{ app }}"</strong>.</p>
+            <div class="file-upload-area my-4">
+              <input type="file" ref="fileInput" @change="handleFileUpload" class="d-none" />
+              <v-sheet
+                  id="drag-and-drop-area"
+                  elevation="1"
+                  rounded
+                  class="pa-8 text-center"
+                  style="border: 2px dashed #ccc;"
+                  @dragover.prevent
+                  @drop.prevent="handleDrop"
+              >
+                <p>Drag and drop the versions zip file here</p>
+              </v-sheet>
             </div>
 
-            <v-list-item-subtitle id="creation-timestamp">
-              {{ formatTimestamp(version.creation_timestamp) }}
-            </v-list-item-subtitle>
-          </v-list-item>
-        </v-list>
+            <v-alert v-if="submitted" type="error" dense>
+              {{ errorMessageText }}
+            </v-alert>
 
-        <div v-if="versionList && selectedVersion.id" class="d-flex justify-end">
-          <v-btn
-              id="button-download-version"
-              color="primary"
-              class="mr-2"
-              @click="downloadVersion"
-          >
-            Download
-          </v-btn>
-          <v-btn
-              id="button-delete-version"
-              color="error"
-              @click="showDeleteConfirmation = true"
-          >
-            Delete
-          </v-btn>
-        </div>
-      </v-card-text>
-    </v-card>
+            <br>
 
+            <h3>Version List</h3>
+            <p v-if="!versionList || versionList.length === 0">
+              (No versions created yet)
+            </p>
+            <v-list id="version-list" dense>
+              <v-list-item
+                  v-for="version in versionList"
+                  :key="version.name"
+                  :class="{ 'v-item--active': selectedVersion.id === version.id }"
+                  @click="selectVersion(version)"
+                  class="version-item"
+              >
+                <div style="display: flex; align-items: center;">
+                  <v-list-item-title id="version-name">{{ version.name }}</v-list-item-title>
+                  <v-icon id="selection-icon" v-if="selectedVersion.id === version.id" color="success" style="margin-left: 8px;">
+                    mdi-check-circle
+                  </v-icon>
+                </div>
+
+                <v-list-item-subtitle id="creation-timestamp">
+                  {{ formatTimestamp(version.creation_timestamp) }}
+                </v-list-item-subtitle>
+              </v-list-item>
+            </v-list>
+
+            <div v-if="versionList && selectedVersion.id" class="d-flex justify-end">
+              <v-btn
+                  id="button-download-version"
+                  color="primary"
+                  class="mr-2"
+                  @click="downloadVersion"
+              >
+                Download
+              </v-btn>
+              <v-btn
+                  id="button-delete-version"
+                  color="error"
+                  @click="showDeleteConfirmation = true"
+              >
+                Delete
+              </v-btn>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
     <DeletionConfirmationDialog
         v-model:visible="showDeleteConfirmation"
         :on-confirm="deleteVersion"

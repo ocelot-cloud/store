@@ -2,66 +2,74 @@
   <FrameComponent>
     <h1 class="text-center">My Apps</h1>
     <br>
-    <v-card outlined>
-      <v-card-text>
-        <p>Tip: Apps typically have the name of the software they are meant to deploy, such as 'gitlab', 'wordpress', etc.</p>
+    <v-row align="center" justify="center">
+      <v-col cols="auto" style="max-width: 600px; width: 100%;">
+        <v-card outlined>
+          <v-card-text>
+            <p>Tip: Apps typically have the name of the software they are meant to deploy, such as 'gitlab', 'wordpress', etc.</p>
+            <br>
+            <v-row>
+              <v-col style="max-width: 260px; width: 100%;">
+                <ValidatedInput
+                    id="input-app"
+                    :submitted="submitted"
+                    validation-type="app"
+                    v-model="newAppToCreate"
+                />
+              </v-col>
+              <v-col style="max-width: 160px; width: 100%;">
+                <v-btn id="button-create-app" color="primary" block @click="createApp" style="margin-top: 10px">
+                  Create App
+                </v-btn>
+              </v-col>
+            </v-row>
 
-        <br>
-        <ValidatedInput
-            id="input-app"
-            :submitted="submitted"
-            validation-type="app"
-            v-model="newAppToCreate"
-        />
-        <v-btn id="button-create-app" color="primary" block @click="createApp">
-          Create App
-        </v-btn>
+            <v-divider class="my-4"></v-divider>
 
-        <v-divider class="my-4"></v-divider>
+            <div>
+              <h3>App List</h3>
+              <p v-if="!appList || appList.length === 0">(No apps created yet)</p>
+              <v-list id="app-list" dense>
+                <v-list-item
+                    class="app-item"
+                    v-for="app in appList"
+                    :key="app.name"
+                    :class="{ 'v-item--active': selectedApp.id === app.id }"
+                    @click="selectApp(app)"
+                >
+                  <div style="display: flex; align-items: center;">
+                    <v-list-item-title>{{ app.name }}</v-list-item-title>
+                    <v-icon id="selection-icon" v-if="selectedApp.id === app.id" color="success" style="margin-left: 8px;">
+                      mdi-check-circle
+                    </v-icon>
+                  </div>
+                </v-list-item>
+              </v-list>
+            </div>
 
-        <div>
-          <h3>App List</h3>
-          <p v-if="!appList || appList.length === 0">(No apps created yet)</p>
-          <v-list id="app-list" dense>
-            <v-list-item
-                class="app-item"
-                v-for="app in appList"
-                :key="app.name"
-                :class="{ 'v-item--active': selectedApp.id === app.id }"
-                @click="selectApp(app)"
-            >
-              <div style="display: flex; align-items: center;">
-                <v-list-item-title>{{ app.name }}</v-list-item-title>
-                <v-icon id="selection-icon" v-if="selectedApp.id === app.id" color="success" style="margin-left: 8px;">
-                  mdi-check-circle
-                </v-icon>
-              </div>
-            </v-list-item>
-          </v-list>
-        </div>
+            <v-divider class="my-4"></v-divider>
 
-        <v-divider class="my-4"></v-divider>
-
-        <div v-if="appList && selectedApp.id != ''" class="d-flex justify-end">
-          <v-btn
-              id="button-edit-versions"
-              color="primary"
-              class="mr-2"
-              @click="goToVersionManagement()"
-          >
-            Edit Versions
-          </v-btn>
-          <v-btn
-              id="button-delete-app"
-              color="error"
-              @click="showDeleteConfirmation = true"
-          >
-            Delete
-          </v-btn>
-        </div>
-      </v-card-text>
-    </v-card>
-
+            <div v-if="appList && selectedApp.id != ''" class="d-flex justify-end">
+              <v-btn
+                  id="button-edit-versions"
+                  color="primary"
+                  class="mr-2"
+                  @click="goToVersionManagement()"
+              >
+                Edit Versions
+              </v-btn>
+              <v-btn
+                  id="button-delete-app"
+                  color="error"
+                  @click="showDeleteConfirmation = true"
+              >
+                Delete
+              </v-btn>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
     <DeletionConfirmationDialog
         v-model:visible="showDeleteConfirmation"
         :on-confirm="deleteApp"

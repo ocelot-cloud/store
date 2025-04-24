@@ -2,7 +2,7 @@
   <v-app>
     <v-container>
       <v-row align="center" justify="center">
-        <v-col cols="12" sm="8" md="5">
+        <v-col cols="auto" style="max-width: 400px; width: 100%;">
           <v-card>
             <v-card-title class="text-h5 text-center">Login</v-card-title>
             <v-card-text>

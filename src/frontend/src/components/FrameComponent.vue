@@ -2,7 +2,10 @@
   <v-app>
     <v-app-bar flat>
       <v-row align="center" justify="space-between" class="pa-2">
-        <v-col cols="auto" class="white--text text-h5">
+        <v-col cols="auto">
+          <img src="../assets/logo.png" alt="Logo" style="height: 45px;" />
+        </v-col>
+        <v-col class="white--text text-h5">
           Ocelot App Store
         </v-col>
       </v-row>

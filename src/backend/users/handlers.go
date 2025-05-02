@@ -24,26 +24,26 @@ func WipeDataHandler(w http.ResponseWriter, r *http.Request) {
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	creds, err := tools.ReadBody[tools.LoginCredentials](r)
 	if err != nil {
-		tools.Logger.Info("invalid input: %v", err)
+		Logger.Info("invalid input: %v", err)
 		http.Error(w, "invalid input", http.StatusBadRequest)
 		return
 	}
 
 	if !UserRepo.DoesUserExist(creds.User) {
-		tools.Logger.Info("user '%s' does not exist", creds.User)
+		Logger.Info("user '%s' does not exist", creds.User)
 		http.Error(w, "user does not exist", http.StatusNotFound)
 		return
 	}
 
 	if !UserRepo.IsPasswordCorrect(creds.User, creds.Password) {
-		tools.Logger.Info("Password of user '%s' was not correct", creds.User)
+		Logger.Info("Password of user '%s' was not correct", creds.User)
 		http.Error(w, "incorrect username or password", http.StatusUnauthorized)
 		return
 	}
 
 	cookie, err := utils.GenerateCookie()
 	if err != nil {
-		tools.Logger.Error("cookie generation failed: %v", err)
+		Logger.Error("cookie generation failed: %v", err)
 		http.Error(w, "cookie generation failed", http.StatusInternalServerError)
 		return
 	}
@@ -58,13 +58,13 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = UserRepo.HashAndSaveCookie(creds.User, cookie.Value, cookie.Expires)
 	if err != nil {
-		tools.Logger.Error("setting cookie failed: %v", err)
+		Logger.Error("setting cookie failed: %v", err)
 		http.Error(w, "setting cookie failed", http.StatusInternalServerError)
 		return
 	}
 
 	http.SetCookie(w, cookie)
-	tools.Logger.Info("user '%s' logged in successfully", creds.User)
+	Logger.Info("user '%s' logged in successfully", creds.User)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -77,19 +77,19 @@ func UserDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
 
 	if !UserRepo.DoesUserExist(user) {
-		tools.Logger.Error("user '%s' wanted to delete his account but seems not to exist although authenticated", user)
+		Logger.Error("user '%s' wanted to delete his account but seems not to exist although authenticated", user)
 		http.Error(w, "user does not exist", http.StatusInternalServerError)
 		return
 	}
 
 	err := UserRepo.DeleteUser(user)
 	if err != nil {
-		tools.Logger.Error("user '%s' deletion failed", err)
+		Logger.Error("user '%s' deletion failed", err)
 		http.Error(w, "user deletion failed", http.StatusInternalServerError)
 		return
 	}
 
-	tools.Logger.Info("deleted user: %s", user)
+	Logger.Info("deleted user: %s", user)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -98,31 +98,31 @@ func ChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	form, err := tools.ReadBody[utils.ChangePasswordForm](r)
 	if err != nil {
-		tools.Logger.Info("could not read request body: %v", err)
+		Logger.Info("could not read request body: %v", err)
 		http.Error(w, "invalid input", http.StatusBadRequest)
 		return
 	}
 
 	if !UserRepo.DoesUserExist(user) {
-		tools.Logger.Warn("somebody tried to change password but user '%s' does not exist", user)
+		Logger.Warn("somebody tried to change password but user '%s' does not exist", user)
 		http.Error(w, "user does not exist", http.StatusNotFound)
 		return
 	}
 
 	if !UserRepo.IsPasswordCorrect(user, form.OldPassword) {
-		tools.Logger.Info("incorrect credentials for user '%s' when trying to change password", user)
+		Logger.Info("incorrect credentials for user '%s' when trying to change password", user)
 		http.Error(w, "incorrect username or password", http.StatusUnauthorized)
 		return
 	}
 
 	err = UserRepo.ChangePassword(user, form.NewPassword)
 	if err != nil {
-		tools.Logger.Error("changing password for user '%s' failed: %v", user, err)
+		Logger.Error("changing password for user '%s' failed: %v", user, err)
 		http.Error(w, "error when trying to change password", http.StatusInternalServerError)
 		return
 	}
 
-	tools.Logger.Info("user '%s' changed his password", user)
+	Logger.Info("user '%s' changed his password", user)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -131,50 +131,50 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := UserRepo.Logout(user)
 	if err != nil {
-		tools.Logger.Error("logout of user '%s' failed: %v", user, err)
+		Logger.Error("logout of user '%s' failed: %v", user, err)
 		http.Error(w, "logout failed", http.StatusInternalServerError)
 		return
 	}
 
-	tools.Logger.Info("user '%s' logged out", user)
+	Logger.Info("user '%s' logged out", user)
 	w.WriteHeader(http.StatusOK)
 }
 
 func RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	form, err := tools.ReadBody[tools.RegistrationForm](r)
 	if err != nil {
-		tools.Logger.Warn("invalid input: %v", err)
+		Logger.Warn("invalid input: %v", err)
 		http.Error(w, "invalid input", http.StatusBadRequest)
 		return
 	}
 
 	if UserRepo.DoesUserExist(form.User) {
-		tools.Logger.Info("user '%s' tried to register but he already exists", form.User)
+		Logger.Info("user '%s' tried to register but he already exists", form.User)
 		http.Error(w, "user already exists", http.StatusConflict)
 		return
 	}
 
 	if UserRepo.DoesEmailExist(form.Email) {
-		tools.Logger.Info("user '%s' tried to register but email '%s' already exists", form.User, form.Email)
+		Logger.Info("user '%s' tried to register but email '%s' already exists", form.User, form.Email)
 		http.Error(w, "email already exists", http.StatusConflict)
 		return
 	}
 
 	code, err := UserRepo.CreateUser(form)
 	if err != nil {
-		tools.Logger.Error("user '%s' registration failed: %v", form.User, err)
+		Logger.Error("user '%s' registration failed: %v", form.User, err)
 		http.Error(w, "user registration failed", http.StatusInternalServerError)
 		return
 	}
 
 	err = sendVerificationEmail(form.Email, code)
 	if err != nil {
-		tools.Logger.Error("sending verification email failed: %v", err)
+		Logger.Error("sending verification email failed: %v", err)
 		http.Error(w, "sending verification email failed", http.StatusInternalServerError)
 		return
 	}
 
-	tools.Logger.Info("user wants to register, validation still necessary: " + form.User)
+	Logger.Info("user wants to register, validation still necessary: " + form.User)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -190,12 +190,12 @@ func ValidationCodeHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = UserRepo.ValidateUser(code)
 	if err != nil {
-		tools.Logger.Error("validation process of user failed: %v", err)
+		Logger.Error("validation process of user failed: %v", err)
 		http.Error(w, "validation process failed", http.StatusBadRequest)
 		return
 	}
 
-	tools.Logger.Info("user validation code accepted")
+	Logger.Info("user validation code accepted")
 	w.WriteHeader(http.StatusOK)
 }
 

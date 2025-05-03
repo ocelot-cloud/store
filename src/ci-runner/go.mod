@@ -3,7 +3,7 @@ module ci-runner
 go 1.24.1
 
 require (
-	github.com/ocelot-cloud/shared v0.0.68
+	github.com/ocelot-cloud/shared v0.0.74
 	github.com/ocelot-cloud/task-runner v0.0.18
 	github.com/spf13/cobra v1.9.1
 )

@@ -92,7 +92,7 @@ func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	versionUpload.Content, err = completeComposeKeywordsWithinZipFileContent(maintainerName, appName, versionUpload.Content)
+	versionUpload.Content, err = tools.CompleteComposeKeywordsWithinZipFileContent(maintainerName, appName, versionUpload.Content)
 	if err != nil {
 		tools.Logger.Error("completing docker compose yaml failed: %v", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
@@ -115,24 +115,6 @@ func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	tools.Logger.Info("version '%s' was uploaded to app with ID '%s' by user '%s'", versionUpload.Version, versionUpload.AppId, user)
 	w.WriteHeader(http.StatusOK)
-}
-
-func completeComposeKeywordsWithinZipFileContent(maintainer, appName string, content []byte) ([]byte, error) {
-	tempDir, err := utils.UnzipToTempDir(content)
-	if err != nil {
-		return nil, err
-	}
-	defer utils.RemoveDir(tempDir)
-
-	err = tools.CompleteDockerComposeYaml(maintainer, appName, tempDir+"/docker-compose.yml")
-	if err != nil {
-		return nil, err
-	}
-	bytes, err := utils.ZipDirectoryToBytes(tempDir)
-	if err != nil {
-		return nil, err
-	}
-	return bytes, nil
 }
 
 func VersionDeleteHandler(w http.ResponseWriter, r *http.Request) {

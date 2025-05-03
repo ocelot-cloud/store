@@ -441,6 +441,24 @@ func validateNetworksDefinition(serviceName string, networks interface{}) error 
 	return nil
 }
 
+func CompleteComposeKeywordsWithinZipFileContent(maintainer, appName string, content []byte) ([]byte, error) {
+	tempDir, err := utils.UnzipToTempDir(content)
+	if err != nil {
+		return nil, err
+	}
+	defer utils.RemoveDir(tempDir)
+
+	err = CompleteDockerComposeYaml(maintainer, appName, tempDir+"/docker-compose.yml")
+	if err != nil {
+		return nil, err
+	}
+	bytes, err := utils.ZipDirectoryToBytes(tempDir)
+	if err != nil {
+		return nil, err
+	}
+	return bytes, nil
+}
+
 func CompleteDockerComposeYaml(maintainer, appName, filePath string) error {
 	m, err := readCompose(filePath)
 	if err != nil {

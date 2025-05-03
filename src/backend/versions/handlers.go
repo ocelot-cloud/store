@@ -3,6 +3,7 @@ package versions
 import (
 	"encoding/json"
 	"github.com/ocelot-cloud/shared/utils"
+	"github.com/ocelot-cloud/shared/validation"
 	"net/http"
 	"ocelot/store/apps"
 	"ocelot/store/tools"
@@ -85,17 +86,10 @@ func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = tools.ValidateVersion(versionUpload.Content, maintainerName, appName)
+	err = validation.ValidateVersion(versionUpload.Content, maintainerName, appName)
 	if err != nil {
 		tools.Logger.Info("version upload of user '%s' invalid: %v", user, err)
 		http.Error(w, "invalid version: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	versionUpload.Content, err = tools.CompleteComposeKeywordsWithinZipFileContent(maintainerName, appName, versionUpload.Content)
-	if err != nil {
-		tools.Logger.Error("completing docker compose yaml failed: %v", err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 

@@ -1,1 +1,0 @@
-url_path: <script>alert('XSS')</script>

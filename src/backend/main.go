@@ -162,17 +162,12 @@ func loadSampleApp() {
 	if err != nil {
 		tools.Logger.Fatal("Failed to create '%s' app: %v.", sampleApp, err)
 	}
-	dirPath := tools.SamplesDir + "/sampleuser_nginxdefault"
-	zipBytes, err := utils.ZipDirectoryToBytes(dirPath)
-	if err != nil {
-		tools.Logger.Fatal("Failed to zip directory: %v", err)
-	}
 
 	appId, err := apps.AppRepo.GetAppId(sampleUser, sampleApp)
 	if err != nil {
 		tools.Logger.Fatal("Failed to get app ID: %v", err)
 	}
-	err = versions.VersionRepo.CreateVersion(appId, "0.0.1", zipBytes)
+	err = versions.VersionRepo.CreateVersion(appId, "0.0.1", tools.GetValidVersionBytes())
 	if err != nil {
 		tools.Logger.Fatal("Failed to create sample version: %v", err)
 	}

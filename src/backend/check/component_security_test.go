@@ -43,7 +43,7 @@ func TestDownloadAppSecurity(t *testing.T) {
 	hub.Parent.SetCookieHeader = false
 	fullVersionInfo, err := hub.downloadVersion()
 	assert.Nil(t, err)
-	assertDownloadedVersion(t, fullVersionInfo.Content)
+	assert.Equal(t, SampleVersionFileContent, fullVersionInfo.Content)
 }
 
 func TestGetVersionsSecurity(t *testing.T) {

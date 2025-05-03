@@ -1,5 +1,10 @@
 package tools
 
+import (
+	"github.com/ocelot-cloud/shared/utils"
+	"github.com/ocelot-cloud/shared/validation"
+)
+
 var (
 	SampleUser     = "samplemaintainer"
 	SampleApp      = "gitea"
@@ -14,7 +19,8 @@ var (
 )
 
 func GetValidVersionBytes() []byte {
-	versionBytes, err := ZipDirectory(SamplesDir + "/test-compose-files/allow-app-yml")
+	sampleAppDir := utils.FindDir("assets") + "/sample_app"
+	versionBytes, err := validation.ZipDirectory(sampleAppDir)
 	if err != nil {
 		Logger.Fatal("Failed to read sample version file: %v", err)
 	}

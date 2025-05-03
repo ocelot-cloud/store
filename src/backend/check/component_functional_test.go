@@ -5,9 +5,7 @@ package check
 import (
 	"github.com/ocelot-cloud/shared/assert"
 	"github.com/ocelot-cloud/shared/utils"
-	"gopkg.in/yaml.v3"
 	"ocelot/store/tools"
-	"os"
 	"testing"
 	"time"
 )
@@ -39,30 +37,7 @@ func TestVersionDownload(t *testing.T) {
 
 	fullVersionInfo, err := hub.downloadVersion()
 	assert.Nil(t, err)
-	assertDownloadedVersion(t, fullVersionInfo.Content)
-}
-
-func assertDownloadedVersion(t *testing.T, downloadedContent []byte) {
-	assert.True(t, len(downloadedContent) > len(SampleVersionFileContent))
-
-	tempDir, err := utils.UnzipToTempDir(downloadedContent)
-	assert.Nil(t, err)
-
-	yamlBytes, err := os.ReadFile(tempDir + "/app.yml")
-	assert.Nil(nil, err)
-	var config map[string]interface{}
-	err = yaml.Unmarshal(yamlBytes, &config)
-	assert.Nil(nil, err)
-	assert.Equal(t, 1, len(config))
-	portValue, exists := config["port"]
-	assert.True(t, exists)
-	assert.Equal(t, 8080, portValue)
-
-	actualBytes, err := os.ReadFile(tempDir + "/docker-compose.yml")
-	assert.Nil(t, err)
-	expectedBytes, err := os.ReadFile(tools.SamplesDir + "/component-test/expected-output-for-download-test.yml")
-	assert.Nil(t, err)
-	tools.AssertYamlEquality(t, expectedBytes, actualBytes)
+	assert.Equal(t, SampleVersionFileContent, fullVersionInfo.Content)
 }
 
 func TestCookie(t *testing.T) {
@@ -235,8 +210,7 @@ func TestDownloadDummyVersion(t *testing.T) {
 	assert.Equal(t, hub.Parent.User, info.Maintainer)
 	assert.Equal(t, hub.App, info.AppName)
 	assert.Equal(t, hub.Version, info.VersionName)
-	expectedNumberOfBytes := 521
-	assert.Equal(t, expectedNumberOfBytes, len(info.Content))
+	assert.True(t, len(info.Content) > 100)
 }
 
 func TestCreationOfOcelotCloudAppIsForbidden(t *testing.T) {

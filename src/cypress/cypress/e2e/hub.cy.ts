@@ -16,6 +16,7 @@ const registrationPath = `${baseUrl}/registration`
 const changePasswordPath = `${baseUrl}/change-password`
 const versionManagementPath = `${baseUrl}/versions`
 const appsPath = `${baseUrl}/`
+const maintainerName = "samplemaintainer"
 
 const appName = "gitea"
 
@@ -114,7 +115,7 @@ function checkInputValidationOnLoginPage() {
     shallInvalidInputMessageBeShown(true, "username")
     shallInvalidInputMessageBeShown(true, "password")
 
-    cy.get('#input-username').clear().type('admin');
+    cy.get('#input-username').clear().type(maintainerName);
     cy.get('#input-password').clear().type('password');
     shallInvalidInputMessageBeShown(false, "username")
     shallInvalidInputMessageBeShown(false, "password")
@@ -135,7 +136,7 @@ function checkInputValidationOnRegistrationPage() {
     shallInvalidInputMessageBeShown(true, "password")
     shallInvalidInputMessageBeShown(true, "email")
 
-    cy.get('#input-username').clear().type('admin');
+    cy.get('#input-username').clear().type(maintainerName);
     cy.get('#input-password').clear().type('password');
     cy.get('#input-email').clear().type('admin@admin.de');
     shallInvalidInputMessageBeShown(false, "username")
@@ -183,7 +184,7 @@ function logout() {
 }
 
 function uploadValidVersion() {
-    cy.task('zipFolderInMemory', "../backend/samples/acceptance-test").then((zipBytes: Buffer) => {
+    cy.task('zipFolderInMemory', "../backend/assets/sample_app").then((zipBytes: Buffer) => {
         cy.get('input[type="file"]').selectFile(
             {
                 contents: Cypress.Buffer.from(zipBytes),
@@ -222,7 +223,7 @@ describe('Hub Operations', () => {
         cy.get('#go-to-registration-page').click();
         cy.url().should('eq', registrationPath);
 
-        cy.get('#input-username').type('admin');
+        cy.get('#input-username').type(maintainerName);
         cy.get('#input-password').type('password');
         cy.get('#input-email').type('admin@admin.com');
         cy.get('#button-register').should('be.disabled')
@@ -321,7 +322,7 @@ describe('Hub Operations', () => {
 
     it('check wrong password prevents login', () => {
         cy.visit(loginPath);
-        cy.get('#input-username').type('admin');
+        cy.get('#input-username').type(maintainerName);
         cy.get('#input-password').type('password+x');
         cy.get('#button-login').click();
         cy.url().should('eq', loginPath);
@@ -345,7 +346,7 @@ describe('Hub Operations', () => {
 
         logout()
 
-        cy.get('#input-username').clear().type('admin')
+        cy.get('#input-username').clear().type(maintainerName)
         cy.get('#input-password').clear().type(password)
         cy.get('#button-login').click()
         cy.url().should('eq', loginPath)
@@ -374,11 +375,11 @@ export let password = "password"
 function login() {
     if(authCookie == "") {
         cy.visit(loginPath)
-        cy.get('#input-username').clear().type('admin')
+        cy.get('#input-username').clear().type(maintainerName)
         cy.get('#input-password').clear().type(password)
         cy.get('#button-login').click()
         cy.url().should('eq', appsPath)
-        cy.get('#user-label').should('contain', 'admin');
+        cy.get('#user-label').should('contain', maintainerName);
         cy.getCookie("auth").should('exist').then((cookie) => {
             authCookie = cookie.value
         })

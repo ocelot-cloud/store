@@ -145,11 +145,12 @@ func initializeHandlers(mux *http.ServeMux) {
 	registerProtectedRoutes(mux, protectedRoutes)
 }
 
-// Creates a sample app that can be downloaded from the cloud for testing.
+// Creates a sample app that can be downloaded from the Ocelot-Cloud for integration testing.
 func loadSampleApp() {
-	tools.Logger.Warn("loading sample app 'nginxdefault' into database for testing")
 	sampleUser := "sampleuser"
-	sampleApp := "nginxdefault"
+	sampleApp := "nginx"
+	tools.Logger.Warn("loading sample app '%s' into database for testing", sampleApp)
+
 	err := users.CreateAndValidateUser(&tools.RegistrationForm{
 		User:     sampleUser,
 		Password: "password",
@@ -167,7 +168,7 @@ func loadSampleApp() {
 	if err != nil {
 		tools.Logger.Fatal("Failed to get app ID: %v", err)
 	}
-	err = versions.VersionRepo.CreateVersion(appId, "0.0.1", tools.GetValidVersionBytes())
+	err = versions.VersionRepo.CreateVersion(appId, "0.0.1", tools.GetValidVersionBytesOfSampleUserApp())
 	if err != nil {
 		tools.Logger.Fatal("Failed to create sample version: %v", err)
 	}

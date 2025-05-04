@@ -51,7 +51,7 @@ func getHub() *HubClient {
 	return hub
 }
 
-var SampleVersionFileContent = tools.GetValidVersionBytes()
+var SampleVersionFileContent = tools.GetValidVersionBytesOfSampleMaintainerApp()
 
 func getHubWithoutWipe() *HubClient {
 	return &HubClient{

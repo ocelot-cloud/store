@@ -1,0 +1,4 @@
+services:
+  nginx:
+    image: nginx/nginx:1.20.2
+    container_name: sampleuser_nginx_nginx

@@ -105,14 +105,10 @@ var deployCmd = &cobra.Command{
 		var remoteHomeDir = "/home/user"
 		executeOnServer("systemctl stop store")
 		executeOnServer("mkdir -p %s/store", remoteHomeDir)
-		rsyncCmd := fmt.Sprintf("rsync -avz --delete samples assets store dist ocelot:%s/store/", remoteHomeDir)
+		rsyncCmd := fmt.Sprintf("rsync -avz --delete assets store dist ocelot:%s/store/", remoteHomeDir)
 		tr.ExecuteInDir(backendDir, rsyncCmd)
 		executeOnServer("chown -R user:user %s/store", remoteHomeDir)
-
-		/* TODO replace line below with this
-		executeOnServer("chmod -R 600 %s/store", remoteHomeDir)
-		executeOnServer("chmod -R 500 %s/store/store", remoteHomeDir)
-		*/
+		
 		executeOnServer("chmod -R 700 %s/store", remoteHomeDir)
 
 		executeOnServer("systemctl start store")

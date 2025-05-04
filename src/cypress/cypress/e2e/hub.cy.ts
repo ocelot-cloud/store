@@ -184,7 +184,7 @@ function logout() {
 }
 
 function uploadValidVersion() {
-    cy.task('zipFolderInMemory', "../backend/assets/sample_app").then((zipBytes: Buffer) => {
+    cy.task('zipFolderInMemory', "../backend/assets/samplemaintainer-app").then((zipBytes: Buffer) => {
         cy.get('input[type="file"]').selectFile(
             {
                 contents: Cypress.Buffer.from(zipBytes),

@@ -116,7 +116,7 @@ func checkCookie(t *testing.T, hub *HubClient) {
 
 func TestCreateAppSecurity(t *testing.T) {
 	hub := getHubAndLogin(t)
-	testInputInvalidation(t, hub, "invalid-app", AppField, CreateApp)
+	testInputInvalidation(t, hub, "invalid_app", AppField, CreateApp)
 }
 
 func TestUploadVersionSecurity(t *testing.T) {

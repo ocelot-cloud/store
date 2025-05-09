@@ -117,7 +117,7 @@ func (h *HubClient) deleteUser() error {
 }
 
 func (h *HubClient) createApp() error {
-	_, err := h.Parent.DoRequest(tools.AppCreationPath, utils.SingleString{Value: h.App}, "")
+	_, err := h.Parent.DoRequest(tools.AppCreationPath, tools.AppNameString{Value: h.App}, "")
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func (h *HubClient) uploadVersion() error {
 }
 
 func (h *HubClient) downloadVersion() (*tools.FullVersionInfo, error) {
-	result, err := h.Parent.DoRequest(tools.DownloadPath, utils.SingleString{Value: h.VersionId}, "")
+	result, err := h.Parent.DoRequest(tools.DownloadPath, tools.NumberString{Value: h.VersionId}, "")
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +205,7 @@ func (h *HubClient) downloadVersion() (*tools.FullVersionInfo, error) {
 }
 
 func (h *HubClient) getVersions() ([]tools.Version, error) {
-	result, err := h.Parent.DoRequest(tools.GetVersionsPath, utils.SingleString{Value: h.AppId}, "")
+	result, err := h.Parent.DoRequest(tools.GetVersionsPath, tools.NumberString{Value: h.AppId}, "")
 	if err != nil {
 		return nil, err
 	}
@@ -219,17 +219,17 @@ func (h *HubClient) getVersions() ([]tools.Version, error) {
 }
 
 func (h *HubClient) deleteVersion() error {
-	_, err := h.Parent.DoRequest(tools.VersionDeletePath, utils.SingleString{Value: h.VersionId}, "")
+	_, err := h.Parent.DoRequest(tools.VersionDeletePath, tools.NumberString{Value: h.VersionId}, "")
 	return err
 }
 
 func (h *HubClient) deleteApp() error {
-	_, err := h.Parent.DoRequest(tools.AppDeletePath, utils.SingleString{Value: h.AppId}, "")
+	_, err := h.Parent.DoRequest(tools.AppDeletePath, tools.NumberString{Value: h.AppId}, "")
 	return err
 }
 
 func (h *HubClient) changePassword() error {
-	form := utils.ChangePasswordForm{
+	form := tools.ChangePasswordForm{
 		OldPassword: h.Parent.Password,
 		NewPassword: h.Parent.NewPassword,
 	}

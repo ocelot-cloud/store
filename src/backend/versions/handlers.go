@@ -31,12 +31,9 @@ func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	jobs := []tools.ValidationJob{
-		{Value: versionUpload.Version, ValType: tools.VersionType},
-		{Value: versionUpload.AppId, ValType: tools.Number},
-	}
-	if err := tools.ValidateJobs(jobs); err != nil {
-		tools.Logger.Info("version upload of user '%s' invalid: %v", user, err)
+	err = validation.ValidateStruct(versionUpload)
+	if err != nil {
+		tools.Logger.Info("version upload of user '%s' failed: %v", user, err)
 		http.Error(w, "invalid input", http.StatusBadRequest)
 		return
 	}

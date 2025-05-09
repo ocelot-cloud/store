@@ -4,10 +4,9 @@ go 1.24.1
 
 require (
 	github.com/jackc/pgx/v5 v5.7.4
-	github.com/ocelot-cloud/shared v0.0.74
+	github.com/ocelot-cloud/shared v0.0.79
 	golang.org/x/crypto v0.37.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -31,4 +30,5 @@ require (
 	golang.org/x/text v0.24.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -3,6 +3,7 @@ package apps
 import (
 	"fmt"
 	"github.com/ocelot-cloud/shared/utils"
+	"github.com/ocelot-cloud/shared/validation"
 	"net/http"
 	"ocelot/store/tools"
 	"ocelot/store/users"
@@ -11,39 +12,39 @@ import (
 
 func AppCreationHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-	app, err := tools.ReadBodyAsSingleString(w, r, tools.AppType)
+	appString, err := validation.ReadBody[tools.AppNameString](w, r)
 	if err != nil {
 		return
 	}
 
 	if !users.UserRepo.DoesUserExist(user) {
-		tools.Logger.Info("user '%s' tried to create app '%s' but it does not exist", user, app)
+		tools.Logger.Info("user '%s' tried to create app '%s' but it does not exist", user, appString)
 		http.Error(w, "user does not exists", http.StatusNotFound)
 		return
 	}
 
-	if app == "ocelotcloud" {
-		tools.Logger.Info("user '%s' tried to create app '%s' but it is reserved", user, app)
+	if appString.Value == "ocelotcloud" {
+		tools.Logger.Info("user '%s' tried to create app '%s' but it is reserved", user, appString)
 		http.Error(w, "app name is reserved", http.StatusBadRequest)
 		return
 	}
 
-	_, err = AppRepo.GetAppId(user, app)
+	_, err = AppRepo.GetAppId(user, appString.Value)
 	if err == nil {
-		tools.Logger.Info("user '%s' tried to create app '%s' but it already exists", user, app)
+		tools.Logger.Info("user '%s' tried to create app '%s' but it already exists", user, appString)
 		http.Error(w, "app already exists", http.StatusConflict)
 		return
 	}
 
-	err = AppRepo.CreateApp(user, app)
+	err = AppRepo.CreateApp(user, appString.Value)
 	if err != nil {
-		tools.Logger.Error("user '%s' tried to create app '%s' but it failed: %v", user, app, err)
+		tools.Logger.Error("user '%s' tried to create app '%s' but it failed: %v", user, appString, err)
 		http.Error(w, "app creation failed", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	tools.Logger.Info("user '%s' created app '%s'", user, app)
+	tools.Logger.Info("user '%s' created app '%s'", user, appString)
 }
 
 func AppDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -71,11 +72,11 @@ func AppDeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadBodyAsStringNumber(w http.ResponseWriter, r *http.Request) (int, error) {
-	appIdString, err := tools.ReadBodyAsSingleString(w, r, tools.Number)
+	appIdString, err := validation.ReadBody[tools.NumberString](w, r)
 	if err != nil {
 		return -1, fmt.Errorf("")
 	}
-	appId, err := strconv.Atoi(appIdString)
+	appId, err := strconv.Atoi(appIdString.Value)
 	if err != nil {
 		tools.Logger.Warn("request body string conversion error: %v", appIdString)
 		http.Error(w, "invalid input", http.StatusBadRequest)
@@ -98,10 +99,8 @@ func AppGetListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func SearchForAppsHandler(w http.ResponseWriter, r *http.Request) {
-	appSearchRequest, err := tools.ReadBody[tools.AppSearchRequest](r)
+	appSearchRequest, err := validation.ReadBody[tools.AppSearchRequest](w, r)
 	if err != nil {
-		tools.Logger.Info("invalid input: %v", err)
-		http.Error(w, "invalid input", http.StatusBadRequest)
 		return
 	}
 

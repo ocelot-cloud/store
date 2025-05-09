@@ -3,6 +3,7 @@ package users
 import (
 	"fmt"
 	"github.com/ocelot-cloud/shared/utils"
+	"github.com/ocelot-cloud/shared/validation"
 	"net/http"
 	"ocelot/store/tools"
 	"time"
@@ -22,10 +23,8 @@ func WipeDataHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	creds, err := tools.ReadBody[tools.LoginCredentials](r)
+	creds, err := validation.ReadBody[tools.LoginCredentials](w, r)
 	if err != nil {
-		Logger.Info("invalid input: %v", err)
-		http.Error(w, "invalid input", http.StatusBadRequest)
 		return
 	}
 
@@ -70,7 +69,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 func AuthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-	utils.SendJsonResponse(w, utils.SingleString{Value: user})
+	utils.SendJsonResponse(w, tools.UserNameString{Value: user})
 }
 
 func UserDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -96,10 +95,8 @@ func UserDeleteHandler(w http.ResponseWriter, r *http.Request) {
 func ChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
 
-	form, err := tools.ReadBody[utils.ChangePasswordForm](r)
+	form, err := validation.ReadBody[tools.ChangePasswordForm](w, r)
 	if err != nil {
-		Logger.Info("could not read request body: %v", err)
-		http.Error(w, "invalid input", http.StatusBadRequest)
 		return
 	}
 
@@ -141,10 +138,8 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func RegistrationHandler(w http.ResponseWriter, r *http.Request) {
-	form, err := tools.ReadBody[tools.RegistrationForm](r)
+	form, err := validation.ReadBody[tools.RegistrationForm](w, r)
 	if err != nil {
-		Logger.Warn("invalid input: %v", err)
-		http.Error(w, "invalid input", http.StatusBadRequest)
 		return
 	}
 
@@ -182,7 +177,7 @@ func ValidationCodeHandler(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 	code := queryParams.Get("code")
 
-	err := tools.Validate(code, tools.ValidationCode)
+	err := validation.ValidateSecret(code)
 	if err != nil {
 		tools.HandleInvalidInput(w, err)
 		return
@@ -208,7 +203,7 @@ func CheckAuthentication(w http.ResponseWriter, r *http.Request) (string, error)
 		return "", fmt.Errorf("")
 	}
 
-	if err = tools.Validate(cookie.Value, tools.Cookie); err != nil {
+	if err = validation.ValidateSecret(cookie.Value); err != nil {
 		http.Error(w, "invalid cookie", http.StatusBadRequest)
 		return "", fmt.Errorf("")
 	}

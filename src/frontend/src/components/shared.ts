@@ -7,6 +7,7 @@ export async function doHubRequest(path: string, data: any): Promise<(AxiosRespo
 }
 
 export const defaultAllowedSymbols = '[0-9a-z]';
+export const appNameAllowedSymbols = '[0-9a-z-]';
 export const passwordAllowedSymbols = '[a-zA-Z0-9!@#$%&_,.?]';
 export const versionAllowedSymbols = '[0-9a-z.]';
 export const defaultMinLength = 3;

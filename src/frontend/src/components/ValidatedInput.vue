@@ -21,7 +21,7 @@ import {
   defaultMaxLength,
   minLengthPassword,
   defaultMinLength,
-  passwordAllowedSymbols
+  passwordAllowedSymbols, appNameAllowedSymbols
 } from '@/components/shared'
 
 type ValidationType = 'username' | 'password' | 'email' | 'app'
@@ -52,7 +52,7 @@ const validationConfig = {
     id: 'input-app',
     type: 'text',
     pattern: getDefaultValidationRegex(),
-    errorMessage: generateInvalidInputMessage('app', defaultAllowedSymbols, defaultMinLength, defaultMaxLength),
+    errorMessage: generateInvalidInputMessage('app', appNameAllowedSymbols, defaultMinLength, defaultMaxLength),
     placeholder: 'Enter name of the new app'
   }
 }

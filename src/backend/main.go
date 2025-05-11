@@ -168,7 +168,7 @@ func loadSampleApp() {
 	if err != nil {
 		tools.Logger.Fatal("Failed to get app ID: %v", err)
 	}
-	err = versions.VersionRepo.CreateVersion(appId, "0.0.1", tools.GetValidVersionBytesOfSampleUserApp())
+	err = versions.VersionRepo.CreateVersion(appId, "0.0.1", tools.GetValidVersionBytesOfSampleUserApp(sampleUser, sampleApp))
 	if err != nil {
 		tools.Logger.Fatal("Failed to create sample version: %v", err)
 	}

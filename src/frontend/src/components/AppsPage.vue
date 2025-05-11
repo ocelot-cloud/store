@@ -164,11 +164,6 @@ export default defineComponent({
       }
     };
 
-    const confirmDeleteAccount = async () => {
-      showDeleteConfirmation.value = false;
-      await deleteApp();
-    };
-
     onMounted(() => {
       user.value = hubSession.user
       getApps();
@@ -183,7 +178,6 @@ export default defineComponent({
       goToVersionManagement,
       createApp,
       deleteApp,
-      confirmDeleteAccount,
       showDeleteConfirmation,
       submitted,
       router,

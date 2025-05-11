@@ -18,11 +18,16 @@ var (
 	}
 )
 
-func GetValidVersionBytesOfSampleUserApp() []byte {
+func GetValidVersionBytesOfSampleUserApp(sampleUser, sampleApp string) []byte {
 	sampleAppDir := utils.FindDir("assets") + "/sampleuser-app"
 	versionBytes, err := validation.ZipDirectory(sampleAppDir)
 	if err != nil {
 		Logger.Fatal("Failed to read sample version file: %v", err)
+	}
+	err = validation.ValidateVersion(versionBytes, sampleUser, sampleApp)
+	if err != nil {
+		Logger.Fatal("Failed to validate sample version file: %v", err)
+		return nil
 	}
 	return versionBytes
 }

@@ -138,38 +138,32 @@ func initializeHandlers(mux *http.ServeMux) {
 			tools.Logger.Debug("Failed to create user '%s' - maybe because he already exists, error: %v.", sampleUser, err)
 		}
 		tools.Logger.Warn("created '%s' user with weak password for manual testing", sampleUser)
-		loadSampleApp()
+		loadSampleAppData("sampleuser", "nginx", "sample2@sample.com", "sampleuser-app", true)
+		loadSampleAppData("maliciousmaintainer", "maliciousapp", "sample3@sample.com", "malicious-app", false)
 	}
 
 	registerUnprotectedRoutes(mux, unprotectedRoutes)
 	registerProtectedRoutes(mux, protectedRoutes)
 }
 
-// Creates a sample app that can be downloaded from the Ocelot-Cloud for integration testing.
-func loadSampleApp() {
-	sampleUser := "sampleuser"
-	sampleApp := "nginx"
-	tools.Logger.Warn("loading sample app '%s' into database for testing", sampleApp)
-
+func loadSampleAppData(username, appname, email, sampleDir string, shouldBeValid bool) {
 	err := users.CreateAndValidateUser(&tools.RegistrationForm{
-		User:     sampleUser,
+		User:     username,
 		Password: "password",
-		Email:    "sample2@sample.com",
+		Email:    email,
 	})
 	if err != nil {
-		tools.Logger.Fatal("Failed to create '%s' user: %v.", sampleUser, err)
+		tools.Logger.Fatal("Failed to create '%s' user: %v.", username, err)
 	}
-	err = apps.AppRepo.CreateApp(sampleUser, sampleApp)
-	if err != nil {
-		tools.Logger.Fatal("Failed to create '%s' app: %v.", sampleApp, err)
+	if err = apps.AppRepo.CreateApp(username, appname); err != nil {
+		tools.Logger.Fatal("Failed to create '%s' app: %v.", appname, err)
 	}
-
-	appId, err := apps.AppRepo.GetAppId(sampleUser, sampleApp)
+	appId, err := apps.AppRepo.GetAppId(username, appname)
 	if err != nil {
 		tools.Logger.Fatal("Failed to get app ID: %v", err)
 	}
-	err = versions.VersionRepo.CreateVersion(appId, "0.0.1", tools.GetValidVersionBytesOfSampleUserApp(sampleUser, sampleApp))
-	if err != nil {
+	if err = versions.VersionRepo.CreateVersion(appId, "0.0.1",
+		tools.GetVersionBytesOfSampleUserApp(sampleDir, username, appname, shouldBeValid)); err != nil {
 		tools.Logger.Fatal("Failed to create sample version: %v", err)
 	}
 }

@@ -1,7 +1,7 @@
 services:
-  nginx:
+  maliciousapp:
     image: nginx/nginx:1.20.2
-    container_name: sampleuser_nginx_nginx
+    container_name: maliciousmaintainer_maliciousapp_maliciousapp
     # malicious attempt to get root access via docker socket
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

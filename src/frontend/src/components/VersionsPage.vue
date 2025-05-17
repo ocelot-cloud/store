@@ -11,17 +11,7 @@
             <p id="selected-app">You are currently editing versions of the app <strong>"{{ app }}"</strong>.</p>
             <div class="file-upload-area my-4">
               <input type="file" ref="fileInput" @change="handleFileUpload" class="d-none" />
-              <v-sheet
-                  id="drag-and-drop-area"
-                  elevation="1"
-                  rounded
-                  class="pa-8 text-center"
-                  style="border: 2px dashed #ccc;"
-                  @dragover.prevent
-                  @drop.prevent="handleDrop"
-              >
-                <p>Drag and drop the versions zip file here</p>
-              </v-sheet>
+              <v-btn color="primary" @click="$refs.fileInput.click()">Upload version</v-btn>
             </div>
 
             <v-alert v-if="submitted" type="error" dense>
@@ -234,13 +224,6 @@ export default defineComponent({
       }
     }
 
-    const handleDrop = (event: DragEvent) => {
-      const files = event.dataTransfer?.files;
-      if (files && files.length > 0) {
-        uploadFile(files[0]);
-      }
-    };
-
     const formatTimestamp = (rawTimestamp: string) => {
       const date = new Date(rawTimestamp);
       return new Intl.DateTimeFormat(navigator.language, {
@@ -266,7 +249,6 @@ export default defineComponent({
       selectVersion,
       downloadVersion,
       showDeleteConfirmation,
-      handleDrop,
       errorMessageText,
       submitted,
       router,

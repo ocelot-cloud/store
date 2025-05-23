@@ -108,7 +108,7 @@ var deployCmd = &cobra.Command{
 		rsyncCmd := fmt.Sprintf("rsync -avz --delete assets store dist ocelot:%s/store/", remoteHomeDir)
 		tr.ExecuteInDir(backendDir, rsyncCmd)
 		executeOnServer("chown -R user:user %s/store", remoteHomeDir)
-		
+
 		executeOnServer("chmod -R 700 %s/store", remoteHomeDir)
 
 		executeOnServer("systemctl start store")
@@ -124,7 +124,7 @@ func executeOnServer(command string, args ...string) {
 		cmd = fmt.Sprintf(command, args[0])
 	}
 	println("executing: " + cmd)
-	tr.ExecuteInDir(".", "ssh ocelot \""+cmd+"\"")
+	tr.Execute("ssh ocelot \"" + cmd + "\"")
 }
 
 var testCmd = &cobra.Command{

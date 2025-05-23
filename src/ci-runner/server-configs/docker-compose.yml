@@ -1,0 +1,49 @@
+services:
+  traefik:
+    image: "traefik:latest"
+    container_name: "traefik"
+    restart: unless-stopped
+    network_mode: host
+    command:
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      # - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=chrisby@crispy-coding.org"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entryPoint.permanent=true"
+      # Uncomment for test mode. This allows detailed logging and creation of a fake certificate.
+      # - "--log.level=DEBUG"
+      # - "--certificatesresolvers.myresolver.acme.caserver=https://acme-sversioning-v02.api.letsencrypt.org/directory"
+    volumes:
+      - "traefik:/letsencrypt"
+      - "./dynamic.yml:/etc/traefik/dynamic.yml"
+
+  watchtower:
+    image: containrrr/watchtower:1.7.1
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 43200 traefik
+
+  postgres:
+    image: postgres:17.2-alpine3.20
+    container_name: ocelotcloud_appstore_postgres
+    ports:
+      - 127.0.0.1:5433:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_DB=postgres
+    volumes:
+      - ocelotcloud_appstore_database:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  ocelotcloud_appstore_database:
+    name: ocelotcloud_appstore_database
+  traefik:

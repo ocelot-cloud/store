@@ -1,0 +1,6 @@
+hub
+.dist
+data
+dist
+**.env
+store

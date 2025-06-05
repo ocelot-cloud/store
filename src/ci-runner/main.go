@@ -17,6 +17,8 @@ var (
 	frontendDir      = srcDir + "/frontend"
 	backendDir       = srcDir + "/backend"
 	backendDockerDir = backendDir + "/docker"
+	backendDataDir   = backendDir + "/data"
+	backendDistDir   = backendDir + "/dist"
 
 	backendToolsDir = backendDir + "/tools"
 	backendCheckDir = backendDir + "/check"

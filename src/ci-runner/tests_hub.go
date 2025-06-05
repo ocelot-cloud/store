@@ -55,15 +55,17 @@ func TestAcceptance() {
 }
 
 func build() {
-	tr.ExecuteInDir(backendDir, "rm -rf data dist")
-	tr.ExecuteInDir(frontendDir, "npm run build")
-	tr.ExecuteInDir(frontendDir, "cp -r ./dist "+backendDir)
+	subBuild()
 	tr.ExecuteInDir(backendDir, "go build")
 }
 
 func buildForDocker() {
-	tr.ExecuteInDir(backendDir, "rm -rf data dist")
-	tr.ExecuteInDir(frontendDir, "npm run build")
-	tr.ExecuteInDir(frontendDir, "cp -r ./dist "+backendDir)
+	subBuild()
 	tr.ExecuteInDir(backendDir, "go build -a -installsuffix cgo", "CGO_ENABLED=0", "GOOS=linux", "GOARCH=amd64")
+}
+
+func subBuild() {
+	tr.Remove(backendDataDir, backendDistDir)
+	tr.ExecuteInDir(frontendDir, "npm run build")
+	tr.Copy(frontendDir, "dist", backendDir)
 }

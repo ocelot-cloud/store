@@ -23,7 +23,7 @@ var isPostgresDbStarted = false
 
 func startCockroachDb() {
 	if !isPostgresDbStarted {
-		tr.ExecuteInDir(ciRunnerDir, "docker compose up -d")
+		tr.ExecuteInDir(backendDockerDir, "docker compose -f docker-compose-dev.yml up -d")
 		isPostgresDbStarted = true
 	}
 }
@@ -59,4 +59,11 @@ func build() {
 	tr.ExecuteInDir(frontendDir, "npm run build")
 	tr.ExecuteInDir(frontendDir, "cp -r ./dist "+backendDir)
 	tr.ExecuteInDir(backendDir, "go build")
+}
+
+func buildForDocker() {
+	tr.ExecuteInDir(backendDir, "rm -rf data dist")
+	tr.ExecuteInDir(frontendDir, "npm run build")
+	tr.ExecuteInDir(frontendDir, "cp -r ./dist "+backendDir)
+	tr.ExecuteInDir(backendDir, "go build -a -installsuffix cgo", "CGO_ENABLED=0", "GOOS=linux", "GOARCH=amd64")
 }

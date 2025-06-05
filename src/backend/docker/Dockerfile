@@ -1,4 +1,5 @@
 FROM alpine:latest
+RUN apk add --no-cache docker docker-cli-compose
 RUN addgroup -S app && adduser -S -D -H -s /sbin/nologin -G app app \
  && mkdir -p /opt/app/data \
  && chown -R app:app /opt/app

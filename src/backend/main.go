@@ -9,7 +9,6 @@ import (
 	"ocelot/store/users"
 	"ocelot/store/versions"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 )
@@ -19,10 +18,6 @@ func init() {
 }
 
 func main() {
-	cmd := exec.Command("docker", "compose", "version")
-	if err := cmd.Run(); err != nil {
-		tools.Logger.Fatal("docker compose is not installed or not accessible in PATH")
-	}
 	if os.Getenv("USE_MOCK_EMAIL_CLIENT") == "true" {
 		tools.Logger.Warn("using mock email client, should only be used for testing")
 		tools.UseMailMockClient = true

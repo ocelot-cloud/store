@@ -13,15 +13,20 @@ import (
 )
 
 var (
-	srcDir      = getAbsoluteParentDir()
-	frontendDir = srcDir + "/frontend"
-	backendDir  = srcDir + "/backend"
+	srcDir           = getAbsoluteParentDir()
+	frontendDir      = srcDir + "/frontend"
+	backendDir       = srcDir + "/backend"
+	backendDockerDir = backendDir + "/docker"
+	backendDataDir   = backendDir + "/data"
+	backendDistDir   = backendDir + "/dist"
 
 	backendToolsDir = backendDir + "/tools"
 	backendCheckDir = backendDir + "/check"
 
 	acceptanceTestsDir = srcDir + "/cypress"
 	ciRunnerDir        = srcDir + "/ci-runner"
+
+	sshHost = "store"
 )
 
 func getAbsoluteParentDir() string {
@@ -45,7 +50,7 @@ func main() {
 	}
 	defer tr.Cleanup()
 
-	tr.DefaultEnvs = []string{"USE_MOCK_EMAIL_CLIENT=true", "LOG_LEVEL=DEBUG"}
+	tr.DefaultEnvs = []string{"USE_MOCK_EMAIL_CLIENT=true", "RUN_NATIVELY=true", "LOG_LEVEL=DEBUG"}
 
 	rootCmd := &cobra.Command{
 		Use:   "ci-runner",
@@ -100,31 +105,18 @@ var deployCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var prompt = "Are you sure you want to replace the current production version of the App Store?"
 		tr.PromptForContinuation(prompt)
-
-		build()
-		var remoteHomeDir = "/home/user"
-		executeOnServer("systemctl stop store")
-		executeOnServer("mkdir -p %s/store", remoteHomeDir)
-		rsyncCmd := fmt.Sprintf("rsync -avz --delete assets store dist ocelot:%s/store/", remoteHomeDir)
+		buildForDocker()
+		executeOnServer("docker rm -f store")
+		rsyncCmd := fmt.Sprintf("rsync -avz --delete docker/Dockerfile docker/docker-compose.yml assets store dist %s:", sshHost)
 		tr.ExecuteInDir(backendDir, rsyncCmd)
-		executeOnServer("chown -R user:user %s/store", remoteHomeDir)
-
-		executeOnServer("chmod -R 700 %s/store", remoteHomeDir)
-
-		executeOnServer("systemctl start store")
-		executeOnServer("nmap -p 8082 localhost")
+		executeOnServer("docker compose up -d")
+		executeOnServer("docker compose up -d --build --force-recreate --remove-orphans store")
 	},
 }
 
-func executeOnServer(command string, args ...string) {
-	var cmd string
-	if len(args) == 0 {
-		cmd = command
-	} else {
-		cmd = fmt.Sprintf(command, args[0])
-	}
-	println("executing: " + cmd)
-	tr.Execute("ssh ocelot \"" + cmd + "\"")
+func executeOnServer(command string) {
+	sshCommand := fmt.Sprintf("ssh %s %s", sshHost, command)
+	tr.Execute(sshCommand)
 }
 
 var testCmd = &cobra.Command{

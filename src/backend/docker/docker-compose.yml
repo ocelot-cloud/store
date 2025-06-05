@@ -1,0 +1,59 @@
+services:
+  traefik:
+    image: "traefik:latest"
+    container_name: "traefik"
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=chrisby@crispy-coding.org"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      # Uncomment for test mode. This allows detailed logging and creation of a fake certificate.
+      # - "--log.level=DEBUG"
+      # - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+    ports:
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - "traefik:/letsencrypt"
+
+  watchtower:
+    image: containrrr/watchtower:1.7.1@sha256:6dd50763bbd632a83cb154d5451700530d1e44200b268a4e9488fefdfcf2b038
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 43200 traefik
+
+  store:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      pull: true
+    restart: unless-stopped
+    container_name: store
+    volumes:
+      - ocelotcloud_store_store:/opt/app/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.website.rule=Host(`store.ocelot-cloud.org`)"
+      - "traefik.http.routers.website.entrypoints=websecure"
+      - "traefik.http.routers.website.tls.certresolver=myresolver"
+
+  postgres:
+    image: postgres:17.2-alpine3.20
+    container_name: ocelotcloud_store_postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_DB=postgres
+    restart: unless-stopped
+    volumes:
+      - ocelotcloud_store_database:/var/lib/postgresql/data
+
+volumes:
+  traefik:
+  ocelotcloud_store_store:
+  ocelotcloud_store_database:

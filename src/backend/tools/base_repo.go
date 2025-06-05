@@ -5,6 +5,7 @@ import (
 	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/ocelot-cloud/shared/utils"
+	"os"
 	"sync"
 )
 
@@ -12,14 +13,22 @@ var Db *sql.DB
 
 func InitializeDatabase() {
 	var err error
-	customPostgresPort := "5433"
-	Db, err = utils.WaitForPostgresDb("localhost", customPostgresPort)
+	var host, customPostgresPort string
+	if os.Getenv("RUN_NATIVELY") == "true" {
+		host = "localhost"
+		customPostgresPort = "5433"
+	} else {
+		host = "ocelotcloud_store_postgres"
+		customPostgresPort = "5432"
+	}
+
+	Db, err = utils.WaitForPostgresDb(host, customPostgresPort)
 	if err != nil {
 		Logger.Fatal("Failed to create database client: %v", err)
 	}
 
 	migrationsDir := utils.FindDir("assets") + "/migrations"
-	utils.RunMigrations(migrationsDir, "localhost", customPostgresPort)
+	utils.RunMigrations(migrationsDir, host, customPostgresPort)
 }
 
 var WaitingForEmailVerificationList sync.Map

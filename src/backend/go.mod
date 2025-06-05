@@ -4,7 +4,7 @@ go 1.24.1
 
 require (
 	github.com/jackc/pgx/v5 v5.7.5
-	github.com/ocelot-cloud/shared v0.0.90
+	github.com/ocelot-cloud/shared v0.0.91
 	golang.org/x/crypto v0.38.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )

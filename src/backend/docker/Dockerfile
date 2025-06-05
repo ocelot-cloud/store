@@ -1,6 +1,6 @@
 FROM alpine:latest
 RUN addgroup -S app && adduser -S -D -H -s /sbin/nologin -G app app \
- && mkdir -p /opt/app/data/logs \
+ && mkdir -p /opt/app/data \
  && chown -R app:app /opt/app
 WORKDIR /opt/app
 COPY --chown=app:app ./store  /opt/app/store

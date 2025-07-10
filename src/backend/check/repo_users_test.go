@@ -57,7 +57,7 @@ func TestCookieExpiration(t *testing.T) {
 
 	assert.True(t, users.UserRepo.IsCookieExpired("non-existing-cookie"))
 
-	timeIn30Days := utils.GetTimeIn30Days()
+	timeIn30Days := utils.GetTimeInSevenDays()
 	cookie, _ := utils.GenerateCookie()
 	assert.Nil(t, users.UserRepo.HashAndSaveCookie(tools.SampleUser, cookie.Value, timeIn30Days))
 	assert.False(t, users.UserRepo.IsCookieExpired(cookie.Value))

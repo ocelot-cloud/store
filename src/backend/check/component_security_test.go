@@ -12,10 +12,12 @@ import (
 	"time"
 )
 
+var DaysToCookieExpiration = 7
+
 func TestCorsHeaderArePresentInTestProfile(t *testing.T) {
 	hub := getHubAndLogin(t)
 	defer hub.wipeData()
-	response, err := hub.Parent.DoRequestWithFullResponse(tools.AppGetListPath, nil, "")
+	response, err := hub.Parent.DoRequestWithFullResponse(tools.AppGetListPath, nil)
 	assert.Nil(t, err)
 
 	assert.Equal(t, "", response.Header.Get("Access-Control-Allow-Origin"))
@@ -110,8 +112,8 @@ func TestLoginSecurity(t *testing.T) {
 func checkCookie(t *testing.T, hub *AppStoreClient) {
 	assert.Equal(t, "/", hub.Parent.Cookie.Path)
 	assert.Equal(t, http.SameSiteStrictMode, hub.Parent.Cookie.SameSite)
-	assert.True(t, time.Now().UTC().AddDate(0, 0, 29).Before(hub.Parent.Cookie.Expires))
-	assert.True(t, time.Now().UTC().AddDate(0, 0, 31).After(hub.Parent.Cookie.Expires))
+	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration-1).Before(hub.Parent.Cookie.Expires))
+	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration+1).After(hub.Parent.Cookie.Expires))
 }
 
 func TestCreateAppSecurity(t *testing.T) {
@@ -145,8 +147,8 @@ func TestCookieExpirationAndRenewal(t *testing.T) {
 	assert.True(t, time.Now().UTC().Before(hub.Parent.Cookie.Expires))
 	assert.True(t, time.Now().UTC().Add(48*time.Hour).After(hub.Parent.Cookie.Expires))
 	assert.Nil(t, hub.createApp())
-	assert.True(t, time.Now().UTC().AddDate(0, 0, 29).Before(hub.Parent.Cookie.Expires))
-	assert.True(t, time.Now().UTC().AddDate(0, 0, 31).After(hub.Parent.Cookie.Expires))
+	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration-1).Before(hub.Parent.Cookie.Expires))
+	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration+1).After(hub.Parent.Cookie.Expires))
 	hub.Parent.User = tools.SampleUser
 }
 

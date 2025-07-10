@@ -221,7 +221,7 @@ func CheckAuthentication(w http.ResponseWriter, r *http.Request) (string, error)
 		return "", fmt.Errorf("")
 	}
 
-	newExpirationTime := utils.GetTimeIn30Days()
+	newExpirationTime := utils.GetTimeInSevenDays()
 	err = UserRepo.HashAndSaveCookie(user, cookie.Value, newExpirationTime)
 	if err != nil {
 		Logger.Error("setting new cookie failed: %v", err)

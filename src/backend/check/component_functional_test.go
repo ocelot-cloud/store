@@ -43,8 +43,8 @@ func TestVersionDownload(t *testing.T) {
 func TestCookie(t *testing.T) {
 	hub := getHubAndLogin(t)
 	assert.Equal(t, tools.CookieName, hub.Parent.Cookie.Name)
-	assert.True(t, utils.GetTimeIn30Days().Add(1*time.Second).After(hub.Parent.Cookie.Expires))
-	assert.True(t, utils.GetTimeIn30Days().Add(-1*time.Second).Before(hub.Parent.Cookie.Expires))
+	assert.True(t, utils.GetTimeInSevenDays().Add(1*time.Second).After(hub.Parent.Cookie.Expires))
+	assert.True(t, utils.GetTimeInSevenDays().Add(-1*time.Second).Before(hub.Parent.Cookie.Expires))
 	assert.Equal(t, 64, len(hub.Parent.Cookie.Value))
 
 	cookie1 := hub.Parent.Cookie

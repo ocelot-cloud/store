@@ -11,7 +11,7 @@ import (
 func TestCorsHeaderNotPresentInProd(t *testing.T) {
 	hub := getHub()
 	defer hub.wipeData()
-	response, err := hub.Parent.DoRequestWithFullResponse("/api/apps/list", nil, "")
+	response, err := hub.Parent.DoRequestWithFullResponse("/api/apps/list", nil)
 	assert.Nil(t, err)
 
 	assert.Equal(t, "", response.Header.Get("Access-Control-Allow-Origin"))
@@ -23,7 +23,7 @@ func TestCorsHeaderNotPresentInProd(t *testing.T) {
 func TestDontAllowDifferentHostAndOriginHeader(t *testing.T) {
 	hub := getHub()
 	hub.Parent.Origin = "localhost2"
-	_, err := hub.Parent.DoRequestWithFullResponse("/api/apps/list", nil, "")
+	_, err := hub.Parent.DoRequestWithFullResponse("/api/apps/list", nil)
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(400, "When 'Origin' header is set, it must match host header"), err.Error())
 }

@@ -286,6 +286,23 @@ const (
 	SearchTerm
 )
 
+type Operation int
+
+const (
+	FindApps Operation = iota
+	DownloadVersion
+	Register
+	ChangePassword
+	Login
+	CreateApp
+	DeleteApp
+	UploadVersion
+	DeleteVersion
+	GetVersions
+	CheckAuth
+	Validate
+)
+
 func testInputInvalidation(t *testing.T, hub *AppStoreClient, invalidValue string, fieldType FieldType, operation Operation) {
 	originalValue := returnCurrentValueAndSetField(hub, fieldType, invalidValue)
 

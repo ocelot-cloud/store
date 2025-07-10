@@ -74,7 +74,11 @@ func (u *UserRepositoryImpl) ValidateUser(code string) error {
 		return fmt.Errorf("code not found")
 	}
 
-	form := value.(*tools.RegistrationForm)
+	form, ok := value.(*tools.RegistrationForm)
+	if !ok {
+		tools.Logger.Error("Invalid type for registration form")
+		return fmt.Errorf("invalid type for registration form")
+	}
 
 	hashedPassword, err := utils.SaltAndHash(form.Password)
 	if err != nil {

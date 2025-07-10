@@ -20,40 +20,15 @@ type AppStoreClient struct {
 	ShowUnofficialApps bool
 }
 
-type Operation int
-
-const (
-	FindApps Operation = iota
-	DownloadVersion
-	Register
-	ChangePassword
-	Login
-	CreateApp
-	DeleteApp
-	UploadVersion
-	DeleteVersion
-	GetVersions
-	CheckAuth
-	Validate
-)
-
-func getRegistrationForm(hub *AppStoreClient) *tools.RegistrationForm {
-	return &tools.RegistrationForm{
-		User:     hub.Parent.User,
-		Password: hub.Parent.Password,
-		Email:    hub.Email,
-	}
-}
-
 func GetHub() *AppStoreClient {
-	hub := getHubWithoutWipe()
+	hub := createHubClient()
 	hub.WipeData()
 	return hub
 }
 
 var SampleVersionFileContent = tools.GetValidVersionBytesOfSampleMaintainerApp()
 
-func getHubWithoutWipe() *AppStoreClient {
+func createHubClient() *AppStoreClient {
 	return &AppStoreClient{
 		Parent: utils.ComponentClient{
 			User:            tools.SampleUser,
@@ -85,6 +60,14 @@ func (h *AppStoreClient) RegisterUser() error {
 	form := getRegistrationForm(h)
 	_, err := h.Parent.DoRequest(tools.RegistrationPath, form)
 	return err
+}
+
+func getRegistrationForm(hub *AppStoreClient) *tools.RegistrationForm {
+	return &tools.RegistrationForm{
+		User:     hub.Parent.User,
+		Password: hub.Parent.Password,
+		Email:    hub.Email,
+	}
 }
 
 func (h *AppStoreClient) ValidateCode() error {

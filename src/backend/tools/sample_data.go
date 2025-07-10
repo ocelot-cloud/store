@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"github.com/ocelot-cloud/shared/store"
 	"github.com/ocelot-cloud/shared/utils"
 	"github.com/ocelot-cloud/shared/validation"
 )
@@ -11,7 +12,7 @@ var (
 	SampleVersion  = "0.0.1"
 	SampleEmail    = "testuser@example.com"
 	SamplePassword = "mypassword"
-	SampleForm     = &RegistrationForm{
+	SampleForm     = &store.RegistrationForm{
 		SampleUser,
 		SamplePassword,
 		SampleEmail,

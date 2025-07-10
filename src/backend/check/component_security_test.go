@@ -4,6 +4,7 @@ package check
 
 import (
 	"github.com/ocelot-cloud/shared/assert"
+	"github.com/ocelot-cloud/shared/store"
 	"github.com/ocelot-cloud/shared/utils"
 	"net/http"
 	"ocelot/store/tools"
@@ -17,7 +18,7 @@ var DaysToCookieExpiration = 7
 func TestCorsHeaderArePresentInTestProfile(t *testing.T) {
 	hub := GetHubAndLogin(t)
 	defer hub.WipeData()
-	response, err := hub.Parent.DoRequestWithFullResponse(tools.AppGetListPath, nil)
+	response, err := hub.Parent.DoRequestWithFullResponse(store.AppGetListPath, nil)
 	assert.Nil(t, err)
 
 	assert.Equal(t, "", response.Header.Get("Access-Control-Allow-Origin"))
@@ -109,7 +110,7 @@ func TestLoginSecurity(t *testing.T) {
 	hub.Parent.Password = tools.SamplePassword
 }
 
-func checkCookie(t *testing.T, hub *AppStoreClient) {
+func checkCookie(t *testing.T, hub *store.AppStoreClient) {
 	assert.Equal(t, "/", hub.Parent.Cookie.Path)
 	assert.Equal(t, http.SameSiteStrictMode, hub.Parent.Cookie.SameSite)
 	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration-1).Before(hub.Parent.Cookie.Expires))
@@ -159,7 +160,7 @@ func TestOwnership(t *testing.T) {
 	testVersionOwnership(t, hub, hub.UploadVersion)
 }
 
-func testVersionOwnership(t *testing.T, hub *AppStoreClient, operation func() error) {
+func testVersionOwnership(t *testing.T, hub *store.AppStoreClient, operation func() error) {
 	defer hub.WipeData()
 	assert.Nil(t, hub.RegisterAndValidateUser())
 	assert.Nil(t, hub.Login())
@@ -234,7 +235,7 @@ func TestCookieAndHostProtection(t *testing.T) {
 	}
 }
 
-func doCookieAndHostPolicyChecks(t *testing.T, hub *AppStoreClient, operation func() error) {
+func doCookieAndHostPolicyChecks(t *testing.T, hub *store.AppStoreClient, operation func() error) {
 	defer hub.WipeData()
 	assert.Nil(t, hub.RegisterAndValidateUser())
 	assert.Nil(t, hub.Login())
@@ -303,7 +304,7 @@ const (
 	Validate
 )
 
-func testInputInvalidation(t *testing.T, hub *AppStoreClient, invalidValue string, fieldType FieldType, operation Operation) {
+func testInputInvalidation(t *testing.T, hub *store.AppStoreClient, invalidValue string, fieldType FieldType, operation Operation) {
 	originalValue := returnCurrentValueAndSetField(hub, fieldType, invalidValue)
 
 	switch operation {
@@ -346,7 +347,7 @@ func assertInvalidInputError(t *testing.T, err error) {
 	assert.Equal(t, utils.GetErrMsg(400, "invalid input"), err.Error())
 }
 
-func returnCurrentValueAndSetField(hub *AppStoreClient, fieldType FieldType, value string) string {
+func returnCurrentValueAndSetField(hub *store.AppStoreClient, fieldType FieldType, value string) string {
 	var originalValue string
 	switch fieldType {
 	case PasswordField:

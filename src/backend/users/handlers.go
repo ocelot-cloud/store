@@ -2,6 +2,7 @@ package users
 
 import (
 	"fmt"
+	"github.com/ocelot-cloud/shared/store"
 	"github.com/ocelot-cloud/shared/utils"
 	"github.com/ocelot-cloud/shared/validation"
 	"net/http"
@@ -23,7 +24,7 @@ func WipeDataHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	creds, err := validation.ReadBody[tools.LoginCredentials](w, r)
+	creds, err := validation.ReadBody[store.LoginCredentials](w, r)
 	if err != nil {
 		return
 	}
@@ -69,7 +70,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 func AuthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-	utils.SendJsonResponse(w, tools.UserNameString{Value: user})
+	utils.SendJsonResponse(w, store.UserNameString{Value: user})
 }
 
 func UserDeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -95,7 +96,7 @@ func UserDeleteHandler(w http.ResponseWriter, r *http.Request) {
 func ChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
 
-	form, err := validation.ReadBody[tools.ChangePasswordForm](w, r)
+	form, err := validation.ReadBody[store.ChangePasswordForm](w, r)
 	if err != nil {
 		return
 	}
@@ -138,7 +139,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func RegistrationHandler(w http.ResponseWriter, r *http.Request) {
-	form, err := validation.ReadBody[tools.RegistrationForm](w, r)
+	form, err := validation.ReadBody[store.RegistrationForm](w, r)
 	if err != nil {
 		return
 	}

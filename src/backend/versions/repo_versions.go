@@ -2,6 +2,7 @@ package versions
 
 import (
 	"fmt"
+	"github.com/ocelot-cloud/shared/store"
 	"github.com/ocelot-cloud/shared/utils"
 	"ocelot/store/apps"
 	"ocelot/store/tools"
@@ -11,8 +12,8 @@ import (
 
 var VersionRepo VersionRepository = &VersionRepositoryImpl{}
 
-func (u *VersionRepositoryImpl) GetFullVersionInfo(versionId int) (*tools.FullVersionInfo, error) {
-	var fullVersionInfo tools.FullVersionInfo
+func (u *VersionRepositoryImpl) GetFullVersionInfo(versionId int) (*store.FullVersionInfo, error) {
+	var fullVersionInfo store.FullVersionInfo
 	err := tools.Db.QueryRow(`
 		SELECT users.user_name, apps.app_name, versions.version_name, versions.data, versions.version_id, versions.creation_timestamp
 		FROM versions
@@ -132,7 +133,7 @@ func getBlobSize(versionId int) (int64, error) {
 	return dataSize, nil
 }
 
-func (u *VersionRepositoryImpl) GetVersionList(appId int) ([]tools.Version, error) {
+func (u *VersionRepositoryImpl) GetVersionList(appId int) ([]store.Version, error) {
 	var exists bool
 	err := tools.Db.QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE app_id = $1)", appId).Scan(&exists)
 	if err != nil {
@@ -148,7 +149,7 @@ func (u *VersionRepositoryImpl) GetVersionList(appId int) ([]tools.Version, erro
 	}
 	defer utils.Close(rows)
 
-	var versions []tools.Version
+	var versions []store.Version
 	for rows.Next() {
 		var version string
 		var id int
@@ -157,7 +158,7 @@ func (u *VersionRepositoryImpl) GetVersionList(appId int) ([]tools.Version, erro
 			return nil, fmt.Errorf("failed to scan version: %w", err)
 		}
 		creationTimestamp = creationTimestamp.UTC()
-		versions = append(versions, tools.Version{
+		versions = append(versions, store.Version{
 			Name:              version,
 			Id:                strconv.Itoa(id),
 			CreationTimestamp: creationTimestamp,
@@ -197,9 +198,9 @@ type VersionRepository interface {
 	CreateVersion(appId int, version string, data []byte) error
 	GetVersionId(appId int, version string) (int, error)
 	DeleteVersion(versionId int) error
-	GetVersionList(appId int) ([]tools.Version, error)
+	GetVersionList(appId int) ([]store.Version, error)
 	DoesVersionExist(versionId int) bool
 	GetVersionContent(versionId int) ([]byte, error)
 	GetAppIdByVersionId(versionId int) (int, error)
-	GetFullVersionInfo(versionId int) (*tools.FullVersionInfo, error)
+	GetFullVersionInfo(versionId int) (*store.FullVersionInfo, error)
 }

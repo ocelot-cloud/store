@@ -4,6 +4,7 @@ package check
 
 import (
 	"github.com/ocelot-cloud/shared/assert"
+	"github.com/ocelot-cloud/shared/store"
 	"ocelot/store/apps"
 	"ocelot/store/tools"
 	"ocelot/store/users"
@@ -182,7 +183,7 @@ func TestSearchForApps(t *testing.T) {
 	err = versions.VersionRepo.CreateVersion(app2Id, sampleVersion2, []byte("asdf"))
 	assert.Nil(t, err)
 
-	appSearchRequest := tools.AppSearchRequest{
+	appSearchRequest := store.AppSearchRequest{
 		SearchTerm:         "app",
 		ShowUnofficialApps: true,
 	}
@@ -203,7 +204,7 @@ func TestSearchForApps_LatestVersions(t *testing.T) {
 	defer users.UserRepo.WipeDatabase()
 	assert.Nil(t, users.CreateAndValidateUser(tools.SampleForm))
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
-	appSearchRequest := tools.AppSearchRequest{
+	appSearchRequest := store.AppSearchRequest{
 		SearchTerm:         tools.SampleApp,
 		ShowUnofficialApps: true,
 	}
@@ -239,14 +240,14 @@ func TestUnofficialAppFiltering(t *testing.T) {
 	defer users.UserRepo.WipeDatabase()
 	officialUser := "ocelotcloud"
 	assert.Nil(t, users.CreateAndValidateUser(tools.SampleForm))
-	officialUserRegistrationForm := &tools.RegistrationForm{
+	officialUserRegistrationForm := &store.RegistrationForm{
 		User:     officialUser,
 		Password: "password",
 		Email:    officialUser + "@ocelot-cloud.org",
 	}
 	assert.Nil(t, users.CreateAndValidateUser(officialUserRegistrationForm))
 
-	appSearchRequest := tools.AppSearchRequest{
+	appSearchRequest := store.AppSearchRequest{
 		SearchTerm:         "app",
 		ShowUnofficialApps: true,
 	}
@@ -266,7 +267,7 @@ func TestUnofficialAppFiltering(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Nil(t, versions.VersionRepo.CreateVersion(app2Id, tools.SampleVersion, []byte("sample-bytes")))
 
-	appSearchRequest = tools.AppSearchRequest{
+	appSearchRequest = store.AppSearchRequest{
 		SearchTerm:         "app",
 		ShowUnofficialApps: true,
 	}
@@ -274,7 +275,7 @@ func TestUnofficialAppFiltering(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(foundApps))
 
-	appSearchRequest = tools.AppSearchRequest{
+	appSearchRequest = store.AppSearchRequest{
 		SearchTerm:         "app",
 		ShowUnofficialApps: false,
 	}

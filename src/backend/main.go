@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/ocelot-cloud/shared/store"
 	"github.com/ocelot-cloud/shared/utils"
 	"net/http"
 	"ocelot/store/apps"
@@ -102,34 +103,34 @@ type Route struct {
 
 func initializeHandlers(mux *http.ServeMux) {
 	unprotectedRoutes := []Route{
-		{tools.LoginPath, users.LoginHandler},
-		{tools.DownloadPath, versions.VersionDownloadHandler},
-		{tools.GetVersionsPath, versions.GetVersionsHandler},
-		{tools.SearchAppsPath, apps.SearchForAppsHandler},
-		{tools.RegistrationPath, users.RegistrationHandler},
-		{tools.EmailValidationPath, users.ValidationCodeHandler},
+		{store.LoginPath, users.LoginHandler},
+		{store.DownloadPath, versions.VersionDownloadHandler},
+		{store.GetVersionsPath, versions.GetVersionsHandler},
+		{store.SearchAppsPath, apps.SearchForAppsHandler},
+		{store.RegistrationPath, users.RegistrationHandler},
+		{store.EmailValidationPath, users.ValidationCodeHandler},
 	}
 
 	protectedRoutes := []Route{
-		{tools.AuthCheckPath, users.AuthCheckHandler},
-		{tools.VersionUploadPath, versions.VersionUploadHandler},
-		{tools.VersionDeletePath, versions.VersionDeleteHandler},
-		{tools.ChangePasswordPath, users.ChangePasswordHandler},
-		{tools.AppCreationPath, apps.AppCreationHandler},
-		{tools.AppGetListPath, apps.AppGetListHandler},
-		{tools.AppDeletePath, apps.AppDeleteHandler},
-		{tools.DeleteUserPath, users.UserDeleteHandler},
-		{tools.LogoutPath, users.LogoutHandler},
+		{store.AuthCheckPath, users.AuthCheckHandler},
+		{store.VersionUploadPath, versions.VersionUploadHandler},
+		{store.VersionDeletePath, versions.VersionDeleteHandler},
+		{store.ChangePasswordPath, users.ChangePasswordHandler},
+		{store.AppCreationPath, apps.AppCreationHandler},
+		{store.AppGetListPath, apps.AppGetListHandler},
+		{store.AppDeletePath, apps.AppDeleteHandler},
+		{store.DeleteUserPath, users.UserDeleteHandler},
+		{store.LogoutPath, users.LogoutHandler},
 	}
 
 	if tools.Profile == tools.TEST {
 		users.UserRepo.WipeDatabase()
 		tools.Logger.Warn("opening unprotected full data wipe endpoint meant for testing only")
-		unprotectedRoutes = append(unprotectedRoutes, Route{tools.WipeDataPath, users.WipeDataHandler})
+		unprotectedRoutes = append(unprotectedRoutes, Route{store.WipeDataPath, users.WipeDataHandler})
 		// This user is created to manually test the GUI so that account registration can be skipped to save time.
 		sampleUser := "sample"
 		// The user may already exist from previous runs. In this case, ignore the error.
-		err := users.CreateAndValidateUser(&tools.RegistrationForm{
+		err := users.CreateAndValidateUser(&store.RegistrationForm{
 			User:     sampleUser,
 			Password: "password",
 			Email:    "sample@sample.com",
@@ -147,7 +148,7 @@ func initializeHandlers(mux *http.ServeMux) {
 }
 
 func loadSampleAppData(username, appname, email, sampleDir string, shouldBeValid bool) {
-	err := users.CreateAndValidateUser(&tools.RegistrationForm{
+	err := users.CreateAndValidateUser(&store.RegistrationForm{
 		User:     username,
 		Password: "password",
 		Email:    email,

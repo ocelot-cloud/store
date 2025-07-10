@@ -2,6 +2,7 @@ package versions
 
 import (
 	"encoding/json"
+	"github.com/ocelot-cloud/shared/store"
 	"github.com/ocelot-cloud/shared/utils"
 	"github.com/ocelot-cloud/shared/validation"
 	"net/http"
@@ -17,7 +18,7 @@ func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, tools.MaxPayloadSize)
 	defer utils.Close(r.Body)
 
-	var versionUpload tools.VersionUpload
+	var versionUpload store.VersionUpload
 	err := json.NewDecoder(r.Body).Decode(&versionUpload)
 	if err != nil {
 		if err.Error() == "http: request body too large" {

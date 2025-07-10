@@ -2,6 +2,7 @@ package apps
 
 import (
 	"fmt"
+	"github.com/ocelot-cloud/shared/store"
 	"github.com/ocelot-cloud/shared/utils"
 	"github.com/ocelot-cloud/shared/validation"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 
 func AppCreationHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-	appString, err := validation.ReadBody[tools.AppNameString](w, r)
+	appString, err := validation.ReadBody[store.AppNameString](w, r)
 	if err != nil {
 		return
 	}
@@ -72,7 +73,7 @@ func AppDeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadBodyAsStringNumber(w http.ResponseWriter, r *http.Request) (int, error) {
-	appIdString, err := validation.ReadBody[tools.NumberString](w, r)
+	appIdString, err := validation.ReadBody[store.NumberString](w, r)
 	if err != nil {
 		return -1, fmt.Errorf("")
 	}
@@ -99,7 +100,7 @@ func AppGetListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func SearchForAppsHandler(w http.ResponseWriter, r *http.Request) {
-	appSearchRequest, err := validation.ReadBody[tools.AppSearchRequest](w, r)
+	appSearchRequest, err := validation.ReadBody[store.AppSearchRequest](w, r)
 	if err != nil {
 		return
 	}

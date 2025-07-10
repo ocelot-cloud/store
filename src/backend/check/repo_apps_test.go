@@ -4,6 +4,7 @@ package check
 
 import (
 	"github.com/ocelot-cloud/shared/assert"
+	"github.com/ocelot-cloud/shared/store"
 	"ocelot/store/apps"
 	"ocelot/store/tools"
 	"ocelot/store/users"
@@ -81,7 +82,7 @@ func TestSearchNegative(t *testing.T) {
 	app := "prefix_myapp_suffix"
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, app))
 
-	appSearchRequest := tools.AppSearchRequest{
+	appSearchRequest := store.AppSearchRequest{
 		SearchTerm:         "some",
 		ShowUnofficialApps: true,
 	}
@@ -92,7 +93,7 @@ func TestSearchNegative(t *testing.T) {
 
 func TestSearchingWithEmptySearchTerm(t *testing.T) {
 	defer users.UserRepo.WipeDatabase()
-	emptySearchRequest := tools.AppSearchRequest{
+	emptySearchRequest := store.AppSearchRequest{
 		SearchTerm:         "",
 		ShowUnofficialApps: true,
 	}

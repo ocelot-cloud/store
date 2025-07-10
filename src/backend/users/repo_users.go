@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/ocelot-cloud/shared/store"
 	"github.com/ocelot-cloud/shared/utils"
 	"golang.org/x/crypto/bcrypt"
 	"ocelot/store/tools"
@@ -51,7 +52,7 @@ func (u *UserRepositoryImpl) DoesUserExist(user string) bool {
 	return exists
 }
 
-func (u *UserRepositoryImpl) CreateUser(form *tools.RegistrationForm) (string, error) {
+func (u *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) (string, error) {
 	var key string
 	if tools.UseMailMockClient {
 		key = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
@@ -74,7 +75,7 @@ func (u *UserRepositoryImpl) ValidateUser(code string) error {
 		return fmt.Errorf("code not found")
 	}
 
-	form, ok := value.(*tools.RegistrationForm)
+	form, ok := value.(*store.RegistrationForm)
 	if !ok {
 		tools.Logger.Error("Invalid type for registration form")
 		return fmt.Errorf("invalid type for registration form")
@@ -217,7 +218,7 @@ func (u *UserRepositoryImpl) Logout(user string) error {
 	return nil
 }
 
-func CreateAndValidateUser(form *tools.RegistrationForm) error {
+func CreateAndValidateUser(form *store.RegistrationForm) error {
 	code, err := UserRepo.CreateUser(form)
 	if err != nil {
 		return err
@@ -241,7 +242,7 @@ type UserRepositoryImpl struct{}
 var UserRepo UserRepository = &UserRepositoryImpl{}
 
 type UserRepository interface {
-	CreateUser(form *tools.RegistrationForm) (string, error)
+	CreateUser(form *store.RegistrationForm) (string, error)
 	ValidateUser(code string) error
 	DoesUserExist(user string) bool
 	DoesEmailExist(email string) bool

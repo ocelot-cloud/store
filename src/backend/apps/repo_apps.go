@@ -3,6 +3,7 @@ package apps
 import (
 	"database/sql"
 	"fmt"
+	"github.com/ocelot-cloud/shared/store"
 	"github.com/ocelot-cloud/shared/utils"
 	"ocelot/store/tools"
 	"ocelot/store/users"
@@ -105,8 +106,8 @@ func (u *AppRepositoryImpl) sumBlobSizes(appID int) (int64, error) {
 	return totalSize.Int64, nil
 }
 
-func (u *AppRepositoryImpl) SearchForApps(request tools.AppSearchRequest) ([]tools.AppWithLatestVersion, error) {
-	var apps []tools.AppWithLatestVersion
+func (u *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]store.AppWithLatestVersion, error) {
+	var apps []store.AppWithLatestVersion
 	query := `
 		SELECT u.user_name, a.app_id, a.app_name, v.version_id, v.version_name
 		FROM users u
@@ -141,7 +142,7 @@ func (u *AppRepositoryImpl) SearchForApps(request tools.AppSearchRequest) ([]too
 			tools.Logger.Error("Error scanning app row: %v", err)
 			continue
 		}
-		apps = append(apps, tools.AppWithLatestVersion{
+		apps = append(apps, store.AppWithLatestVersion{
 			Maintainer:        maintainer,
 			AppId:             strconv.Itoa(appId),
 			AppName:           appName,
@@ -170,7 +171,7 @@ func (u *AppRepositoryImpl) GetAppId(user, app string) (int, error) {
 	return appID, nil
 }
 
-func (u *AppRepositoryImpl) GetAppList(user string) ([]tools.App, error) {
+func (u *AppRepositoryImpl) GetAppList(user string) ([]store.App, error) {
 	userID, err := tools.GetUserId(user)
 	if err != nil {
 		return nil, err
@@ -182,14 +183,14 @@ func (u *AppRepositoryImpl) GetAppList(user string) ([]tools.App, error) {
 	}
 	defer utils.Close(rows)
 
-	var apps []tools.App
+	var apps []store.App
 	for rows.Next() {
 		var app string
 		var appId int
 		if err = rows.Scan(&app, &appId); err != nil {
 			return nil, fmt.Errorf("failed to scan app: %w", err)
 		}
-		apps = append(apps, tools.App{Maintainer: user, Name: app, Id: strconv.Itoa(appId)})
+		apps = append(apps, store.App{Maintainer: user, Name: app, Id: strconv.Itoa(appId)})
 	}
 
 	if err = rows.Err(); err != nil {
@@ -229,9 +230,9 @@ type AppRepository interface {
 	DoesAppExist(appId int) bool
 	CreateApp(user, app string) error
 	DeleteApp(appId int) error
-	SearchForApps(searchRequest tools.AppSearchRequest) ([]tools.AppWithLatestVersion, error)
+	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error)
 	GetAppId(user, app string) (int, error)
 	GetAppName(appId int) (string, error)
-	GetAppList(user string) ([]tools.App, error)
+	GetAppList(user string) ([]store.App, error)
 	GetMaintainerName(appId int) (string, error)
 }

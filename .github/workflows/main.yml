@@ -11,17 +11,9 @@ permissions:
 jobs:
   ci-tests:
     runs-on: ubuntu-latest
-    environment: MY_TOKEN
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-
-      - name: Authenticate for private modules
-        env:
-          ACTIONS_TOKEN: ${{ secrets.ACTIONS_TOKEN }}
-        run: |
-          git config --global url."https://${ACTIONS_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
-          go env -w GOPRIVATE=github.com/ocelot-cloud/*
 
       - name: Run CI Tests
         run: |

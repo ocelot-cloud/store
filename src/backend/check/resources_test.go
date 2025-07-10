@@ -45,9 +45,9 @@ func getRegistrationForm(hub *AppStoreClient) *tools.RegistrationForm {
 	}
 }
 
-func getHub() *AppStoreClient {
+func GetHub() *AppStoreClient {
 	hub := getHubWithoutWipe()
-	hub.wipeData()
+	hub.WipeData()
 	return hub
 }
 
@@ -73,26 +73,26 @@ func getHubWithoutWipe() *AppStoreClient {
 	}
 }
 
-func (h *AppStoreClient) registerAndValidateUser() error {
-	err := h.registerUser()
+func (h *AppStoreClient) RegisterAndValidateUser() error {
+	err := h.RegisterUser()
 	if err != nil {
 		return err
 	}
-	return h.validateCode()
+	return h.ValidateCode()
 }
 
-func (h *AppStoreClient) registerUser() error {
+func (h *AppStoreClient) RegisterUser() error {
 	form := getRegistrationForm(h)
 	_, err := h.Parent.DoRequest(tools.RegistrationPath, form)
 	return err
 }
 
-func (h *AppStoreClient) validateCode() error {
+func (h *AppStoreClient) ValidateCode() error {
 	_, err := h.Parent.DoRequest(tools.EmailValidationPath+"?code="+h.ValidationCode, nil)
 	return err
 }
 
-func (h *AppStoreClient) login() error {
+func (h *AppStoreClient) Login() error {
 	creds := tools.LoginCredentials{
 		User:     h.Parent.User,
 		Password: h.Parent.Password,
@@ -111,12 +111,12 @@ func (h *AppStoreClient) login() error {
 	return nil
 }
 
-func (h *AppStoreClient) deleteUser() error {
+func (h *AppStoreClient) DeleteUser() error {
 	_, err := h.Parent.DoRequest(tools.DeleteUserPath, nil)
 	return err
 }
 
-func (h *AppStoreClient) createApp() error {
+func (h *AppStoreClient) CreateApp() error {
 	_, err := h.Parent.DoRequest(tools.AppCreationPath, tools.AppNameString{Value: h.App})
 	if err != nil {
 		return err
@@ -166,7 +166,7 @@ func (h *AppStoreClient) ListOwnApps() ([]tools.App, error) {
 	return *apps, nil
 }
 
-func (h *AppStoreClient) uploadVersion() error {
+func (h *AppStoreClient) UploadVersion() error {
 	tapUpload := &tools.VersionUpload{
 		AppId:   h.AppId,
 		Version: h.Version,
@@ -177,7 +177,7 @@ func (h *AppStoreClient) uploadVersion() error {
 		return err
 	}
 
-	versions, err := h.getVersions()
+	versions, err := h.GetVersions()
 	if err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func (h *AppStoreClient) uploadVersion() error {
 	return fmt.Errorf("version not found on server")
 }
 
-func (h *AppStoreClient) downloadVersion() (*tools.FullVersionInfo, error) {
+func (h *AppStoreClient) DownloadVersion() (*tools.FullVersionInfo, error) {
 	result, err := h.Parent.DoRequest(tools.DownloadPath, tools.NumberString{Value: h.VersionId})
 	if err != nil {
 		return nil, err
@@ -204,7 +204,7 @@ func (h *AppStoreClient) downloadVersion() (*tools.FullVersionInfo, error) {
 	return fullVersionInfo, nil
 }
 
-func (h *AppStoreClient) getVersions() ([]tools.Version, error) {
+func (h *AppStoreClient) GetVersions() ([]tools.Version, error) {
 	result, err := h.Parent.DoRequest(tools.GetVersionsPath, tools.NumberString{Value: h.AppId})
 	if err != nil {
 		return nil, err
@@ -218,17 +218,17 @@ func (h *AppStoreClient) getVersions() ([]tools.Version, error) {
 	return *versions, nil
 }
 
-func (h *AppStoreClient) deleteVersion() error {
+func (h *AppStoreClient) DeleteVersion() error {
 	_, err := h.Parent.DoRequest(tools.VersionDeletePath, tools.NumberString{Value: h.VersionId})
 	return err
 }
 
-func (h *AppStoreClient) deleteApp() error {
+func (h *AppStoreClient) DeleteApp() error {
 	_, err := h.Parent.DoRequest(tools.AppDeletePath, tools.NumberString{Value: h.AppId})
 	return err
 }
 
-func (h *AppStoreClient) changePassword() error {
+func (h *AppStoreClient) ChangePassword() error {
 	form := tools.ChangePasswordForm{
 		OldPassword: h.Parent.Password,
 		NewPassword: h.Parent.NewPassword,
@@ -238,28 +238,28 @@ func (h *AppStoreClient) changePassword() error {
 	return err
 }
 
-func getHubAndLogin(t *testing.T) *AppStoreClient {
-	hub := getHub()
-	assert.Nil(t, hub.registerUser())
-	assert.Nil(t, hub.validateCode())
-	err := hub.login()
+func GetHubAndLogin(t *testing.T) *AppStoreClient {
+	hub := GetHub()
+	assert.Nil(t, hub.RegisterUser())
+	assert.Nil(t, hub.ValidateCode())
+	err := hub.Login()
 	assert.Nil(t, err)
 	return hub
 }
 
-func (h *AppStoreClient) wipeData() {
+func (h *AppStoreClient) WipeData() {
 	_, err := h.Parent.DoRequest(tools.WipeDataPath, nil)
 	if err != nil {
 		panic("failed to wipe data: " + err.Error())
 	}
 }
 
-func (h *AppStoreClient) logout() error {
+func (h *AppStoreClient) Logout() error {
 	_, err := h.Parent.DoRequest(tools.LogoutPath, nil)
 	return err
 }
 
-func (h *AppStoreClient) checkAuth() error {
+func (h *AppStoreClient) CheckAuth() error {
 	_, err := h.Parent.DoRequest(tools.AuthCheckPath, nil)
 	return err
 }

@@ -15,8 +15,8 @@ import (
 var DaysToCookieExpiration = 7
 
 func TestCorsHeaderArePresentInTestProfile(t *testing.T) {
-	hub := getHubAndLogin(t)
-	defer hub.wipeData()
+	hub := GetHubAndLogin(t)
+	defer hub.WipeData()
 	response, err := hub.Parent.DoRequestWithFullResponse(tools.AppGetListPath, nil)
 	assert.Nil(t, err)
 
@@ -27,7 +27,7 @@ func TestCorsHeaderArePresentInTestProfile(t *testing.T) {
 }
 
 func TestFindAppsSecurity(t *testing.T) {
-	hub := getHubAndLogin(t)
+	hub := GetHubAndLogin(t)
 	hub.Parent.SetCookieHeader = false
 
 	_, err := hub.SearchForApps("notexistingapp")
@@ -37,44 +37,44 @@ func TestFindAppsSecurity(t *testing.T) {
 }
 
 func TestDownloadAppSecurity(t *testing.T) {
-	hub := getHubAndLogin(t)
+	hub := GetHubAndLogin(t)
 
-	assert.Nil(t, hub.createApp())
-	assert.Nil(t, hub.uploadVersion())
+	assert.Nil(t, hub.CreateApp())
+	assert.Nil(t, hub.UploadVersion())
 
 	hub.Parent.SetCookieHeader = false
-	fullVersionInfo, err := hub.downloadVersion()
+	fullVersionInfo, err := hub.DownloadVersion()
 	assert.Nil(t, err)
 	assert.Equal(t, SampleVersionFileContent, fullVersionInfo.Content)
 }
 
 func TestGetVersionsSecurity(t *testing.T) {
-	hub := getHubAndLogin(t)
+	hub := GetHubAndLogin(t)
 
-	assert.Nil(t, hub.createApp())
-	assert.Nil(t, hub.uploadVersion())
+	assert.Nil(t, hub.CreateApp())
+	assert.Nil(t, hub.UploadVersion())
 
 	hub.Parent.SetCookieHeader = false
-	versions, err := hub.getVersions()
+	versions, err := hub.GetVersions()
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(versions))
 	assert.Equal(t, tools.SampleVersion, versions[0].Name)
 }
 
 func TestRegisterSecurity(t *testing.T) {
-	hub := getHub()
+	hub := GetHub()
 	hub.Parent.SetCookieHeader = false
 	testInputInvalidation(t, hub, "invalid-password-with-letter-ä", PasswordField, Register)
 	testInputInvalidation(t, hub, "invalid-username", UserField, Register)
 }
 
 func TestChangePasswordSecurity(t *testing.T) {
-	hub := getHubAndLogin(t)
+	hub := GetHubAndLogin(t)
 
 	hub.Parent.NewPassword = tools.SamplePassword + "x"
 	correctlyFormattedButNotMatchingPassword := tools.SamplePassword + "xy"
 	hub.Parent.Password = correctlyFormattedButNotMatchingPassword
-	err := hub.changePassword()
+	err := hub.ChangePassword()
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(401, "incorrect username or password"), err.Error())
 	hub.Parent.Password = tools.SamplePassword
@@ -84,17 +84,17 @@ func TestChangePasswordSecurity(t *testing.T) {
 }
 
 func TestLoginSecurity(t *testing.T) {
-	hub := getHub()
-	err := hub.registerAndValidateUser()
+	hub := GetHub()
+	err := hub.RegisterAndValidateUser()
 	assert.Nil(t, err)
 
 	assert.Nil(t, hub.Parent.Cookie)
-	assert.Nil(t, hub.login())
+	assert.Nil(t, hub.Login())
 	assert.NotNil(t, hub.Parent.Cookie)
 	checkCookie(t, hub)
 
 	// cookies are renewed after each successful operation
-	assert.Nil(t, hub.createApp())
+	assert.Nil(t, hub.CreateApp())
 	checkCookie(t, hub)
 
 	hub.Parent.Cookie = nil
@@ -103,7 +103,7 @@ func TestLoginSecurity(t *testing.T) {
 
 	correctlyFormattedButNotMatchingPassword := tools.SamplePassword + "x"
 	hub.Parent.Password = correctlyFormattedButNotMatchingPassword
-	err = hub.login()
+	err = hub.Login()
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(401, "incorrect username or password"), err.Error())
 	hub.Parent.Password = tools.SamplePassword
@@ -117,24 +117,24 @@ func checkCookie(t *testing.T, hub *AppStoreClient) {
 }
 
 func TestCreateAppSecurity(t *testing.T) {
-	hub := getHubAndLogin(t)
+	hub := GetHubAndLogin(t)
 	testInputInvalidation(t, hub, "invalid_app", AppField, CreateApp)
 }
 
 func TestUploadVersionSecurity(t *testing.T) {
-	hub := getHubAndLogin(t)
+	hub := GetHubAndLogin(t)
 	testInputInvalidation(t, hub, "invalid-version", VersionField, UploadVersion)
 }
 
 func TestCookieExpirationAndRenewal(t *testing.T) {
-	hub := getHubAndLogin(t)
+	hub := GetHubAndLogin(t)
 	// There is some specific logic for this user in the production code when handling cookie.
 	hub.Parent.User = users.TestUserWithExpiredCookie
 	hub.Email = hub.Email + "x"
-	assert.Nil(t, hub.registerAndValidateUser())
-	assert.Nil(t, hub.login())
+	assert.Nil(t, hub.RegisterAndValidateUser())
+	assert.Nil(t, hub.Login())
 	assert.True(t, time.Now().UTC().After(hub.Parent.Cookie.Expires))
-	err := hub.createApp()
+	err := hub.CreateApp()
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(400, "cookie expired"), err.Error())
 	hub.Parent.User = tools.SampleUser
@@ -142,66 +142,66 @@ func TestCookieExpirationAndRenewal(t *testing.T) {
 	// There is some specific logic for this user in the production code when handling cookie.
 	hub.Parent.User = users.TestUserWithOldButNotExpiredCookie
 	hub.Email = hub.Email + "y"
-	assert.Nil(t, hub.registerAndValidateUser())
-	assert.Nil(t, hub.login())
+	assert.Nil(t, hub.RegisterAndValidateUser())
+	assert.Nil(t, hub.Login())
 	assert.True(t, time.Now().UTC().Before(hub.Parent.Cookie.Expires))
 	assert.True(t, time.Now().UTC().Add(48*time.Hour).After(hub.Parent.Cookie.Expires))
-	assert.Nil(t, hub.createApp())
+	assert.Nil(t, hub.CreateApp())
 	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration-1).Before(hub.Parent.Cookie.Expires))
 	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration+1).After(hub.Parent.Cookie.Expires))
 	hub.Parent.User = tools.SampleUser
 }
 
 func TestOwnership(t *testing.T) {
-	hub := getHub()
-	testVersionOwnership(t, hub, hub.deleteApp)
-	hub = getHub()
-	testVersionOwnership(t, hub, hub.uploadVersion)
+	hub := GetHub()
+	testVersionOwnership(t, hub, hub.DeleteApp)
+	hub = GetHub()
+	testVersionOwnership(t, hub, hub.UploadVersion)
 }
 
 func testVersionOwnership(t *testing.T, hub *AppStoreClient, operation func() error) {
-	defer hub.wipeData()
-	assert.Nil(t, hub.registerAndValidateUser())
-	assert.Nil(t, hub.login())
-	assert.Nil(t, hub.createApp())
+	defer hub.WipeData()
+	assert.Nil(t, hub.RegisterAndValidateUser())
+	assert.Nil(t, hub.Login())
+	assert.Nil(t, hub.CreateApp())
 	hub.Parent.User = tools.SampleUser + "2"
 	hub.Email = tools.SampleEmail + "x"
-	assert.Nil(t, hub.registerAndValidateUser())
-	assert.Nil(t, hub.login())
+	assert.Nil(t, hub.RegisterAndValidateUser())
+	assert.Nil(t, hub.Login())
 	err := operation()
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(401, "you do not own this app"), err.Error())
 }
 
 func TestOwnershipOfDeleteVersion(t *testing.T) {
-	hub := getHubAndLogin(t)
-	defer hub.wipeData()
-	assert.Nil(t, hub.createApp())
-	assert.Nil(t, hub.uploadVersion())
+	hub := GetHubAndLogin(t)
+	defer hub.WipeData()
+	assert.Nil(t, hub.CreateApp())
+	assert.Nil(t, hub.UploadVersion())
 
 	hub.Parent.User = tools.SampleUser + "2"
 	hub.Email = tools.SampleEmail + "x"
-	assert.Nil(t, hub.registerAndValidateUser())
-	assert.Nil(t, hub.login())
+	assert.Nil(t, hub.RegisterAndValidateUser())
+	assert.Nil(t, hub.Login())
 
-	err := hub.deleteVersion()
+	err := hub.DeleteVersion()
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(401, "you do not own this version"), err.Error())
 }
 
 func TestValidationCodeInputValidation(t *testing.T) {
-	hub := getHub()
+	hub := GetHub()
 	testInputInvalidation(t, hub, "?123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", ValidationCodeField, Validate)
 	testInputInvalidation(t, hub, "1234", ValidationCodeField, Validate)
 }
 
 func TestEmailInputValidation(t *testing.T) {
-	hub := getHub()
+	hub := GetHub()
 	testInputInvalidation(t, hub, "admin@admin", EmailField, Register)
 }
 
 func TestIdInputValidationDuringDownload(t *testing.T) {
-	hub := getHubAndLogin(t)
+	hub := GetHubAndLogin(t)
 	testInputInvalidation(t, hub, "1234a", VersionIdField, DownloadVersion)
 	testInputInvalidation(t, hub, "1234a", VersionIdField, DeleteVersion)
 	testInputInvalidation(t, hub, "1234a", AppIdField, GetVersions)
@@ -210,24 +210,24 @@ func TestIdInputValidationDuringDownload(t *testing.T) {
 }
 
 func TestUploadOfInvalidZipContent(t *testing.T) {
-	hub := getHubAndLogin(t)
+	hub := GetHubAndLogin(t)
 	hub.UploadContent = []byte("not-bytes-of-valid-zip-file")
-	assert.Nil(t, hub.createApp())
-	err := hub.uploadVersion()
+	assert.Nil(t, hub.CreateApp())
+	err := hub.UploadVersion()
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(400, "invalid version: failed to read zip file: zip: not a valid zip file"), err.Error())
 }
 
 func TestCookieAndHostProtection(t *testing.T) {
-	hub := getHub()
+	hub := GetHub()
 	tests := []func() error{
-		hub.deleteUser,
-		hub.createApp,
-		hub.deleteApp,
-		hub.uploadVersion,
-		hub.deleteVersion,
-		hub.changePassword,
-		hub.checkAuth,
+		hub.DeleteUser,
+		hub.CreateApp,
+		hub.DeleteApp,
+		hub.UploadVersion,
+		hub.DeleteVersion,
+		hub.ChangePassword,
+		hub.CheckAuth,
 	}
 	for _, test := range tests {
 		doCookieAndHostPolicyChecks(t, hub, test)
@@ -235,9 +235,9 @@ func TestCookieAndHostProtection(t *testing.T) {
 }
 
 func doCookieAndHostPolicyChecks(t *testing.T, hub *AppStoreClient, operation func() error) {
-	defer hub.wipeData()
-	assert.Nil(t, hub.registerAndValidateUser())
-	assert.Nil(t, hub.login())
+	defer hub.WipeData()
+	assert.Nil(t, hub.RegisterAndValidateUser())
+	assert.Nil(t, hub.Login())
 
 	hub.Parent.SetCookieHeader = false
 
@@ -257,12 +257,12 @@ func doCookieAndHostPolicyChecks(t *testing.T, hub *AppStoreClient, operation fu
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(401, "cookie not found"), err.Error())
 
-	assert.Nil(t, hub.login())
+	assert.Nil(t, hub.Login())
 
 	hub.Parent.User = users.TestUserWithExpiredCookie
 	hub.Email = hub.Email + "x"
-	assert.Nil(t, hub.registerAndValidateUser())
-	assert.Nil(t, hub.login())
+	assert.Nil(t, hub.RegisterAndValidateUser())
+	assert.Nil(t, hub.Login())
 	err = operation()
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(400, "cookie expired"), err.Error())
@@ -291,32 +291,32 @@ func testInputInvalidation(t *testing.T, hub *AppStoreClient, invalidValue strin
 
 	switch operation {
 	case Register:
-		assertInvalidInputError(t, hub.registerAndValidateUser())
+		assertInvalidInputError(t, hub.RegisterAndValidateUser())
 	case GetVersions:
-		_, err := hub.getVersions()
+		_, err := hub.GetVersions()
 		assertInvalidInputError(t, err)
 	case DownloadVersion:
-		_, err := hub.downloadVersion()
+		_, err := hub.DownloadVersion()
 		assertInvalidInputError(t, err)
 	case FindApps:
 		_, err := hub.SearchForApps(invalidValue)
 		assertInvalidInputError(t, err)
 	case ChangePassword:
-		assertInvalidInputError(t, hub.changePassword())
+		assertInvalidInputError(t, hub.ChangePassword())
 	case Login:
-		assertInvalidInputError(t, hub.login())
+		assertInvalidInputError(t, hub.Login())
 	case DeleteApp:
-		assertInvalidInputError(t, hub.deleteApp())
+		assertInvalidInputError(t, hub.DeleteApp())
 	case UploadVersion:
-		assertInvalidInputError(t, hub.uploadVersion())
+		assertInvalidInputError(t, hub.UploadVersion())
 	case DeleteVersion:
-		assertInvalidInputError(t, hub.deleteVersion())
+		assertInvalidInputError(t, hub.DeleteVersion())
 	case CheckAuth:
-		assertInvalidInputError(t, hub.checkAuth())
+		assertInvalidInputError(t, hub.CheckAuth())
 	case CreateApp:
-		assertInvalidInputError(t, hub.createApp())
+		assertInvalidInputError(t, hub.CreateApp())
 	case Validate:
-		assertInvalidInputError(t, hub.validateCode())
+		assertInvalidInputError(t, hub.ValidateCode())
 	default:
 		panic("Unsupported operation")
 	}

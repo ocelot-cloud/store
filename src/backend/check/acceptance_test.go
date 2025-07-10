@@ -9,8 +9,8 @@ import (
 )
 
 func TestCorsHeaderNotPresentInProd(t *testing.T) {
-	hub := getHub()
-	defer hub.wipeData()
+	hub := GetHub()
+	defer hub.WipeData()
 	response, err := hub.Parent.DoRequestWithFullResponse("/api/apps/list", nil)
 	assert.Nil(t, err)
 
@@ -21,7 +21,7 @@ func TestCorsHeaderNotPresentInProd(t *testing.T) {
 }
 
 func TestDontAllowDifferentHostAndOriginHeader(t *testing.T) {
-	hub := getHub()
+	hub := GetHub()
 	hub.Parent.Origin = "localhost2"
 	_, err := hub.Parent.DoRequestWithFullResponse("/api/apps/list", nil)
 	assert.NotNil(t, err)

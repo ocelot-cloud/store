@@ -107,7 +107,7 @@ func TestLoginSecurity(t *testing.T) {
 	hub.Parent.Password = tools.SamplePassword
 }
 
-func checkCookie(t *testing.T, hub *HubClient) {
+func checkCookie(t *testing.T, hub *AppStoreClient) {
 	assert.Equal(t, "/", hub.Parent.Cookie.Path)
 	assert.Equal(t, http.SameSiteStrictMode, hub.Parent.Cookie.SameSite)
 	assert.True(t, time.Now().UTC().AddDate(0, 0, 29).Before(hub.Parent.Cookie.Expires))
@@ -157,7 +157,7 @@ func TestOwnership(t *testing.T) {
 	testVersionOwnership(t, hub, hub.uploadVersion)
 }
 
-func testVersionOwnership(t *testing.T, hub *HubClient, operation func() error) {
+func testVersionOwnership(t *testing.T, hub *AppStoreClient, operation func() error) {
 	defer hub.wipeData()
 	assert.Nil(t, hub.registerAndValidateUser())
 	assert.Nil(t, hub.login())
@@ -232,7 +232,7 @@ func TestCookieAndHostProtection(t *testing.T) {
 	}
 }
 
-func doCookieAndHostPolicyChecks(t *testing.T, hub *HubClient, operation func() error) {
+func doCookieAndHostPolicyChecks(t *testing.T, hub *AppStoreClient, operation func() error) {
 	defer hub.wipeData()
 	assert.Nil(t, hub.registerAndValidateUser())
 	assert.Nil(t, hub.login())
@@ -284,7 +284,7 @@ const (
 	SearchTerm
 )
 
-func testInputInvalidation(t *testing.T, hub *HubClient, invalidValue string, fieldType FieldType, operation Operation) {
+func testInputInvalidation(t *testing.T, hub *AppStoreClient, invalidValue string, fieldType FieldType, operation Operation) {
 	originalValue := returnCurrentValueAndSetField(hub, fieldType, invalidValue)
 
 	switch operation {
@@ -327,7 +327,7 @@ func assertInvalidInputError(t *testing.T, err error) {
 	assert.Equal(t, utils.GetErrMsg(400, "invalid input"), err.Error())
 }
 
-func returnCurrentValueAndSetField(hub *HubClient, fieldType FieldType, value string) string {
+func returnCurrentValueAndSetField(hub *AppStoreClient, fieldType FieldType, value string) string {
 	var originalValue string
 	switch fieldType {
 	case PasswordField:

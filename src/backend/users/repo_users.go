@@ -55,6 +55,7 @@ func (u *UserRepositoryImpl) DoesUserExist(user string) bool {
 func (u *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) (string, error) {
 	var key string
 	if tools.UseMailMockClient {
+		// TODO static sample key for testing, use from shared module
 		key = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 	} else {
 		randomBytes := make([]byte, 32)

@@ -15,8 +15,7 @@ func TestUnits() {
 	defer tr.Cleanup()
 	startCockroachDb()
 
-	tr.ExecuteInDir(backendToolsDir, "go test -count=1 .")
-	tr.ExecuteInDir(backendCheckDir, "go test -count=1 -tags=unit .")
+	tr.ExecuteInDir(backendDir, "go test -count=1 -tags=unit ./...")
 }
 
 var isPostgresDbStarted = false

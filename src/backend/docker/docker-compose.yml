@@ -43,7 +43,7 @@ services:
       - "traefik.http.routers.website.tls.certresolver=myresolver"
 
   postgres:
-    image: postgres:17.2-alpine3.20
+    image: postgres:17.2
     container_name: ocelotcloud_store_postgres
     environment:
       - POSTGRES_USER=postgres

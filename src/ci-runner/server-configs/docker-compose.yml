@@ -31,8 +31,8 @@ services:
     command: --interval 43200 traefik
 
   postgres:
-    image: postgres:17.2-alpine3.20
-    container_name: ocelotcloud_appstore_postgres
+    image: postgres:17.2
+    container_name: ocelotcloud_store_postgres
     ports:
       - 127.0.0.1:5433:5432
     environment:

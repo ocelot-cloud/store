@@ -12,43 +12,39 @@ import (
 
 func TestVersionDownload(t *testing.T) {
 	hub := GetHub()
+	defer hub.WipeData()
+	assert.Nil(t, hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail))
+	assert.Nil(t, hub.Login(tools.SampleUser, tools.SamplePassword))
 
-	_, err := hub.DownloadVersion()
+	notExistingVersionId := "0"
+	appId, err := hub.CreateApp(tools.SampleApp)
+	assert.Nil(t, err)
+	_, err = hub.DownloadVersion(notExistingVersionId)
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(404, "version does not exist"), err.Error())
 
-	assert.Nil(t, hub.RegisterAndValidateUser())
-	assert.Nil(t, hub.Login())
-
-	_, err = hub.DownloadVersion()
-	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(404, "version does not exist"), err.Error())
-
-	assert.Nil(t, hub.CreateApp())
-	_, err = hub.DownloadVersion()
-	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(404, "version does not exist"), err.Error())
-
-	assert.Nil(t, hub.UploadVersion())
-	foundVersions, err := hub.GetVersions()
+	versionId, err := hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
+	assert.Nil(t, err)
+	foundVersions, err := hub.GetVersions(appId)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(foundVersions))
 	assert.Equal(t, tools.SampleVersion, foundVersions[0].Name)
 
-	fullVersionInfo, err := hub.DownloadVersion()
+	fullVersionInfo, err := hub.DownloadVersion(versionId)
 	assert.Nil(t, err)
 	assert.Equal(t, SampleVersionFileContent, fullVersionInfo.Content)
 }
 
 func TestCookie(t *testing.T) {
 	hub := GetHubAndLogin(t)
+	defer hub.WipeData()
 	assert.Equal(t, tools.CookieName, hub.Parent.Cookie.Name)
 	assert.True(t, utils.GetTimeInSevenDays().Add(1*time.Second).After(hub.Parent.Cookie.Expires))
 	assert.True(t, utils.GetTimeInSevenDays().Add(-1*time.Second).Before(hub.Parent.Cookie.Expires))
 	assert.Equal(t, 64, len(hub.Parent.Cookie.Value))
 
 	cookie1 := hub.Parent.Cookie
-	err := hub.Login()
+	err := hub.Login(tools.SampleUser, tools.SamplePassword)
 	assert.Nil(t, err)
 	cookie2 := hub.Parent.Cookie
 	assert.NotNil(t, cookie2)
@@ -57,19 +53,21 @@ func TestCookie(t *testing.T) {
 
 func TestCreateApp(t *testing.T) {
 	hub := GetHubAndLogin(t)
-	assert.Nil(t, hub.CreateApp())
+	defer hub.WipeData()
+	appId, err := hub.CreateApp(tools.SampleApp)
+	assert.Nil(t, err)
 	foundApps, err := hub.ListOwnApps()
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(foundApps))
 	foundApp := foundApps[0]
-	assert.Equal(t, hub.Parent.User, foundApp.Maintainer)
-	assert.Equal(t, hub.App, foundApp.Name)
+	assert.Equal(t, tools.SampleUser, foundApp.Maintainer)
+	assert.Equal(t, tools.SampleApp, foundApp.Name)
 
-	err = hub.CreateApp()
+	_, err = hub.CreateApp(tools.SampleApp)
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(409, "app already exists"), err.Error())
 
-	assert.Nil(t, hub.DeleteApp())
+	assert.Nil(t, hub.DeleteApp(appId))
 	foundApps, err = hub.ListOwnApps()
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(foundApps))
@@ -77,95 +75,100 @@ func TestCreateApp(t *testing.T) {
 
 func TestUploadVersion(t *testing.T) {
 	hub := GetHubAndLogin(t)
-
-	err := hub.UploadVersion()
+	defer hub.WipeData()
+	notExistingVersionId := "0"
+	_, err := hub.UploadVersion(notExistingVersionId, tools.SampleVersion, SampleVersionFileContent)
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(404, "app does not exist"), err.Error())
 
-	assert.Nil(t, hub.CreateApp())
-	assert.Nil(t, hub.UploadVersion())
+	appId, err := hub.CreateApp(tools.SampleApp)
+	assert.Nil(t, err)
+	versionId, err := hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
+	assert.Nil(t, err)
 
-	err = hub.UploadVersion()
+	_, err = hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(409, "version already exists"), err.Error())
 
-	versions, err := hub.GetVersions()
+	versions, err := hub.GetVersions(appId)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(versions))
-	assert.Equal(t, hub.Version, versions[0].Name)
+	assert.Equal(t, tools.SampleVersion, versions[0].Name)
 
-	assert.Nil(t, hub.DeleteVersion())
-	versions, err = hub.GetVersions()
+	assert.Nil(t, hub.DeleteVersion(versionId))
+	versions, err = hub.GetVersions(appId)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(versions))
 
-	err = hub.DeleteVersion()
+	err = hub.DeleteVersion(versionId)
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(404, "version does not exist"), err.Error())
 }
 
 func TestLogin(t *testing.T) {
 	hub := GetHub()
-	err := hub.Login()
+	err := hub.Login(tools.SampleUser, tools.SamplePassword)
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(404, "user does not exist"), err.Error())
 }
 
 func TestChangePassword(t *testing.T) {
 	hub := GetHubAndLogin(t)
+	defer hub.WipeData()
+	newPassword := tools.SamplePassword + "x"
 
-	hub.Parent.NewPassword = hub.Parent.Password + "x"
-
-	assert.Nil(t, hub.ChangePassword())
-	err := hub.Login()
+	assert.Nil(t, hub.ChangePassword(tools.SamplePassword, newPassword))
+	err := hub.Login(tools.SampleUser, tools.SamplePassword)
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(401, "incorrect username or password"), err.Error())
 
-	hub.Parent.Password = hub.Parent.NewPassword
 	hub.Parent.Cookie = nil
-	err = hub.Login()
+	err = hub.Login(tools.SampleUser, newPassword)
 	assert.Nil(t, err)
 	assert.NotNil(t, hub.Parent.Cookie)
 }
 
 func TestRegistration(t *testing.T) {
 	hub := GetHub()
-	assert.Nil(t, hub.RegisterAndValidateUser())
-	err := hub.RegisterAndValidateUser()
+	defer hub.WipeData()
+	assert.Nil(t, hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail))
+	err := hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail)
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(409, "user already exists"), err.Error())
 }
 
 func TestGetVersionsUnhappyPath(t *testing.T) {
 	hub := GetHub()
+	defer hub.WipeData()
+	assert.Nil(t, hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail))
+	assert.Nil(t, hub.Login(tools.SampleUser, tools.SamplePassword))
 
-	assert.Nil(t, hub.RegisterAndValidateUser())
-	assert.Nil(t, hub.Login())
-	_, err := hub.GetVersions()
-	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(404, "app does not exist"), err.Error())
-
-	assert.Nil(t, hub.CreateApp())
-	versionList, err := hub.GetVersions()
+	appId, err := hub.CreateApp(tools.SampleApp)
+	assert.Nil(t, err)
+	versionList, err := hub.GetVersions(appId)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(versionList))
 }
 
 func TestLogout(t *testing.T) {
 	hub := GetHubAndLogin(t)
-	assert.Nil(t, hub.CreateApp())
+	defer hub.WipeData()
+	_, err := hub.CreateApp(tools.SampleApp)
+	assert.Nil(t, err)
 	assert.Nil(t, hub.Logout())
-	err := hub.CreateApp()
+	_, err = hub.CreateApp(tools.SampleApp)
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(401, "cookie not found"), err.Error())
 }
 
 func TestGetAppList(t *testing.T) {
 	hub := GetHubAndLogin(t)
+	defer hub.WipeData()
 	apps, err := hub.ListOwnApps()
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(apps))
-	assert.Nil(t, hub.CreateApp())
+	_, err = hub.CreateApp(tools.SampleApp)
+	assert.Nil(t, err)
 	apps, err = hub.ListOwnApps()
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(apps))
@@ -175,18 +178,18 @@ func TestGetAppList(t *testing.T) {
 func TestRegistrationAndValidation(t *testing.T) {
 	hub := GetHub()
 	defer hub.WipeData()
-	assert.Nil(t, hub.RegisterUser())
-	assert.NotNil(t, hub.Login())
+	assert.Nil(t, hub.RegisterUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail))
+	assert.NotNil(t, hub.Login(tools.SampleUser, tools.SamplePassword))
 	assert.Nil(t, hub.ValidateCode())
-	assert.Nil(t, hub.Login())
+	assert.Nil(t, hub.Login(tools.SampleUser, tools.SamplePassword))
 }
 
 func TestEmailAlreadyExists(t *testing.T) {
 	hub := GetHub()
 	defer hub.WipeData()
-	assert.Nil(t, hub.RegisterAndValidateUser())
-	hub.Parent.User = tools.SampleUser + "2"
-	err := hub.RegisterUser()
+	assert.Nil(t, hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail))
+	user2 := tools.SampleUser + "2"
+	err := hub.RegisterUser(user2, tools.SamplePassword, tools.SampleEmail)
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(409, "email already exists"), err.Error())
 }
@@ -194,29 +197,29 @@ func TestEmailAlreadyExists(t *testing.T) {
 func TestDownloadDummyVersion(t *testing.T) {
 	hub := GetHubAndLogin(t)
 	defer hub.WipeData()
-	assert.Nil(t, hub.CreateApp())
-	assert.Nil(t, hub.UploadVersion())
-	apps, err := hub.SearchForApps(hub.App)
+	appId, err := hub.CreateApp(tools.SampleApp)
+	assert.Nil(t, err)
+	versionId, err := hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
+	assert.Nil(t, err)
+	apps, err := hub.SearchForApps(tools.SampleApp, true)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(apps))
-	hub.AppId = apps[0].AppId
-	versions, err := hub.GetVersions()
+	versions, err := hub.GetVersions(appId)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(versions))
-	hub.VersionId = versions[0].Id
 
-	info, err := hub.DownloadVersion()
+	info, err := hub.DownloadVersion(versionId)
 	assert.Nil(t, err)
-	assert.Equal(t, hub.Parent.User, info.Maintainer)
-	assert.Equal(t, hub.App, info.AppName)
-	assert.Equal(t, hub.Version, info.VersionName)
+	assert.Equal(t, tools.SampleUser, info.Maintainer)
+	assert.Equal(t, tools.SampleApp, info.AppName)
+	assert.Equal(t, tools.SampleVersion, info.VersionName)
 	assert.True(t, len(info.Content) > 100)
 }
 
 func TestCreationOfOcelotCloudAppIsForbidden(t *testing.T) {
 	hub := GetHubAndLogin(t)
-	hub.App = "ocelotcloud"
-	err := hub.CreateApp()
+	defer hub.WipeData()
+	_, err := hub.CreateApp("ocelotcloud")
 	assert.NotNil(t, err)
 	assert.Equal(t, utils.GetErrMsg(400, "app name is reserved"), err.Error())
 }
@@ -224,17 +227,17 @@ func TestCreationOfOcelotCloudAppIsForbidden(t *testing.T) {
 func TestUnofficialAppFilteringWhenSearching(t *testing.T) {
 	hub := GetHubAndLogin(t)
 	defer hub.WipeData()
-	assert.Nil(t, hub.CreateApp())
-	assert.Nil(t, hub.UploadVersion())
+	appId, err := hub.CreateApp(tools.SampleApp)
+	assert.Nil(t, err)
+	_, err = hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
+	assert.Nil(t, err)
 
-	hub.ShowUnofficialApps = true
-	apps, err := hub.SearchForApps(hub.App)
+	apps, err := hub.SearchForApps(tools.SampleApp, true)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(apps))
-	assert.Equal(t, hub.AppId, apps[0].AppId)
+	assert.Equal(t, appId, apps[0].AppId)
 
-	hub.ShowUnofficialApps = false
-	apps, err = hub.SearchForApps(hub.App)
+	apps, err = hub.SearchForApps(tools.SampleApp, false)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(apps))
 }
@@ -242,15 +245,16 @@ func TestUnofficialAppFilteringWhenSearching(t *testing.T) {
 func TestAllowEmptyStringAsSearchTerm(t *testing.T) {
 	hub := GetHubAndLogin(t)
 	defer hub.WipeData()
-	apps, err := hub.SearchForApps("")
+	apps, err := hub.SearchForApps("", true)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(apps))
 
-	assert.Nil(t, hub.CreateApp())
-	assert.Nil(t, hub.UploadVersion())
+	appId, err := hub.CreateApp(tools.SampleApp)
+	assert.Nil(t, err)
+	_, err = hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
+	assert.Nil(t, err)
 
-	apps, err = hub.SearchForApps("")
+	apps, err = hub.SearchForApps("", true)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(apps))
-
 }

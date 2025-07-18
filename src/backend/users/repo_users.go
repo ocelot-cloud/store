@@ -18,11 +18,11 @@ var NotEnoughSpacePrefix = "not enough space"
 func (u *UserRepositoryImpl) IsThereEnoughSpaceToAddVersion(user string, bytesToAdd int) error {
 	bytesUsed, err := UserRepo.GetUsedSpaceInBytes(user)
 	if err != nil {
-		tools.Logger.ErrorF("checking space failed: %v", err)
+		Logger.Error("checking space failed", utils.ErrorField, err)
 		return errors.New("checking space failed")
 	}
 	if bytesUsed+bytesToAdd > tools.MaxStorageSize {
-		tools.Logger.InfoF("user '%s' tried to upload version, but storage limit would be exceeded", user)
+		Logger.Info("user tried to upload version, but storage limit would be exceeded", tools.UserField, user)
 		usedStorageInPercent := bytesUsed * 100 / tools.MaxStorageSize
 		msg := fmt.Sprintf(NotEnoughSpacePrefix+", you can't store more then 10MiB of version content, currently used storage in bytes: %d/%d (%d percent)", bytesUsed, tools.MaxStorageSize, usedStorageInPercent)
 		return errors.New(msg)
@@ -34,7 +34,7 @@ func (u *UserRepositoryImpl) IsPasswordCorrect(user string, password string) boo
 	var hashedPassword string
 	err := tools.Db.QueryRow("SELECT hashed_password FROM users WHERE user_name = $1", user).Scan(&hashedPassword)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to fetch hashed password: %v", err)
+		Logger.Error("Failed to fetch hashed password", utils.ErrorField, err)
 		return false
 	}
 
@@ -46,7 +46,7 @@ func (u *UserRepositoryImpl) DoesUserExist(user string) bool {
 	var exists bool
 	err := tools.Db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE user_name = $1)", user).Scan(&exists)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to check user existence: %v", err)
+		Logger.Error("Failed to check user existence", utils.ErrorField, err)
 		return false
 	}
 	return exists
@@ -60,12 +60,12 @@ func (u *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) (string, e
 	} else {
 		randomBytes := make([]byte, 32)
 		if _, err := rand.Read(randomBytes); err != nil {
-			tools.Logger.ErrorF("Failed to generate cookie: %v", err)
+			Logger.Error("Failed to generate cookie", utils.ErrorField, err)
 			return "", err
 		}
 		key = hex.EncodeToString(randomBytes)
 	}
-	tools.Logger.InfoF("adding user to validation list: %s", form.User)
+	Logger.Info("adding user to validation list", tools.UserField, form.User)
 	tools.WaitingForEmailVerificationList.Store(key, form)
 	return key, nil
 }
@@ -78,18 +78,18 @@ func (u *UserRepositoryImpl) ValidateUser(code string) error {
 
 	form, ok := value.(*store.RegistrationForm)
 	if !ok {
-		tools.Logger.ErrorF("Invalid type for registration form")
+		Logger.Error("Invalid type for registration form")
 		return fmt.Errorf("invalid type for registration form")
 	}
 
 	hashedPassword, err := utils.SaltAndHash(form.Password)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to hash password: %v", err)
+		Logger.Error("Failed to hash password", utils.ErrorField, err)
 		return fmt.Errorf("failed to hash password")
 	}
 	_, err = tools.Db.Exec("INSERT INTO users (user_name, email, hashed_password, used_space) VALUES ($1, $2, $3, $4)", form.User, form.Email, hashedPassword, 0)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to create user: %v", err)
+		Logger.Error("Failed to create user", utils.ErrorField, err)
 		return fmt.Errorf("failed to create user")
 	}
 	tools.WaitingForEmailVerificationList.Delete(code)
@@ -98,13 +98,13 @@ func (u *UserRepositoryImpl) ValidateUser(code string) error {
 
 func (u *UserRepositoryImpl) DeleteUser(user string) error {
 	if !u.DoesUserExist(user) {
-		tools.Logger.InfoF("User '%s' does not exist", user)
+		Logger.Info("User does not exist", utils.ErrorField, user)
 		return fmt.Errorf("user does not exist")
 	}
 
 	_, err := tools.Db.Exec("DELETE FROM users WHERE user_name = $1", user)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to delete user: %v", err)
+		Logger.Error("Failed to delete user", utils.ErrorField, err)
 		return fmt.Errorf("failed to delete user")
 	}
 
@@ -119,7 +119,7 @@ func (u *UserRepositoryImpl) HashAndSaveCookie(user string, cookie string, expir
 
 	_, err = tools.Db.Exec("UPDATE users SET hashed_cookie_value = $1, expiration_date = $2 WHERE user_name = $3", hashedCookieValue, expirationDate.Format(time.RFC3339), user)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to hash and save cookie: %v", err)
+		Logger.Error("Failed to hash and save cookie", utils.ErrorField, err)
 		return fmt.Errorf("failed to hash and save cookie")
 	}
 	return nil
@@ -128,14 +128,14 @@ func (u *UserRepositoryImpl) HashAndSaveCookie(user string, cookie string, expir
 func (u *UserRepositoryImpl) IsCookieExpired(cookie string) bool {
 	hashedCookieValue, err := utils.Hash(cookie)
 	if err != nil {
-		tools.Logger.ErrorF("Error hashing cookie: %v", err)
+		Logger.Error("Error hashing cookie", utils.ErrorField, err)
 		return false
 	}
 
 	var expirationDateStr string
 	err = tools.Db.QueryRow("SELECT expiration_date FROM users WHERE hashed_cookie_value = $1", hashedCookieValue).Scan(&expirationDateStr)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to fetch expiration date: %v", err)
+		Logger.Error("Failed to fetch expiration date", utils.ErrorField, err)
 		return true
 	} else if expirationDateStr == "" {
 		return true
@@ -143,7 +143,7 @@ func (u *UserRepositoryImpl) IsCookieExpired(cookie string) bool {
 
 	expirationDate, err := time.Parse(time.RFC3339, expirationDateStr)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to parse expiration date: %v", err)
+		Logger.Error("Failed to parse expiration date", utils.ErrorField, err)
 		return true
 	}
 
@@ -152,7 +152,7 @@ func (u *UserRepositoryImpl) IsCookieExpired(cookie string) bool {
 
 func (u *UserRepositoryImpl) GetUserViaCookie(cookie string) (string, error) {
 	if cookie == "" {
-		tools.Logger.ErrorF("Cookie not set in request")
+		Logger.Error("Cookie not set in request")
 		return "", fmt.Errorf("cookie not set in request")
 	}
 
@@ -165,10 +165,10 @@ func (u *UserRepositoryImpl) GetUserViaCookie(cookie string) (string, error) {
 	err = tools.Db.QueryRow("SELECT user_name FROM users WHERE hashed_cookie_value = $1", hashedCookieValue).Scan(&user)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			tools.Logger.InfoF("Cookie not found")
+			Logger.Info("Cookie not found")
 			return "", fmt.Errorf("cookie not found")
 		} else {
-			tools.Logger.ErrorF("Failed to fetch user: %v", err)
+			Logger.Error("Failed to fetch user", utils.ErrorField, err)
 			return "", fmt.Errorf("failed to fetch user")
 		}
 	}
@@ -179,13 +179,13 @@ func (u *UserRepositoryImpl) GetUserViaCookie(cookie string) (string, error) {
 func (u *UserRepositoryImpl) ChangePassword(user string, newPassword string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to hash password: %v", err)
+		Logger.Error("Failed to hash password", utils.ErrorField, err)
 		return fmt.Errorf("failed to hash password")
 	}
 
 	_, err = tools.Db.Exec("UPDATE users SET hashed_password = $1 WHERE user_name = $2", hashedPassword, user)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to change password: %v", err)
+		Logger.Error("Failed to change password", utils.ErrorField, err)
 		return fmt.Errorf("failed to change password")
 	}
 
@@ -195,7 +195,7 @@ func (u *UserRepositoryImpl) ChangePassword(user string, newPassword string) err
 func (u *UserRepositoryImpl) WipeDatabase() {
 	_, err := tools.Db.Exec("DELETE FROM users WHERE user_name != 'sample'")
 	if err != nil {
-		tools.Logger.ErrorF("Failed to wipe database: %v", err)
+		Logger.Error("Failed to wipe database", utils.ErrorField, err)
 	}
 	tools.WaitingForEmailVerificationList = sync.Map{}
 }
@@ -204,7 +204,7 @@ func (u *UserRepositoryImpl) GetUsedSpaceInBytes(user string) (int, error) {
 	var usedSpace int
 	err := tools.Db.QueryRow(`SELECT used_space FROM users WHERE user_name = $1`, user).Scan(&usedSpace)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to get used space: %v", err)
+		Logger.Error("Failed to get used space", utils.ErrorField, err)
 		return 0, fmt.Errorf("failed to get used space")
 	}
 	return usedSpace, nil
@@ -213,7 +213,7 @@ func (u *UserRepositoryImpl) GetUsedSpaceInBytes(user string) (int, error) {
 func (u *UserRepositoryImpl) Logout(user string) error {
 	_, err := tools.Db.Exec("UPDATE users SET hashed_cookie_value = $1, expiration_date = $2 WHERE user_name = $3", nil, nil, user)
 	if err != nil {
-		tools.Logger.ErrorF("failed to logout: %v", err)
+		Logger.Error("failed to logout", utils.ErrorField, err)
 		return errors.New("failed to logout")
 	}
 	return nil
@@ -232,7 +232,7 @@ func (u *UserRepositoryImpl) DoesEmailExist(email string) bool {
 	var exists bool
 	err := tools.Db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)", email).Scan(&exists)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to check email existence: %v", err)
+		Logger.Error("Failed to check email existence", utils.ErrorField, err)
 		return false
 	}
 	return exists

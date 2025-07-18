@@ -24,7 +24,7 @@ func InitializeDatabase() {
 
 	Db, err = utils.WaitForPostgresDb(host, customPostgresPort)
 	if err != nil {
-		Logger.ErrorF("Failed to create database client: %v", err)
+		Logger.Error("Failed to create database client", utils.ErrorField, err)
 		os.Exit(1)
 	}
 

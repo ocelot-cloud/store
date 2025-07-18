@@ -10,19 +10,22 @@ import (
 	"strconv"
 )
 
-var AppRepo AppRepository = &AppRepositoryImpl{}
+var (
+	AppRepo AppRepository = &AppRepositoryImpl{}
+	Logger                = tools.Logger
+)
 
 func (u *AppRepositoryImpl) IsAppOwner(user string, appId int) bool {
 	userId, err := tools.GetUserId(user)
 	if err != nil {
-		tools.Logger.InfoF("Failed to get user ID: %v", err)
+		Logger.Info("Failed to get user ID", utils.ErrorField, err)
 		return false
 	}
 
 	var ownerId int
 	err = tools.Db.QueryRow("SELECT user_id FROM apps WHERE app_id = $1", appId).Scan(&ownerId)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to get app owner ID: %v", err)
+		Logger.Error("Failed to get app owner ID", utils.ErrorField, err)
 		return false
 	}
 
@@ -31,7 +34,7 @@ func (u *AppRepositoryImpl) IsAppOwner(user string, appId int) bool {
 
 func (u *AppRepositoryImpl) CreateApp(user string, app string) error {
 	if !users.UserRepo.DoesUserExist(user) {
-		tools.Logger.InfoF("User '%s' does not exist", user)
+		Logger.Info("User does not exist", tools.UserField, user)
 		return fmt.Errorf("user does not exist")
 	}
 
@@ -41,7 +44,7 @@ func (u *AppRepositoryImpl) CreateApp(user string, app string) error {
 	}
 	_, err = tools.Db.Exec(`INSERT INTO apps (user_id, app_name) VALUES ($1, $2)`, userID, app)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to create app: %v", err)
+		Logger.Error("Failed to create app", utils.ErrorField, err)
 		return fmt.Errorf("failed to create app")
 	}
 	return nil
@@ -51,7 +54,7 @@ func (u *AppRepositoryImpl) DoesAppExist(appId int) bool {
 	var exists bool
 	err := tools.Db.QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE app_id = $1)", appId).Scan(&exists)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to check app existence for app with ID: %d, error: %v", appId, err)
+		Logger.Error("Failed to check app existence for app", tools.AppIdField, appId, utils.ErrorField, err)
 		return false
 	}
 	return exists
@@ -70,7 +73,7 @@ func (u *AppRepositoryImpl) DeleteApp(appId int) error {
 
 	_, err = tools.Db.Exec(`DELETE FROM apps WHERE app_id = $1`, appId)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to delete app: %v", err)
+		Logger.Error("Failed to delete app", utils.ErrorField, err)
 		return fmt.Errorf("failed to delete app")
 	}
 
@@ -86,7 +89,7 @@ func GetUserIdOfApp(appId int) (int, error) {
 	var userId int
 	err := tools.Db.QueryRow(`SELECT user_id FROM apps WHERE app_id = $1`, appId).Scan(&userId)
 	if err != nil {
-		tools.Logger.ErrorF("Failed to get user ID of app: %v", err)
+		Logger.Error("Failed to get user ID of app", tools.AppIdField, appId, utils.ErrorField, err)
 		return -1, fmt.Errorf("failed to get user ID of app")
 	}
 	return userId, nil
@@ -129,7 +132,7 @@ func (u *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 
 	rows, err := tools.Db.Query(query, "%"+request.SearchTerm+"%", "%"+request.SearchTerm+"%")
 	if err != nil {
-		tools.Logger.ErrorF("Failed to find apps: %v", err)
+		Logger.Error("Failed to find apps", utils.ErrorField, err)
 		return nil, fmt.Errorf("failed to find apps")
 	}
 	defer utils.Close(rows)
@@ -139,7 +142,7 @@ func (u *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 		var appId, versionId int
 		err := rows.Scan(&maintainer, &appId, &appName, &versionId, &versionName)
 		if err != nil {
-			tools.Logger.ErrorF("Error scanning app row: %v", err)
+			Logger.Error("Error scanning app row", utils.ErrorField, err)
 			continue
 		}
 		apps = append(apps, store.AppWithLatestVersion{
@@ -152,7 +155,7 @@ func (u *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 	}
 	err = rows.Err()
 	if err != nil {
-		tools.Logger.ErrorF("Error iterating over rows: %v", err)
+		Logger.Error("Error iterating over rows", utils.ErrorField, err)
 		return nil, fmt.Errorf("error iterating over rows")
 	}
 	return apps, nil

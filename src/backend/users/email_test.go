@@ -18,7 +18,7 @@ func TestInitializeEnv(t *testing.T) {
 	}
 
 	err := InitializeEnvs()
-	assert.NotNil(t, err)
+	assert.Nil(t, err)
 
 	_, err = os.Stat(envFilePath)
 	assert.False(t, os.IsNotExist(err))

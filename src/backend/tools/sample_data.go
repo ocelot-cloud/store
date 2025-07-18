@@ -24,16 +24,16 @@ func GetVersionBytesOfSampleUserApp(folderName, sampleUser, sampleApp string, sh
 	sampleAppDir := utils.FindDir("assets") + "/" + folderName
 	versionBytes, err := validation.ZipDirectory(sampleAppDir)
 	if err != nil {
-		Logger.ErrorF("Failed to read sample version file: %v", err)
+		Logger.Error("Failed to read sample version file", utils.ErrorField, err)
 		os.Exit(1)
 	}
 	err = validation.ValidateVersion(versionBytes, sampleUser, sampleApp)
 	if shouldBeValid && err != nil {
-		Logger.ErrorF("expected sample version to be valid, but it is not: %v", err)
+		Logger.Error("expected sample version to be valid, but it is not", utils.ErrorField, err)
 		os.Exit(1)
 	}
 	if !shouldBeValid && err == nil {
-		Logger.ErrorF("expected sample version to be invalid, but it is valid")
+		Logger.Error("expected sample version to be invalid, but it is valid")
 		os.Exit(1)
 	}
 	return versionBytes
@@ -43,7 +43,7 @@ func GetValidVersionBytesOfSampleMaintainerApp() []byte {
 	sampleAppDir := utils.FindDir("assets") + "/samplemaintainer-app"
 	versionBytes, err := validation.ZipDirectory(sampleAppDir)
 	if err != nil {
-		Logger.ErrorF("Failed to read sample version file: %v", err)
+		Logger.Error("Failed to read sample version file", utils.ErrorField, err)
 		os.Exit(1)
 	}
 	return versionBytes

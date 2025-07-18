@@ -71,7 +71,6 @@ var runCmd = &cobra.Command{
 	Short: "Run the application locally",
 	Run: func(cmd *cobra.Command, args []string) {
 		build()
-		tr.ExecuteInDir(backendDir, "bash -c './store || true'")
 		tr.ExecuteInDir(backendDir, "./store")
 	},
 }

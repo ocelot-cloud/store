@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	Logger     = utils.ProvideLogger("DEBUG")
+	Logger     = utils.ProvideLogger("DEBUG", true)
 	Port       = "8082"
 	RootUrl    = "http://localhost:" + Port
 	CookieName = "auth"

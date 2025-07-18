@@ -9,7 +9,7 @@ type ContextKey string
 const UserCtxKey ContextKey = "user"
 
 func HandleInvalidInput(w http.ResponseWriter, err error) {
-	Logger.Info("invalid input: %v", err)
+	Logger.InfoF("invalid input: %v", err)
 	http.Error(w, "invalid input", http.StatusBadRequest)
 }
 

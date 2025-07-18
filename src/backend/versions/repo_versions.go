@@ -31,7 +31,7 @@ func (u *VersionRepositoryImpl) GetAppIdByVersionId(versionId int) (int, error) 
 	var appId int
 	err := tools.Db.QueryRow("SELECT app_id FROM versions WHERE version_id = $1", versionId).Scan(&appId)
 	if err != nil {
-		tools.Logger.Error("Failed to get app ID by version ID %d: %v", versionId, err)
+		tools.Logger.ErrorF("Failed to get app ID by version ID %d: %v", versionId, err)
 		return -1, fmt.Errorf("failed to get app ID by version ID")
 	}
 	return appId, nil
@@ -40,7 +40,7 @@ func (u *VersionRepositoryImpl) GetAppIdByVersionId(versionId int) (int, error) 
 func (u *VersionRepositoryImpl) IsVersionOwner(user string, versionId int) bool {
 	userId, err := tools.GetUserId(user)
 	if err != nil {
-		tools.Logger.Info("Failed to get user ID: %v", err)
+		tools.Logger.InfoF("Failed to get user ID: %v", err)
 		return false
 	}
 
@@ -51,7 +51,7 @@ func (u *VersionRepositoryImpl) IsVersionOwner(user string, versionId int) bool 
 		JOIN apps ON versions.app_id = apps.app_id
 		WHERE versions.version_id = $1`, versionId).Scan(&ownerId)
 	if err != nil {
-		tools.Logger.Error("Failed to get version owner ID: %v", err)
+		tools.Logger.ErrorF("Failed to get version owner ID: %v", err)
 		return false
 	}
 
@@ -176,7 +176,7 @@ func (u *VersionRepositoryImpl) DoesVersionExist(versionId int) bool {
 	var exists bool
 	err := tools.Db.QueryRow(`SELECT EXISTS(SELECT 1 FROM versions WHERE version_id = $1)`, versionId).Scan(&exists)
 	if err != nil {
-		tools.Logger.Debug("error checking if version exists")
+		tools.Logger.DebugF("error checking if version exists")
 		return false
 	}
 	return exists

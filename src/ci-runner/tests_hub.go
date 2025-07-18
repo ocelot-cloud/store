@@ -35,7 +35,6 @@ func TestBackend() {
 	tr.ExecuteInDir(backendDir, "go build .")
 	startCockroachDb()
 	tr.ExecuteInDir(backendDir, "rm -f data/.env")
-	tr.ExecuteInDir(backendDir, "bash -c './store || true'") // creates default data/.env file and exit
 	tr.StartDaemon(backendDir, "./store", "PROFILE=TEST")
 	tr.WaitUntilPortIsReady("8082")
 	tr.ExecuteInDir(backendCheckDir, "go test -count=1 -tags=component ./...")
@@ -46,7 +45,6 @@ func TestAcceptance() {
 	defer tr.Cleanup()
 	build()
 	startCockroachDb()
-	tr.ExecuteInDir(backendDir, "bash -c './store || true'") // creates data/.env file and exit
 	tr.StartDaemon(backendDir, "./store")
 	tr.WaitUntilPortIsReady("8082")
 	tr.ExecuteInDir(backendCheckDir, "go test -count=1 -tags=acceptance ./...")

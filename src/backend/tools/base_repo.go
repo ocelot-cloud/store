@@ -24,7 +24,8 @@ func InitializeDatabase() {
 
 	Db, err = utils.WaitForPostgresDb(host, customPostgresPort)
 	if err != nil {
-		Logger.Fatal("Failed to create database client: %v", err)
+		Logger.ErrorF("Failed to create database client: %v", err)
+		os.Exit(1)
 	}
 
 	migrationsDir := utils.FindDir("assets") + "/migrations"

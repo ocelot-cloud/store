@@ -16,38 +16,40 @@ import (
 )
 
 func init() {
-	tools.Logger = utils.ProvideLogger(os.Getenv("LOG_LEVEL"))
+	tools.Logger = utils.ProvideLogger(os.Getenv("LOG_LEVEL"), true)
 }
 
 func main() {
 	cmd := exec.Command("docker", "compose", "version")
 	if err := cmd.Run(); err != nil {
-		tools.Logger.Fatal("docker compose is not installed or not accessible in PATH. Tool is required for docker-compose.yml validation.")
+		tools.Logger.ErrorF("docker compose is not installed or not accessible in PATH. Tool is required for docker-compose.yml validation.")
+		os.Exit(1)
 	}
 	if os.Getenv("USE_MOCK_EMAIL_CLIENT") == "true" {
-		tools.Logger.Warn("using mock email client, should only be used for testing")
+		tools.Logger.WarnF("using mock email client, should only be used for testing")
 		tools.UseMailMockClient = true
 	}
 	if tools.Profile == tools.TEST {
-		tools.Logger.Info("profile is: TEST")
+		tools.Logger.InfoF("profile is: TEST")
 	} else if tools.Profile == tools.PROD {
-		tools.Logger.Info("profile is: PROD")
+		tools.Logger.InfoF("profile is: PROD")
 	} else {
-		tools.Logger.Fatal("unknown profile: %d", tools.Profile)
+		tools.Logger.ErrorF("unknown profile: %d", tools.Profile)
+		os.Exit(1)
 	}
 	err := users.InitializeEnvs()
 	if err != nil {
-		tools.Logger.Fatal("exiting due to error through env file: %v", err)
+		tools.Logger.ErrorF("exiting due to error through env file: %v", err)
 	}
 	tools.InitializeDatabase()
 	mux := http.NewServeMux()
 	initializeHandlers(mux)
 	initializeFrontendResourceDelivery(mux)
 
-	tools.Logger.Info("server starting on port %s", tools.Port)
+	tools.Logger.InfoF("server starting on port %s", tools.Port)
 	var handler http.Handler
 	if tools.Profile == tools.TEST {
-		tools.Logger.Warn("CORS is disabled in test mode")
+		tools.Logger.WarnF("CORS is disabled in test mode")
 		handler = utils.GetCorsDisablingHandler(mux)
 	} else {
 		handler = applyOriginCheckingHandler(mux)
@@ -61,7 +63,7 @@ func main() {
 	}
 	err = srv.ListenAndServe()
 	if err != nil {
-		tools.Logger.Error("Server stopped: %v", err)
+		tools.Logger.ErrorF("Server stopped: %v", err)
 		os.Exit(1)
 	}
 }
@@ -74,7 +76,7 @@ func applyOriginCheckingHandler(mux *http.ServeMux) http.Handler {
 		if origin == "" || origin == host {
 			mux.ServeHTTP(w, r)
 		} else {
-			tools.Logger.Info("request failed since origin header '%s' differed from host header '%s'", origin, host)
+			tools.Logger.InfoF("request failed since origin header '%s' differed from host header '%s'", origin, host)
 			http.Error(w, "When 'Origin' header is set, it must match host header", http.StatusBadRequest)
 			return
 		}
@@ -125,7 +127,7 @@ func initializeHandlers(mux *http.ServeMux) {
 
 	if tools.Profile == tools.TEST {
 		users.UserRepo.WipeDatabase()
-		tools.Logger.Warn("opening unprotected full data wipe endpoint meant for testing only")
+		tools.Logger.WarnF("opening unprotected full data wipe endpoint meant for testing only")
 		unprotectedRoutes = append(unprotectedRoutes, Route{store.WipeDataPath, users.WipeDataHandler})
 		// This user is created to manually test the GUI so that account registration can be skipped to save time.
 		sampleUser := "sample"
@@ -136,9 +138,9 @@ func initializeHandlers(mux *http.ServeMux) {
 			Email:    "sample@sample.com",
 		})
 		if err != nil {
-			tools.Logger.Debug("Failed to create user '%s' - maybe because he already exists, error: %v.", sampleUser, err)
+			tools.Logger.DebugF("Failed to create user '%s' - maybe because he already exists, error: %v.", sampleUser, err)
 		}
-		tools.Logger.Warn("created '%s' user with weak password for manual testing", sampleUser)
+		tools.Logger.WarnF("created '%s' user with weak password for manual testing", sampleUser)
 		loadSampleAppData("sampleuser", "nginx", "sample2@sample.com", "sampleuser-app", true)
 		loadSampleAppData("maliciousmaintainer", "maliciousapp", "sample3@sample.com", "malicious-app", false)
 	}
@@ -154,18 +156,22 @@ func loadSampleAppData(username, appname, email, sampleDir string, shouldBeValid
 		Email:    email,
 	})
 	if err != nil {
-		tools.Logger.Fatal("Failed to create '%s' user: %v.", username, err)
+		tools.Logger.ErrorF("Failed to create '%s' user: %v.", username, err)
+		os.Exit(1)
 	}
 	if err = apps.AppRepo.CreateApp(username, appname); err != nil {
-		tools.Logger.Fatal("Failed to create '%s' app: %v.", appname, err)
+		tools.Logger.ErrorF("Failed to create '%s' app: %v.", appname, err)
+		os.Exit(1)
 	}
 	appId, err := apps.AppRepo.GetAppId(username, appname)
 	if err != nil {
-		tools.Logger.Fatal("Failed to get app ID: %v", err)
+		tools.Logger.ErrorF("Failed to get app ID: %v", err)
+		os.Exit(1)
 	}
 	if err = versions.VersionRepo.CreateVersion(appId, "0.0.1",
 		tools.GetVersionBytesOfSampleUserApp(sampleDir, username, appname, shouldBeValid)); err != nil {
-		tools.Logger.Fatal("Failed to create sample version: %v", err)
+		tools.Logger.ErrorF("Failed to create sample version: %v", err)
+		os.Exit(1)
 	}
 }
 
@@ -203,14 +209,14 @@ func initializeFrontendResourceDelivery(mux *http.ServeMux) {
 		// allowing frontend routes to be handled by index.html.
 		// This means that users can directly access pages with paths such as "example.com/some/path".
 		if err != nil && !strings.Contains(r.URL.Path, ".") {
-			tools.Logger.Debug("Serving index.html for SPA route: %s", r.URL.Path)
+			tools.Logger.DebugF("Serving index.html for SPA route: %s", r.URL.Path)
 			http.ServeFile(w, r, "./dist/index.html")
 			return
 		}
 
 		// If the request is for a static file or if the file exists, serve it directly.
 		// This handles requests for JS, CSS, images, etc.
-		tools.Logger.Debug("Serving static content at '%s'", r.URL.Path)
+		tools.Logger.DebugF("Serving static content at '%s'", r.URL.Path)
 		http.FileServer(http.Dir("./dist")).ServeHTTP(w, r)
 	}))
 }

@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/ocelot-cloud/shared/store"
-	"github.com/ocelot-cloud/shared/utils"
 	"net/http"
 	"ocelot/store/apps"
 	"ocelot/store/tools"
@@ -13,14 +11,13 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/ocelot-cloud/deepstack"
+	"github.com/ocelot-cloud/shared/store"
+	"github.com/ocelot-cloud/shared/utils"
 )
 
-var Logger utils.StructuredLogger
-
-func init() {
-	tools.Logger = utils.ProvideLogger(os.Getenv("LOG_LEVEL"), true)
-	Logger = tools.Logger
-}
+var Logger = tools.Logger
 
 func main() {
 	cmd := exec.Command("docker", "compose", "version")
@@ -32,17 +29,9 @@ func main() {
 		Logger.Warn("using mock email client, should only be used for testing")
 		tools.UseMailMockClient = true
 	}
-	if tools.Profile == tools.TEST {
-		Logger.Info("profile set", tools.ProfileField, tools.Profile)
-	} else if tools.Profile == tools.PROD {
-		Logger.Info("profile set", tools.ProfileField, tools.Profile)
-	} else {
-		Logger.Error("unknown profile found", tools.ProfileField, tools.Profile)
-		os.Exit(1)
-	}
 	err := users.InitializeEnvs()
 	if err != nil {
-		Logger.Error("exiting due to error through env file", utils.ErrorField, err)
+		Logger.Error("exiting due to error through env file", deepstack.ErrorField, err)
 	}
 	tools.InitializeDatabase()
 	mux := http.NewServeMux()
@@ -66,7 +55,7 @@ func main() {
 	}
 	err = srv.ListenAndServe()
 	if err != nil {
-		Logger.Error("Server stopped", utils.ErrorField, err)
+		Logger.Error("Server stopped", deepstack.ErrorField, err)
 		os.Exit(1)
 	}
 }
@@ -141,7 +130,7 @@ func initializeHandlers(mux *http.ServeMux) {
 			Email:    "sample@sample.com",
 		})
 		if err != nil {
-			Logger.Debug("Failed to create user - maybe because he already exists, error", tools.UserField, sampleUser, utils.ErrorField, err)
+			Logger.Debug("Failed to create user - maybe because he already exists, error", tools.UserField, sampleUser, deepstack.ErrorField, err)
 		}
 		Logger.Warn("created user with weak password for manual testing", tools.UserField, sampleUser)
 		loadSampleAppData("sampleuser", "nginx", "sample2@sample.com", "sampleuser-app", true)
@@ -159,21 +148,21 @@ func loadSampleAppData(username, appname, email, sampleDir string, shouldBeValid
 		Email:    email,
 	})
 	if err != nil {
-		Logger.Error("Failed to create user", tools.UserField, username, utils.ErrorField, err)
+		Logger.Error("Failed to create user", tools.UserField, username, deepstack.ErrorField, err)
 		os.Exit(1)
 	}
 	if err = apps.AppRepo.CreateApp(username, appname); err != nil {
-		Logger.Error("Failed to create app", tools.AppField, appname, utils.ErrorField, err)
+		Logger.Error("Failed to create app", tools.AppField, appname, deepstack.ErrorField, err)
 		os.Exit(1)
 	}
 	appId, err := apps.AppRepo.GetAppId(username, appname)
 	if err != nil {
-		Logger.Error("Failed to get app ID", utils.ErrorField, err)
+		Logger.Error("Failed to get app ID", deepstack.ErrorField, err)
 		os.Exit(1)
 	}
 	if err = versions.VersionRepo.CreateVersion(appId, "0.0.1",
 		tools.GetVersionBytesOfSampleUserApp(sampleDir, username, appname, shouldBeValid)); err != nil {
-		Logger.Error("Failed to create sample version", utils.ErrorField, err)
+		Logger.Error("Failed to create sample version", deepstack.ErrorField, err)
 		os.Exit(1)
 	}
 }

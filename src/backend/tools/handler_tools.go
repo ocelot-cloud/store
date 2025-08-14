@@ -1,8 +1,9 @@
 package tools
 
 import (
-	"github.com/ocelot-cloud/shared/utils"
 	"net/http"
+
+	"github.com/ocelot-cloud/deepstack"
 )
 
 type ContextKey string
@@ -10,7 +11,7 @@ type ContextKey string
 const UserCtxKey ContextKey = "user"
 
 func HandleInvalidInput(w http.ResponseWriter, err error) {
-	Logger.Info("invalid input", utils.ErrorField, err)
+	Logger.Info("invalid input", deepstack.ErrorField, err)
 	http.Error(w, "invalid input", http.StatusBadRequest)
 }
 

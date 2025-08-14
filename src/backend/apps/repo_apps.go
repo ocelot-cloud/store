@@ -3,6 +3,7 @@ package apps
 import (
 	"database/sql"
 	"fmt"
+	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/store"
 	"github.com/ocelot-cloud/shared/utils"
 	"ocelot/store/tools"
@@ -18,14 +19,14 @@ var (
 func (u *AppRepositoryImpl) IsAppOwner(user string, appId int) bool {
 	userId, err := tools.GetUserId(user)
 	if err != nil {
-		Logger.Info("Failed to get user ID", utils.ErrorField, err)
+		Logger.Info("Failed to get user ID", deepstack.ErrorField, err)
 		return false
 	}
 
 	var ownerId int
 	err = tools.Db.QueryRow("SELECT user_id FROM apps WHERE app_id = $1", appId).Scan(&ownerId)
 	if err != nil {
-		Logger.Error("Failed to get app owner ID", utils.ErrorField, err)
+		Logger.Error("Failed to get app owner ID", deepstack.ErrorField, err)
 		return false
 	}
 
@@ -44,7 +45,7 @@ func (u *AppRepositoryImpl) CreateApp(user string, app string) error {
 	}
 	_, err = tools.Db.Exec(`INSERT INTO apps (user_id, app_name) VALUES ($1, $2)`, userID, app)
 	if err != nil {
-		Logger.Error("Failed to create app", utils.ErrorField, err)
+		Logger.Error("Failed to create app", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to create app")
 	}
 	return nil
@@ -54,7 +55,7 @@ func (u *AppRepositoryImpl) DoesAppExist(appId int) bool {
 	var exists bool
 	err := tools.Db.QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE app_id = $1)", appId).Scan(&exists)
 	if err != nil {
-		Logger.Error("Failed to check app existence for app", tools.AppIdField, appId, utils.ErrorField, err)
+		Logger.Error("Failed to check app existence for app", tools.AppIdField, appId, deepstack.ErrorField, err)
 		return false
 	}
 	return exists
@@ -73,7 +74,7 @@ func (u *AppRepositoryImpl) DeleteApp(appId int) error {
 
 	_, err = tools.Db.Exec(`DELETE FROM apps WHERE app_id = $1`, appId)
 	if err != nil {
-		Logger.Error("Failed to delete app", utils.ErrorField, err)
+		Logger.Error("Failed to delete app", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to delete app")
 	}
 
@@ -89,7 +90,7 @@ func GetUserIdOfApp(appId int) (int, error) {
 	var userId int
 	err := tools.Db.QueryRow(`SELECT user_id FROM apps WHERE app_id = $1`, appId).Scan(&userId)
 	if err != nil {
-		Logger.Error("Failed to get user ID of app", tools.AppIdField, appId, utils.ErrorField, err)
+		Logger.Error("Failed to get user ID of app", tools.AppIdField, appId, deepstack.ErrorField, err)
 		return -1, fmt.Errorf("failed to get user ID of app")
 	}
 	return userId, nil
@@ -132,7 +133,7 @@ func (u *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 
 	rows, err := tools.Db.Query(query, "%"+request.SearchTerm+"%", "%"+request.SearchTerm+"%")
 	if err != nil {
-		Logger.Error("Failed to find apps", utils.ErrorField, err)
+		Logger.Error("Failed to find apps", deepstack.ErrorField, err)
 		return nil, fmt.Errorf("failed to find apps")
 	}
 	defer utils.Close(rows)
@@ -142,7 +143,7 @@ func (u *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 		var appId, versionId int
 		err := rows.Scan(&maintainer, &appId, &appName, &versionId, &versionName)
 		if err != nil {
-			Logger.Error("Error scanning app row", utils.ErrorField, err)
+			Logger.Error("Error scanning app row", deepstack.ErrorField, err)
 			continue
 		}
 		apps = append(apps, store.AppWithLatestVersion{
@@ -155,7 +156,7 @@ func (u *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 	}
 	err = rows.Err()
 	if err != nil {
-		Logger.Error("Error iterating over rows", utils.ErrorField, err)
+		Logger.Error("Error iterating over rows", deepstack.ErrorField, err)
 		return nil, fmt.Errorf("error iterating over rows")
 	}
 	return apps, nil

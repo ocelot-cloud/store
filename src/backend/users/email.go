@@ -3,12 +3,14 @@ package users
 import (
 	"bufio"
 	"fmt"
-	"github.com/ocelot-cloud/shared/utils"
-	"gopkg.in/gomail.v2"
 	"ocelot/store/tools"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/ocelot-cloud/deepstack"
+	"github.com/ocelot-cloud/shared/utils"
+	"gopkg.in/gomail.v2"
 )
 
 const envFilePath = "data/.env"
@@ -23,7 +25,7 @@ func InitializeEnvs() error {
 		defaultEnv := []byte("HOST=http://localhost:8082\nSMTP_HOST=smtps.sample.com\nSMTP_PORT=465\nEMAIL=sample@sample.com\nEMAIL_USER=sample\nEMAIL_PASSWORD=password\n")
 		err = os.WriteFile(envFilePath, defaultEnv, 0600)
 		if err != nil {
-			Logger.Error("Failed to create .env file", utils.ErrorField, err)
+			Logger.Error("Failed to create .env file", deepstack.ErrorField, err)
 			return fmt.Errorf("failed to create .env file")
 		}
 		Logger.Info(".env file created with default values")
@@ -32,7 +34,7 @@ func InitializeEnvs() error {
 		var file *os.File
 		file, err = os.Open(envFilePath)
 		if err != nil {
-			Logger.Error("Failed to open .env file", utils.ErrorField, err)
+			Logger.Error("Failed to open .env file", deepstack.ErrorField, err)
 			os.Exit(1)
 		}
 		defer utils.Close(file)
@@ -44,14 +46,14 @@ func InitializeEnvs() error {
 			if len(parts) == 2 {
 				err = os.Setenv(parts[0], parts[1])
 				if err != nil {
-					Logger.Error("failed to set environment variable", tools.EnvVarField, parts[0], utils.ErrorField, err)
+					Logger.Error("failed to set environment variable", tools.EnvVarField, parts[0], deepstack.ErrorField, err)
 					os.Exit(1)
 				}
 			}
 		}
 
 		if err := scanner.Err(); err != nil {
-			Logger.Error("Error reading .env file", utils.ErrorField, err)
+			Logger.Error("Error reading .env file", deepstack.ErrorField, err)
 			os.Exit(1)
 		}
 
@@ -60,7 +62,7 @@ func InitializeEnvs() error {
 		smtpPort := GetEnv("SMTP_PORT")
 		SMTP_PORT, err = strconv.Atoi(smtpPort)
 		if err != nil {
-			Logger.Error("Failed to parse SMTP_PORT env", tools.SmtpPortEnvField, smtpPort, utils.ErrorField, err)
+			Logger.Error("Failed to parse SMTP_PORT env", tools.SmtpPortEnvField, smtpPort, deepstack.ErrorField, err)
 			os.Exit(1)
 		}
 		EMAIL = GetEnv("EMAIL")

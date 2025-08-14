@@ -2,15 +2,17 @@ package versions
 
 import (
 	"encoding/json"
-	"github.com/ocelot-cloud/shared/store"
-	"github.com/ocelot-cloud/shared/utils"
-	"github.com/ocelot-cloud/shared/validation"
 	"net/http"
 	"ocelot/store/apps"
 	"ocelot/store/tools"
 	"ocelot/store/users"
 	"strconv"
 	"strings"
+
+	"github.com/ocelot-cloud/deepstack"
+	"github.com/ocelot-cloud/shared/store"
+	"github.com/ocelot-cloud/shared/utils"
+	"github.com/ocelot-cloud/shared/validation"
 )
 
 var Logger = tools.Logger
@@ -28,7 +30,7 @@ func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "version content too large, the limit is 1MB", http.StatusRequestEntityTooLarge)
 			return
 		} else {
-			Logger.Info("version upload request body of user was invalid", tools.UserField, user, utils.ErrorField, err)
+			Logger.Info("version upload request body of user was invalid", tools.UserField, user, deepstack.ErrorField, err)
 			http.Error(w, "could not decode request body", http.StatusBadRequest)
 			return
 		}
@@ -36,7 +38,7 @@ func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = validation.ValidateStruct(versionUpload)
 	if err != nil {
-		Logger.Info("version upload of user failed", tools.UserField, user, utils.ErrorField, err)
+		Logger.Info("version upload of user failed", tools.UserField, user, deepstack.ErrorField, err)
 		http.Error(w, "invalid input", http.StatusBadRequest)
 		return
 	}
@@ -74,21 +76,21 @@ func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	appName, err := apps.AppRepo.GetAppName(appId)
 	if err != nil {
-		Logger.Error("getting app name failed", utils.ErrorField, err)
+		Logger.Error("getting app name failed", deepstack.ErrorField, err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
 	maintainerName, err := apps.AppRepo.GetMaintainerName(appId)
 	if err != nil {
-		Logger.Error("getting maintainer name failed", utils.ErrorField, err)
+		Logger.Error("getting maintainer name failed", deepstack.ErrorField, err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
 	err = validation.ValidateVersion(versionUpload.Content, maintainerName, appName)
 	if err != nil {
-		Logger.Info("version upload of user invalid", tools.UserField, user, utils.ErrorField, err)
+		Logger.Info("version upload of user invalid", tools.UserField, user, deepstack.ErrorField, err)
 		http.Error(w, "invalid version: "+err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -102,7 +104,7 @@ func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = VersionRepo.CreateVersion(appId, versionUpload.Version, versionUpload.Content)
 	if err != nil {
-		Logger.Error("creating version failed", utils.ErrorField, err)
+		Logger.Error("creating version failed", deepstack.ErrorField, err)
 		http.Error(w, "invalid input", http.StatusInternalServerError)
 		return
 	}
@@ -132,7 +134,7 @@ func VersionDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = VersionRepo.DeleteVersion(versionId)
 	if err != nil {
-		Logger.Info("deleting version failed", tools.VersionIdField, versionId, utils.ErrorField, err)
+		Logger.Info("deleting version failed", tools.VersionIdField, versionId, deepstack.ErrorField, err)
 		http.Error(w, "invalid input", http.StatusInternalServerError)
 		return
 	}
@@ -176,7 +178,7 @@ func VersionDownloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	versionInfo, err := VersionRepo.GetFullVersionInfo(versionId)
 	if err != nil {
-		Logger.Error("error when accessing version info", utils.ErrorField, err)
+		Logger.Error("error when accessing version info", deepstack.ErrorField, err)
 		http.Error(w, "error when accessing version info", http.StatusInternalServerError)
 		return
 	}

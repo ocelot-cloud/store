@@ -1,9 +1,5 @@
 package main
 
-import (
-	"github.com/ocelot-cloud/task-runner"
-)
-
 func TestHubAll() {
 	tr.ExecuteInDir(backendDir, "rm -rf data")
 	TestBackend()
@@ -11,11 +7,12 @@ func TestHubAll() {
 }
 
 func TestUnits() {
-	tr.PrintTaskDescription("Testing units")
+	tr.Log.TaskDescription("Testing units")
 	defer tr.Cleanup()
 	startCockroachDb()
 
-	tr.ExecuteInDir(backendDir, "go test -count=1 -tags=unit ./...")
+	// TODO it should not be necessary to set a profile for unit tests; the TEST profile should become the default; PROD should become the app store packaged in a container I guess?
+	tr.ExecuteInDir(backendDir, "go test -count=1 -tags=unit ./...", "PROFILE=TEST")
 }
 
 var isPostgresDbStarted = false
@@ -30,7 +27,7 @@ func startCockroachDb() {
 func TestBackend() {
 	TestUnits()
 
-	tr.PrintTaskDescription("Testing backend")
+	tr.Log.TaskDescription("Testing backend")
 	defer tr.Cleanup()
 	tr.ExecuteInDir(backendDir, "go build .")
 	startCockroachDb()
@@ -41,11 +38,11 @@ func TestBackend() {
 }
 
 func TestAcceptance() {
-	tr.PrintTaskDescription("Testing acceptance")
+	tr.Log.TaskDescription("Testing acceptance")
 	defer tr.Cleanup()
 	build()
 	startCockroachDb()
-	tr.StartDaemon(backendDir, "./store")
+	tr.StartDaemon(backendDir, "./store", "PROFILE=TEST")
 	tr.WaitUntilPortIsReady("8082")
 	tr.ExecuteInDir(backendCheckDir, "go test -count=1 -tags=acceptance ./...")
 	tr.ExecuteInDir(acceptanceTestsDir, "npx cypress run --spec cypress/e2e/hub.cy.ts --headless")

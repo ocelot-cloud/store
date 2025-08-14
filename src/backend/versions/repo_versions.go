@@ -2,12 +2,14 @@ package versions
 
 import (
 	"fmt"
-	"github.com/ocelot-cloud/shared/store"
-	"github.com/ocelot-cloud/shared/utils"
 	"ocelot/store/apps"
 	"ocelot/store/tools"
 	"strconv"
 	"time"
+
+	"github.com/ocelot-cloud/deepstack"
+	"github.com/ocelot-cloud/shared/store"
+	"github.com/ocelot-cloud/shared/utils"
 )
 
 var VersionRepo VersionRepository = &VersionRepositoryImpl{}
@@ -31,7 +33,7 @@ func (u *VersionRepositoryImpl) GetAppIdByVersionId(versionId int) (int, error) 
 	var appId int
 	err := tools.Db.QueryRow("SELECT app_id FROM versions WHERE version_id = $1", versionId).Scan(&appId)
 	if err != nil {
-		Logger.Error("Failed to get app ID by version ID", tools.VersionIdField, versionId, utils.ErrorField, err)
+		Logger.Error("Failed to get app ID by version ID", tools.VersionIdField, versionId, deepstack.ErrorField, err)
 		return -1, fmt.Errorf("failed to get app ID by version ID")
 	}
 	return appId, nil
@@ -40,7 +42,7 @@ func (u *VersionRepositoryImpl) GetAppIdByVersionId(versionId int) (int, error) 
 func (u *VersionRepositoryImpl) IsVersionOwner(user string, versionId int) bool {
 	userId, err := tools.GetUserId(user)
 	if err != nil {
-		Logger.Info("Failed to get user ID", tools.UserField, utils.ErrorField, err)
+		Logger.Info("Failed to get user ID", tools.UserField, deepstack.ErrorField, err)
 		return false
 	}
 
@@ -51,7 +53,7 @@ func (u *VersionRepositoryImpl) IsVersionOwner(user string, versionId int) bool 
 		JOIN apps ON versions.app_id = apps.app_id
 		WHERE versions.version_id = $1`, versionId).Scan(&ownerId)
 	if err != nil {
-		Logger.Error("Failed to get version owner ID", utils.ErrorField, err)
+		Logger.Error("Failed to get version owner ID", deepstack.ErrorField, err)
 		return false
 	}
 

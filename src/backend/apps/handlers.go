@@ -2,13 +2,15 @@ package apps
 
 import (
 	"fmt"
-	"github.com/ocelot-cloud/shared/store"
-	"github.com/ocelot-cloud/shared/utils"
-	"github.com/ocelot-cloud/shared/validation"
 	"net/http"
 	"ocelot/store/tools"
 	"ocelot/store/users"
 	"strconv"
+
+	"github.com/ocelot-cloud/deepstack"
+	"github.com/ocelot-cloud/shared/store"
+	"github.com/ocelot-cloud/shared/utils"
+	"github.com/ocelot-cloud/shared/validation"
 )
 
 func AppCreationHandler(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +41,7 @@ func AppCreationHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = AppRepo.CreateApp(user, appString.Value)
 	if err != nil {
-		Logger.Error("user tried to create app but it failed", tools.UserField, user, tools.AppField, appString, utils.ErrorField, err)
+		Logger.Error("user tried to create app but it failed", tools.UserField, user, tools.AppField, appString, deepstack.ErrorField, err)
 		http.Error(w, "app creation failed", http.StatusInternalServerError)
 		return
 	}
@@ -91,7 +93,7 @@ func AppGetListHandler(w http.ResponseWriter, r *http.Request) {
 
 	list, err := AppRepo.GetAppList(user)
 	if err != nil {
-		Logger.Warn("error getting app list", utils.ErrorField, err)
+		Logger.Warn("error getting app list", deepstack.ErrorField, err)
 		http.Error(w, "error getting app list", http.StatusInternalServerError)
 	}
 
@@ -107,7 +109,7 @@ func SearchForAppsHandler(w http.ResponseWriter, r *http.Request) {
 
 	apps, err := AppRepo.SearchForApps(*appSearchRequest)
 	if err != nil {
-		Logger.Warn("error finding apps", utils.ErrorField, err)
+		Logger.Warn("error finding apps", deepstack.ErrorField, err)
 		http.Error(w, "error finding apps", http.StatusInternalServerError)
 		return
 	}

@@ -5,12 +5,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/ocelot-cloud/shared/store"
-	"github.com/ocelot-cloud/shared/utils"
-	"golang.org/x/crypto/bcrypt"
 	"ocelot/store/tools"
 	"sync"
 	"time"
+
+	"github.com/ocelot-cloud/deepstack"
+	"github.com/ocelot-cloud/shared/store"
+	"github.com/ocelot-cloud/shared/utils"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var NotEnoughSpacePrefix = "not enough space"
@@ -18,7 +20,7 @@ var NotEnoughSpacePrefix = "not enough space"
 func (u *UserRepositoryImpl) IsThereEnoughSpaceToAddVersion(user string, bytesToAdd int) error {
 	bytesUsed, err := UserRepo.GetUsedSpaceInBytes(user)
 	if err != nil {
-		Logger.Error("checking space failed", utils.ErrorField, err)
+		Logger.Error("checking space failed", deepstack.ErrorField, err)
 		return errors.New("checking space failed")
 	}
 	if bytesUsed+bytesToAdd > tools.MaxStorageSize {
@@ -34,7 +36,7 @@ func (u *UserRepositoryImpl) IsPasswordCorrect(user string, password string) boo
 	var hashedPassword string
 	err := tools.Db.QueryRow("SELECT hashed_password FROM users WHERE user_name = $1", user).Scan(&hashedPassword)
 	if err != nil {
-		Logger.Error("Failed to fetch hashed password", utils.ErrorField, err)
+		Logger.Error("Failed to fetch hashed password", deepstack.ErrorField, err)
 		return false
 	}
 
@@ -46,7 +48,7 @@ func (u *UserRepositoryImpl) DoesUserExist(user string) bool {
 	var exists bool
 	err := tools.Db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE user_name = $1)", user).Scan(&exists)
 	if err != nil {
-		Logger.Error("Failed to check user existence", utils.ErrorField, err)
+		Logger.Error("Failed to check user existence", deepstack.ErrorField, err)
 		return false
 	}
 	return exists
@@ -60,7 +62,7 @@ func (u *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) (string, e
 	} else {
 		randomBytes := make([]byte, 32)
 		if _, err := rand.Read(randomBytes); err != nil {
-			Logger.Error("Failed to generate cookie", utils.ErrorField, err)
+			Logger.Error("Failed to generate cookie", deepstack.ErrorField, err)
 			return "", err
 		}
 		key = hex.EncodeToString(randomBytes)
@@ -84,12 +86,12 @@ func (u *UserRepositoryImpl) ValidateUser(code string) error {
 
 	hashedPassword, err := utils.SaltAndHash(form.Password)
 	if err != nil {
-		Logger.Error("Failed to hash password", utils.ErrorField, err)
+		Logger.Error("Failed to hash password", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to hash password")
 	}
 	_, err = tools.Db.Exec("INSERT INTO users (user_name, email, hashed_password, used_space) VALUES ($1, $2, $3, $4)", form.User, form.Email, hashedPassword, 0)
 	if err != nil {
-		Logger.Error("Failed to create user", utils.ErrorField, err)
+		Logger.Error("Failed to create user", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to create user")
 	}
 	tools.WaitingForEmailVerificationList.Delete(code)
@@ -98,13 +100,13 @@ func (u *UserRepositoryImpl) ValidateUser(code string) error {
 
 func (u *UserRepositoryImpl) DeleteUser(user string) error {
 	if !u.DoesUserExist(user) {
-		Logger.Info("User does not exist", utils.ErrorField, user)
+		Logger.Info("User does not exist", deepstack.ErrorField, user)
 		return fmt.Errorf("user does not exist")
 	}
 
 	_, err := tools.Db.Exec("DELETE FROM users WHERE user_name = $1", user)
 	if err != nil {
-		Logger.Error("Failed to delete user", utils.ErrorField, err)
+		Logger.Error("Failed to delete user", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to delete user")
 	}
 
@@ -119,7 +121,7 @@ func (u *UserRepositoryImpl) HashAndSaveCookie(user string, cookie string, expir
 
 	_, err = tools.Db.Exec("UPDATE users SET hashed_cookie_value = $1, expiration_date = $2 WHERE user_name = $3", hashedCookieValue, expirationDate.Format(time.RFC3339), user)
 	if err != nil {
-		Logger.Error("Failed to hash and save cookie", utils.ErrorField, err)
+		Logger.Error("Failed to hash and save cookie", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to hash and save cookie")
 	}
 	return nil
@@ -128,14 +130,14 @@ func (u *UserRepositoryImpl) HashAndSaveCookie(user string, cookie string, expir
 func (u *UserRepositoryImpl) IsCookieExpired(cookie string) bool {
 	hashedCookieValue, err := utils.Hash(cookie)
 	if err != nil {
-		Logger.Error("Error hashing cookie", utils.ErrorField, err)
+		Logger.Error("Error hashing cookie", deepstack.ErrorField, err)
 		return false
 	}
 
 	var expirationDateStr string
 	err = tools.Db.QueryRow("SELECT expiration_date FROM users WHERE hashed_cookie_value = $1", hashedCookieValue).Scan(&expirationDateStr)
 	if err != nil {
-		Logger.Error("Failed to fetch expiration date", utils.ErrorField, err)
+		Logger.Error("Failed to fetch expiration date", deepstack.ErrorField, err)
 		return true
 	} else if expirationDateStr == "" {
 		return true
@@ -143,7 +145,7 @@ func (u *UserRepositoryImpl) IsCookieExpired(cookie string) bool {
 
 	expirationDate, err := time.Parse(time.RFC3339, expirationDateStr)
 	if err != nil {
-		Logger.Error("Failed to parse expiration date", utils.ErrorField, err)
+		Logger.Error("Failed to parse expiration date", deepstack.ErrorField, err)
 		return true
 	}
 
@@ -168,7 +170,7 @@ func (u *UserRepositoryImpl) GetUserViaCookie(cookie string) (string, error) {
 			Logger.Info("Cookie not found")
 			return "", fmt.Errorf("cookie not found")
 		} else {
-			Logger.Error("Failed to fetch user", utils.ErrorField, err)
+			Logger.Error("Failed to fetch user", deepstack.ErrorField, err)
 			return "", fmt.Errorf("failed to fetch user")
 		}
 	}
@@ -179,13 +181,13 @@ func (u *UserRepositoryImpl) GetUserViaCookie(cookie string) (string, error) {
 func (u *UserRepositoryImpl) ChangePassword(user string, newPassword string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
-		Logger.Error("Failed to hash password", utils.ErrorField, err)
+		Logger.Error("Failed to hash password", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to hash password")
 	}
 
 	_, err = tools.Db.Exec("UPDATE users SET hashed_password = $1 WHERE user_name = $2", hashedPassword, user)
 	if err != nil {
-		Logger.Error("Failed to change password", utils.ErrorField, err)
+		Logger.Error("Failed to change password", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to change password")
 	}
 
@@ -195,7 +197,7 @@ func (u *UserRepositoryImpl) ChangePassword(user string, newPassword string) err
 func (u *UserRepositoryImpl) WipeDatabase() {
 	_, err := tools.Db.Exec("DELETE FROM users WHERE user_name != 'sample'")
 	if err != nil {
-		Logger.Error("Failed to wipe database", utils.ErrorField, err)
+		Logger.Error("Failed to wipe database", deepstack.ErrorField, err)
 	}
 	tools.WaitingForEmailVerificationList = sync.Map{}
 }
@@ -204,7 +206,7 @@ func (u *UserRepositoryImpl) GetUsedSpaceInBytes(user string) (int, error) {
 	var usedSpace int
 	err := tools.Db.QueryRow(`SELECT used_space FROM users WHERE user_name = $1`, user).Scan(&usedSpace)
 	if err != nil {
-		Logger.Error("Failed to get used space", utils.ErrorField, err)
+		Logger.Error("Failed to get used space", deepstack.ErrorField, err)
 		return 0, fmt.Errorf("failed to get used space")
 	}
 	return usedSpace, nil
@@ -213,7 +215,7 @@ func (u *UserRepositoryImpl) GetUsedSpaceInBytes(user string) (int, error) {
 func (u *UserRepositoryImpl) Logout(user string) error {
 	_, err := tools.Db.Exec("UPDATE users SET hashed_cookie_value = $1, expiration_date = $2 WHERE user_name = $3", nil, nil, user)
 	if err != nil {
-		Logger.Error("failed to logout", utils.ErrorField, err)
+		Logger.Error("failed to logout", deepstack.ErrorField, err)
 		return errors.New("failed to logout")
 	}
 	return nil
@@ -232,7 +234,7 @@ func (u *UserRepositoryImpl) DoesEmailExist(email string) bool {
 	var exists bool
 	err := tools.Db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)", email).Scan(&exists)
 	if err != nil {
-		Logger.Error("Failed to check email existence", utils.ErrorField, err)
+		Logger.Error("Failed to check email existence", deepstack.ErrorField, err)
 		return false
 	}
 	return exists

@@ -2,12 +2,14 @@ package users
 
 import (
 	"fmt"
-	"github.com/ocelot-cloud/shared/store"
-	"github.com/ocelot-cloud/shared/utils"
-	"github.com/ocelot-cloud/shared/validation"
 	"net/http"
 	"ocelot/store/tools"
 	"time"
+
+	"github.com/ocelot-cloud/deepstack"
+	"github.com/ocelot-cloud/shared/store"
+	"github.com/ocelot-cloud/shared/utils"
+	"github.com/ocelot-cloud/shared/validation"
 )
 
 const (
@@ -43,7 +45,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	cookie, err := utils.GenerateCookie()
 	if err != nil {
-		Logger.Error("cookie generation failed", utils.ErrorField, err)
+		Logger.Error("cookie generation failed", deepstack.ErrorField, err)
 		http.Error(w, "cookie generation failed", http.StatusInternalServerError)
 		return
 	}
@@ -58,7 +60,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = UserRepo.HashAndSaveCookie(creds.User, cookie.Value, cookie.Expires)
 	if err != nil {
-		Logger.Error("setting cookie failed", utils.ErrorField, err)
+		Logger.Error("setting cookie failed", deepstack.ErrorField, err)
 		http.Error(w, "setting cookie failed", http.StatusInternalServerError)
 		return
 	}
@@ -115,7 +117,7 @@ func ChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = UserRepo.ChangePassword(user, form.NewPassword)
 	if err != nil {
-		Logger.Error("changing password for user failed", tools.UserField, user, utils.ErrorField, err)
+		Logger.Error("changing password for user failed", tools.UserField, user, deepstack.ErrorField, err)
 		http.Error(w, "error when trying to change password", http.StatusInternalServerError)
 		return
 	}
@@ -129,7 +131,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := UserRepo.Logout(user)
 	if err != nil {
-		Logger.Error("logout of user failed", tools.UserField, user, utils.ErrorField, err)
+		Logger.Error("logout of user failed", tools.UserField, user, deepstack.ErrorField, err)
 		http.Error(w, "logout failed", http.StatusInternalServerError)
 		return
 	}
@@ -158,14 +160,14 @@ func RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	code, err := UserRepo.CreateUser(form)
 	if err != nil {
-		Logger.Error("user registration failed", tools.UserField, form.User, utils.ErrorField, err)
+		Logger.Error("user registration failed", tools.UserField, form.User, deepstack.ErrorField, err)
 		http.Error(w, "user registration failed", http.StatusInternalServerError)
 		return
 	}
 
 	err = sendVerificationEmail(form.Email, code)
 	if err != nil {
-		Logger.Error("sending verification email failed", utils.ErrorField, err)
+		Logger.Error("sending verification email failed", deepstack.ErrorField, err)
 		http.Error(w, "sending verification email failed", http.StatusInternalServerError)
 		return
 	}
@@ -186,7 +188,7 @@ func ValidationCodeHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = UserRepo.ValidateUser(code)
 	if err != nil {
-		Logger.Error("validation process of user failed", utils.ErrorField, err)
+		Logger.Error("validation process of user failed", deepstack.ErrorField, err)
 		http.Error(w, "validation process failed", http.StatusBadRequest)
 		return
 	}
@@ -199,7 +201,7 @@ func CheckAuthentication(w http.ResponseWriter, r *http.Request) (string, error)
 	Logger.Debug("checking authentication", tools.UrlPathField, r.URL.Path)
 	cookie, err := r.Cookie(tools.CookieName)
 	if err != nil {
-		Logger.Info("cookie not set in request", utils.ErrorField, err)
+		Logger.Info("cookie not set in request", deepstack.ErrorField, err)
 		http.Error(w, "cookie not set in request", http.StatusUnauthorized)
 		return "", fmt.Errorf("")
 	}
@@ -211,7 +213,7 @@ func CheckAuthentication(w http.ResponseWriter, r *http.Request) (string, error)
 
 	user, err := UserRepo.GetUserViaCookie(cookie.Value)
 	if err != nil {
-		Logger.Info("error when getting cookie of user", utils.ErrorField, err)
+		Logger.Info("error when getting cookie of user", deepstack.ErrorField, err)
 		http.Error(w, "cookie not found", http.StatusUnauthorized)
 		return "", fmt.Errorf("")
 	}
@@ -225,7 +227,7 @@ func CheckAuthentication(w http.ResponseWriter, r *http.Request) (string, error)
 	newExpirationTime := utils.GetTimeInSevenDays()
 	err = UserRepo.HashAndSaveCookie(user, cookie.Value, newExpirationTime)
 	if err != nil {
-		Logger.Error("setting new cookie failed", utils.ErrorField, err)
+		Logger.Error("setting new cookie failed", deepstack.ErrorField, err)
 		http.Error(w, "setting new cookie failed", http.StatusInternalServerError)
 		return "", fmt.Errorf("")
 	}

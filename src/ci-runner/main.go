@@ -2,17 +2,20 @@ package main
 
 import (
 	"fmt"
-	"github.com/ocelot-cloud/shared/utils"
-	tr "github.com/ocelot-cloud/task-runner"
-	"github.com/spf13/cobra"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
 	"syscall"
+
+	"github.com/ocelot-cloud/shared/utils"
+	"github.com/ocelot-cloud/task-runner"
+	"github.com/spf13/cobra"
 )
 
 var (
+	tr = taskrunner.GetTaskRunner()
+
 	srcDir           = getAbsoluteParentDir()
 	frontendDir      = srcDir + "/frontend"
 	backendDir       = srcDir + "/backend"
@@ -39,8 +42,8 @@ func getAbsoluteParentDir() string {
 }
 
 func main() {
-	tr.HandleSignals()
-	tr.CustomCleanupFunc = func() {
+	tr.EnableAbortForKeystrokeControlPlusC()
+	tr.Config.CleanupFunc = func() {
 		var potentiallyExistingProcesses = []string{
 			"vue-tr-service",
 			"vue-service",
@@ -50,7 +53,7 @@ func main() {
 	}
 	defer tr.Cleanup()
 
-	tr.DefaultEnvs = []string{"USE_MOCK_EMAIL_CLIENT=true", "RUN_NATIVELY=true", "LOG_LEVEL=DEBUG"}
+	tr.Config.DefaultEnvironmentVariables = []string{"USE_MOCK_EMAIL_CLIENT=true", "RUN_NATIVELY=true", "LOG_LEVEL=DEBUG"}
 
 	rootCmd := &cobra.Command{
 		Use:   "ci-runner",
@@ -62,7 +65,7 @@ func main() {
 
 	err := rootCmd.Execute()
 	if err != nil {
-		tr.CleanupAndExitWithError()
+		tr.ExitWithError()
 	}
 }
 
@@ -125,13 +128,13 @@ var testCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		inputTestType := args[0]
 		if _, exists := hubTestTypes[inputTestType]; !exists {
-			tr.ColoredPrintln("\nerror: unknown hub test type: %s\n", inputTestType)
-			tr.ColoredPrintln("valid args: %s\n", strings.Join(getKeys(hubTestTypes), ", "))
+			tr.Log.Error("\nerror: unknown hub test type: %s\n", inputTestType)
+			tr.Log.Error("valid args: %s\n", strings.Join(getKeys(hubTestTypes), ", "))
 			os.Exit(1)
 		} else {
 			hubTestTypes[inputTestType]()
 		}
-		tr.ColoredPrintln("\nSuccess! Hub tests passed.\n")
+		tr.Log.Info(("\nSuccess! Hub tests passed.\n"))
 	},
 }
 
@@ -154,7 +157,7 @@ var downloadDependenciesCmd = &cobra.Command{
 	Use:   "download",
 	Short: "Downloads application dependencies",
 	Run: func(cmd *cobra.Command, args []string) {
-		tr.PrintTaskDescription("downloading dependencies")
+		tr.Log.Info("downloading dependencies")
 		tr.ExecuteInDir(backendDir, "go mod tidy")
 		tr.ExecuteInDir(frontendDir, "npm install")
 		tr.ExecuteInDir(acceptanceTestsDir, "npm install")
@@ -166,6 +169,6 @@ var analyzeCmd = &cobra.Command{
 	Short: "runs code analysis tools",
 	Run: func(cmd *cobra.Command, args []string) {
 		signal.Ignore(syscall.SIGPIPE)
-		utils.AnalyzeCode(backendDir)
+		utils.AnalyzeCode(tr, backendDir)
 	},
 }

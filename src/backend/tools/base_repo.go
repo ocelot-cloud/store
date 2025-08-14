@@ -3,10 +3,12 @@ package tools
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/ocelot-cloud/shared/utils"
 	"os"
 	"sync"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/ocelot-cloud/deepstack"
+	"github.com/ocelot-cloud/shared/utils"
 )
 
 var Db *sql.DB
@@ -14,7 +16,8 @@ var Db *sql.DB
 func InitializeDatabase() {
 	var err error
 	var host, customPostgresPort string
-	if os.Getenv("RUN_NATIVELY") == "true" {
+	// TODO maybe better introduce profiles? -> so acceptance testing should be run against the app store container I guess?
+	if Profile == TEST {
 		host = "localhost"
 		customPostgresPort = "5433"
 	} else {
@@ -24,7 +27,7 @@ func InitializeDatabase() {
 
 	Db, err = utils.WaitForPostgresDb(host, customPostgresPort)
 	if err != nil {
-		Logger.Error("Failed to create database client", utils.ErrorField, err)
+		Logger.Error("Failed to create database client", deepstack.ErrorField, err)
 		os.Exit(1)
 	}
 

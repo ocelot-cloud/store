@@ -12,5 +12,4 @@ TODO
 
 ### frontend 
 
-* may be replaced by a CLI tool entirely
-* merge cypress and frontend folder; use yarn as the package manager
+* replace by CLI tool entirely

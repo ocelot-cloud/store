@@ -14,7 +14,6 @@ import (
 
 	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/store"
-	"github.com/ocelot-cloud/shared/utils"
 )
 
 var Logger = tools.Logger
@@ -42,7 +41,7 @@ func main() {
 	var handler http.Handler
 	if tools.Profile == tools.TEST {
 		Logger.Warn("CORS is disabled in test mode")
-		handler = utils.GetCorsDisablingHandler(mux)
+		handler = GetCorsDisablingHandler(mux)
 	} else {
 		handler = applyOriginCheckingHandler(mux)
 	}
@@ -58,6 +57,21 @@ func main() {
 		Logger.Error("Server stopped", deepstack.ErrorField, err)
 		os.Exit(1)
 	}
+}
+
+// TODO !! make the integration tests run against a locally build docker container, so that CORS disabling is not longer needed
+func GetCorsDisablingHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Authorization")
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func applyOriginCheckingHandler(mux *http.ServeMux) http.Handler {

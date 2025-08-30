@@ -114,12 +114,9 @@ func (u *UserRepositoryImpl) DeleteUser(user string) error {
 }
 
 func (u *UserRepositoryImpl) HashAndSaveCookie(user string, cookie string, expirationDate time.Time) error {
-	hashedCookieValue, err := utils.Hash(cookie)
-	if err != nil {
-		return fmt.Errorf("hashing failed")
-	}
+	hashedCookieValue := utils.GetSHA256Hash(cookie)
 
-	_, err = tools.Db.Exec("UPDATE users SET hashed_cookie_value = $1, expiration_date = $2 WHERE user_name = $3", hashedCookieValue, expirationDate.Format(time.RFC3339), user)
+	_, err := tools.Db.Exec("UPDATE users SET hashed_cookie_value = $1, expiration_date = $2 WHERE user_name = $3", hashedCookieValue, expirationDate.Format(time.RFC3339), user)
 	if err != nil {
 		Logger.Error("Failed to hash and save cookie", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to hash and save cookie")
@@ -128,14 +125,10 @@ func (u *UserRepositoryImpl) HashAndSaveCookie(user string, cookie string, expir
 }
 
 func (u *UserRepositoryImpl) IsCookieExpired(cookie string) bool {
-	hashedCookieValue, err := utils.Hash(cookie)
-	if err != nil {
-		Logger.Error("Error hashing cookie", deepstack.ErrorField, err)
-		return false
-	}
+	hashedCookieValue := utils.GetSHA256Hash(cookie)
 
 	var expirationDateStr string
-	err = tools.Db.QueryRow("SELECT expiration_date FROM users WHERE hashed_cookie_value = $1", hashedCookieValue).Scan(&expirationDateStr)
+	err := tools.Db.QueryRow("SELECT expiration_date FROM users WHERE hashed_cookie_value = $1", hashedCookieValue).Scan(&expirationDateStr)
 	if err != nil {
 		Logger.Error("Failed to fetch expiration date", deepstack.ErrorField, err)
 		return true
@@ -158,13 +151,10 @@ func (u *UserRepositoryImpl) GetUserViaCookie(cookie string) (string, error) {
 		return "", fmt.Errorf("cookie not set in request")
 	}
 
-	hashedCookieValue, err := utils.Hash(cookie)
-	if err != nil {
-		return "", fmt.Errorf("hashing failed")
-	}
+	hashedCookieValue := utils.GetSHA256Hash(cookie)
 
 	var user string
-	err = tools.Db.QueryRow("SELECT user_name FROM users WHERE hashed_cookie_value = $1", hashedCookieValue).Scan(&user)
+	err := tools.Db.QueryRow("SELECT user_name FROM users WHERE hashed_cookie_value = $1", hashedCookieValue).Scan(&user)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			Logger.Info("Cookie not found")
@@ -244,6 +234,7 @@ type UserRepositoryImpl struct{}
 
 var UserRepo UserRepository = &UserRepositoryImpl{}
 
+// TODO !! simplify to CRUD operations, rest should be handle by a service
 type UserRepository interface {
 	CreateUser(form *store.RegistrationForm) (string, error)
 	ValidateUser(code string) error

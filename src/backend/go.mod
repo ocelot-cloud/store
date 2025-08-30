@@ -1,11 +1,11 @@
 module ocelot/store
 
-go 1.24.4
+go 1.24.5
 
 require (
 	github.com/jackc/pgx/v5 v5.7.5
-	github.com/ocelot-cloud/deepstack v0.0.4
-	github.com/ocelot-cloud/shared v0.0.112
+	github.com/ocelot-cloud/deepstack v0.0.8
+	github.com/ocelot-cloud/shared v0.0.126
 	golang.org/x/crypto v0.41.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
@@ -21,7 +21,7 @@ require (
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/ocelot-cloud/task-runner v0.0.33 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/stretchr/testify v1.11.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/text v0.28.0 // indirect

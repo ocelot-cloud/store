@@ -3,14 +3,15 @@
 package check
 
 import (
-	"github.com/ocelot-cloud/shared/assert"
-	"github.com/ocelot-cloud/shared/store"
-	"github.com/ocelot-cloud/shared/utils"
 	"net/http"
 	"ocelot/store/tools"
 	"ocelot/store/users"
 	"testing"
 	"time"
+
+	"github.com/ocelot-cloud/deepstack"
+	"github.com/ocelot-cloud/shared/assert"
+	"github.com/ocelot-cloud/shared/store"
 )
 
 var DaysToCookieExpiration = 7
@@ -73,7 +74,7 @@ func TestChangePasswordSecurity(t *testing.T) {
 
 	err := hub.ChangePassword(correctlyFormattedButNotMatchingPassword, newPassword)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(401, "incorrect username or password"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "incorrect username or password", 401)
 }
 
 // TODO test input validation through utils.ReadJsonFromRequest
@@ -98,10 +99,10 @@ func TestLoginSecurity(t *testing.T) {
 	correctlyFormattedButNotMatchingPassword := tools.SamplePassword + "x"
 	err = hub.Login(tools.SampleUser, correctlyFormattedButNotMatchingPassword)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(401, "incorrect username or password"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "incorrect username or password", 401)
 }
 
-func checkCookie(t *testing.T, hub *store.AppStoreClient) {
+func checkCookie(t *testing.T, hub *store.AppStoreClientImpl) {
 	assert.Equal(t, "/", hub.Parent.Cookie.Path)
 	assert.Equal(t, http.SameSiteStrictMode, hub.Parent.Cookie.SameSite)
 	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration-1).Before(hub.Parent.Cookie.Expires))
@@ -111,14 +112,16 @@ func checkCookie(t *testing.T, hub *store.AppStoreClient) {
 func TestCookieExpirationAndRenewal(t *testing.T) {
 	hub := GetHubAndLogin(t)
 	defer hub.WipeData()
+	// TODO !! too complex? to be simplified?
 	// There is some specific logic for this user in the production code when handling cookie.
 	assert.Nil(t, hub.RegisterAndValidateUser(users.TestUserWithExpiredCookie, tools.SamplePassword, tools.SampleEmail+"x"))
 	assert.Nil(t, hub.Login(users.TestUserWithExpiredCookie, tools.SamplePassword))
 	assert.True(t, time.Now().UTC().After(hub.Parent.Cookie.Expires))
 	_, err := hub.CreateApp(tools.SampleApp)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(400, "cookie expired"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "cookie expired", 400)
 
+	// TODO !! too complex? to be simplified?
 	// There is some specific logic for this user in the production code when handling cookie.
 	assert.Nil(t, hub.RegisterAndValidateUser(users.TestUserWithOldButNotExpiredCookie, tools.SamplePassword, tools.SampleEmail+"y"))
 	assert.Nil(t, hub.Login(users.TestUserWithOldButNotExpiredCookie, tools.SamplePassword))
@@ -130,7 +133,7 @@ func TestCookieExpirationAndRenewal(t *testing.T) {
 	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration+1).After(hub.Parent.Cookie.Expires))
 }
 
-/* TODO reimplement
+/* TODO !! reimplement
 func TestOwnership(t *testing.T) {
 	hub := GetHub()
 	testVersionOwnership(t, hub, hub.DeleteApp)
@@ -168,7 +171,7 @@ func TestOwnershipOfDeleteVersion(t *testing.T) {
 
 	err = hub.DeleteVersion(versionId)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(401, "you do not own this version"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "you do not own this version", 401)
 }
 
 func TestUploadOfInvalidZipContent(t *testing.T) {
@@ -179,10 +182,13 @@ func TestUploadOfInvalidZipContent(t *testing.T) {
 	assert.Nil(t, err)
 	_, err = hub.UploadVersion(appId, tools.SampleVersion, content)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(400, "invalid version: failed to read zip file: zip: not a valid zip file"), err.Error())
+	// TODO !! also assert "response_body", problem is, that it is a deepstack.Error(), so very long, which is not the expected behavior of the http tool I use, to be investigated
+	deepstack.AssertDeepStackError(t, err, "request failed", "status_code", 400)
 }
 
-/* TODO
+// TODO !! when integration tests are applied to docker deployment, then there is not need to expose the database port to the host any longer
+
+/* TODO !!
 func TestCookieAndHostProtection(t *testing.T) {
 	hub := GetHub()
 	tests := []func() error{

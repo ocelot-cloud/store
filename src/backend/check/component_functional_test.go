@@ -3,11 +3,13 @@
 package check
 
 import (
-	"github.com/ocelot-cloud/shared/assert"
-	"github.com/ocelot-cloud/shared/utils"
 	"ocelot/store/tools"
 	"testing"
 	"time"
+
+	"github.com/ocelot-cloud/deepstack"
+	"github.com/ocelot-cloud/shared/assert"
+	"github.com/ocelot-cloud/shared/utils"
 )
 
 func TestVersionDownload(t *testing.T) {
@@ -21,7 +23,7 @@ func TestVersionDownload(t *testing.T) {
 	assert.Nil(t, err)
 	_, err = hub.DownloadVersion(notExistingVersionId)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(404, "version does not exist"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "version does not exist", 404)
 
 	versionId, err := hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
 	assert.Nil(t, err)
@@ -65,7 +67,7 @@ func TestCreateApp(t *testing.T) {
 
 	_, err = hub.CreateApp(tools.SampleApp)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(409, "app already exists"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "app already exists", 409)
 
 	assert.Nil(t, hub.DeleteApp(appId))
 	foundApps, err = hub.ListOwnApps()
@@ -79,7 +81,7 @@ func TestUploadVersion(t *testing.T) {
 	notExistingVersionId := "0"
 	_, err := hub.UploadVersion(notExistingVersionId, tools.SampleVersion, SampleVersionFileContent)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(404, "app does not exist"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "app does not exist", 404)
 
 	appId, err := hub.CreateApp(tools.SampleApp)
 	assert.Nil(t, err)
@@ -88,7 +90,7 @@ func TestUploadVersion(t *testing.T) {
 
 	_, err = hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(409, "version already exists"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "version already exists", 409)
 
 	versions, err := hub.GetVersions(appId)
 	assert.Nil(t, err)
@@ -102,14 +104,14 @@ func TestUploadVersion(t *testing.T) {
 
 	err = hub.DeleteVersion(versionId)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(404, "version does not exist"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "version does not exist", 404)
 }
 
 func TestLogin(t *testing.T) {
 	hub := GetHub()
 	err := hub.Login(tools.SampleUser, tools.SamplePassword)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(404, "user does not exist"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "user does not exist", 404)
 }
 
 func TestChangePassword(t *testing.T) {
@@ -120,7 +122,7 @@ func TestChangePassword(t *testing.T) {
 	assert.Nil(t, hub.ChangePassword(tools.SamplePassword, newPassword))
 	err := hub.Login(tools.SampleUser, tools.SamplePassword)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(401, "incorrect username or password"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "incorrect username or password", 401)
 
 	hub.Parent.Cookie = nil
 	err = hub.Login(tools.SampleUser, newPassword)
@@ -134,7 +136,7 @@ func TestRegistration(t *testing.T) {
 	assert.Nil(t, hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail))
 	err := hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(409, "user already exists"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "user already exists", 409)
 }
 
 func TestGetVersionsUnhappyPath(t *testing.T) {
@@ -158,7 +160,7 @@ func TestLogout(t *testing.T) {
 	assert.Nil(t, hub.Logout())
 	_, err = hub.CreateApp(tools.SampleApp)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(401, "cookie not found"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "cookie not found", 401)
 }
 
 func TestGetAppList(t *testing.T) {
@@ -191,7 +193,7 @@ func TestEmailAlreadyExists(t *testing.T) {
 	user2 := tools.SampleUser + "2"
 	err := hub.RegisterUser(user2, tools.SamplePassword, tools.SampleEmail)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(409, "email already exists"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "email already exists", 409)
 }
 
 func TestDownloadDummyVersion(t *testing.T) {
@@ -221,7 +223,7 @@ func TestCreationOfOcelotCloudAppIsForbidden(t *testing.T) {
 	defer hub.WipeData()
 	_, err := hub.CreateApp("ocelotcloud")
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(400, "app name is reserved"), err.Error())
+	AssertDeepStackErrorWithCode(t, err, "app name is reserved", 400)
 }
 
 func TestUnofficialAppFilteringWhenSearching(t *testing.T) {
@@ -257,4 +259,9 @@ func TestAllowEmptyStringAsSearchTerm(t *testing.T) {
 	apps, err = hub.SearchForApps("", true)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(apps))
+}
+
+// TODO !! duplication with cloud -> move to "shared"
+func AssertDeepStackErrorWithCode(t *testing.T, err error, expectedResponseBodyErrorMessage string, expectedStatusCode int) {
+	deepstack.AssertDeepStackError(t, err, "request failed", "response_body", expectedResponseBodyErrorMessage, "status_code", expectedStatusCode)
 }

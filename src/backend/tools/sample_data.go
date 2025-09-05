@@ -22,8 +22,14 @@ var (
 	}
 )
 
+// TODO !! return error
 func GetVersionBytesOfSampleUserApp(folderName, sampleUser, sampleApp string, shouldBeValid bool) []byte {
-	sampleAppDir := utils.FindDir("assets") + "/" + folderName
+	assetsDir, err := utils.FindDir("assets") // TODO !! the DirectoryProvider Service should find the assets directory once at the beginning
+	if err != nil {
+		Logger.Error("Failed to find assets directory", deepstack.ErrorField, err)
+		os.Exit(1)
+	}
+	sampleAppDir := assetsDir + "/" + folderName
 	versionBytes, err := validation.ZipDirectory(sampleAppDir)
 	if err != nil {
 		Logger.Error("Failed to read sample version file", deepstack.ErrorField, err)
@@ -42,7 +48,13 @@ func GetVersionBytesOfSampleUserApp(folderName, sampleUser, sampleApp string, sh
 }
 
 func GetValidVersionBytesOfSampleMaintainerApp() []byte {
-	sampleAppDir := utils.FindDir("assets") + "/samplemaintainer-app"
+	assetsDir, err := utils.FindDir("assets")
+	if err != nil {
+		Logger.Error("Failed to find assets directory", deepstack.ErrorField, err)
+		// TODO !! return error
+	}
+	// TODO !! simple call it "sampleapp"
+	sampleAppDir := assetsDir + "/samplemaintainer-app"
 	versionBytes, err := validation.ZipDirectory(sampleAppDir)
 	if err != nil {
 		Logger.Error("Failed to read sample version file", deepstack.ErrorField, err)

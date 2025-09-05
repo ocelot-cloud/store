@@ -22,9 +22,7 @@ var (
 	backendDockerDir = backendDir + "/docker"
 	backendDataDir   = backendDir + "/data"
 	backendDistDir   = backendDir + "/dist"
-
-	backendToolsDir = backendDir + "/tools"
-	backendCheckDir = backendDir + "/check"
+	backendCheckDir  = backendDir + "/check"
 
 	acceptanceTestsDir = srcDir + "/cypress"
 	ciRunnerDir        = srcDir + "/ci-runner"
@@ -60,7 +58,8 @@ func main() {
 		Short: "ci-runner is a service that runs CI jobs",
 	}
 
-	rootCmd.AddCommand(runCmd, testCmd, updateCmd, deployCmd, downloadDependenciesCmd, analyzeCmd)
+	buildCmd.AddCommand(buildBackendCmd)
+	rootCmd.AddCommand(runCmd, testCmd, updateCmd, deployCmd, downloadDependenciesCmd, analyzeCmd, buildCmd)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	err := rootCmd.Execute()
@@ -168,7 +167,26 @@ var analyzeCmd = &cobra.Command{
 	Use:   "analyze",
 	Short: "runs code analysis tools",
 	Run: func(cmd *cobra.Command, args []string) {
-		signal.Ignore(syscall.SIGPIPE)
+		signal.Ignore(syscall.SIGPIPE) // TODO is that really needed?
 		utils.AnalyzeCode(tr, backendDir)
 	},
 }
+
+var buildCmd = &cobra.Command{
+	Use:   "build",
+	Short: "build commands",
+	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Help()
+	},
+}
+
+var buildBackendCmd = &cobra.Command{
+	Use:   "backend",
+	Short: "Builds the backend",
+	Run: func(cmd *cobra.Command, args []string) {
+		// TODO !! fix this, database should not be run there
+		//  utils.BuildWholeGoProject(tr, backendDir)
+	},
+}
+
+// TODO !! add build functions for frontend and docker container

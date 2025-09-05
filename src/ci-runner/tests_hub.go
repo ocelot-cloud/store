@@ -57,7 +57,7 @@ func build() {
 }
 
 func buildForDocker() {
-	subBuild()
+	subBuild() // TODO !! bad name, also better simplify build logic like "build backend/frontend/docker" etc.
 	tr.ExecuteInDir(backendDir, "go build -a -installsuffix cgo", "CGO_ENABLED=0", "GOOS=linux", "GOARCH=amd64")
 }
 

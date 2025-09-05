@@ -1,6 +1,6 @@
 TODO
 
-* ged rid of native mode, only run in docker containers, have a test and prod profile
+* ged rid of native mode, only run in docker containers, have a test and prod profile config
 * introduce unit tests, mocks, wire etc; shift business logic to units
 * application should not fail on first boot when .env file is not there; in such case, simply generate a template -> make a warning log, that this still needs configuration
 * I also want here that unit tests detect compile errors in modules with build tags and tests like in "cloud"
@@ -13,4 +13,4 @@ TODO
 
 ### frontend 
 
-* replace by CLI tool entirely
+* replace by CLI tool entirely; introduce cobra, so one cobra command runs the app store backend, another interacts with it, which makes sharing the library very easy

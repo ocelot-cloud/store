@@ -21,6 +21,7 @@ var isPostgresDbStarted = false
 
 func startCockroachDb() {
 	if !isPostgresDbStarted {
+		// TODO !! the "dev" compose can be deleted after refactoring
 		tr.ExecuteInDir(backendDockerDir, "docker compose -f docker-compose-dev.yml up -d")
 		isPostgresDbStarted = true
 	}

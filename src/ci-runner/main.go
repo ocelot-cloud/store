@@ -139,7 +139,7 @@ var testCmd = &cobra.Command{
 }
 
 var hubTestTypes = map[string]func(){
-	"unit":       func() { TestUnits() },
+	"units":      func() { TestUnits() },
 	"backend":    func() { TestBackend() },
 	"acceptance": func() { TestAcceptance() },
 	"all":        func() { TestHubAll() },

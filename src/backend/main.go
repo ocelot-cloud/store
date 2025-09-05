@@ -16,7 +16,12 @@ import (
 	"github.com/ocelot-cloud/shared/store"
 )
 
+// TODO !! use "utils" logger
 var Logger = tools.Logger
+
+// TODO !! way to long, simply call wire here and initialize the modules, rest is to be extracted
+// TODO !! replace errors with deepstack approach
+// TODO !! shift logic from handlers and repos to services, simplify repos to CRUD
 
 func main() {
 	cmd := exec.Command("docker", "compose", "version")

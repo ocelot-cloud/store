@@ -1,5 +1,6 @@
 TODO
 
+* set git hooks like in "cloud" repo + build tag when doing unit testing (and committing)
 * unit tests should fail if there is a compile error in the component tests
 * ged rid of native mode, only run in docker containers, have a test and prod profile config
 * introduce unit tests, mocks, wire etc; shift business logic to units

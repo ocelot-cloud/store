@@ -9,6 +9,8 @@ func TestHubAll() {
 func TestUnits() {
 	tr.Log.TaskDescription("Testing units")
 	defer tr.Cleanup()
+
+	// TODO !! unit tests should not need cockroachDB, rather use "integration" build tag instead
 	startCockroachDb()
 
 	// TODO it should not be necessary to set a profile for unit tests; the TEST profile should become the default; PROD should become the app store packaged in a container I guess?

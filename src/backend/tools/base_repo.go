@@ -13,6 +13,7 @@ import (
 
 var Db *sql.DB
 
+// TODO !! should return error
 func InitializeDatabase() {
 	var err error
 	var host, customPostgresPort string
@@ -25,14 +26,28 @@ func InitializeDatabase() {
 		customPostgresPort = "5432"
 	}
 
+	// TODO !! get rid of exit() and return error to top module instead
+
 	Db, err = utils.WaitForPostgresDb(host, customPostgresPort)
 	if err != nil {
 		Logger.Error("Failed to create database client", deepstack.ErrorField, err)
 		os.Exit(1)
 	}
 
-	migrationsDir := utils.FindDir("assets") + "/migrations"
-	utils.RunMigrations(migrationsDir, host, customPostgresPort)
+	// TODO !! directories and path initialization are two separate concerns
+	assertDir, err := utils.FindDir("assets")
+	if err != nil {
+		Logger.Error("Failed to find migrations directory", deepstack.ErrorField, err)
+		os.Exit(1)
+	}
+	migrationsDir := assertDir + "/migrations"
+
+	err = utils.RunMigrations(migrationsDir, host, customPostgresPort)
+	if err != nil {
+		Logger.Error("Failed to run migrations", deepstack.ErrorField, err)
+		os.Exit(1)
+	}
+
 }
 
 var WaitingForEmailVerificationList sync.Map

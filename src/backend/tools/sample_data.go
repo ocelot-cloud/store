@@ -16,9 +16,9 @@ var (
 	SampleEmail    = "testuser@example.com"
 	SamplePassword = "mypassword"
 	SampleForm     = &store.RegistrationForm{
-		SampleUser,
-		SamplePassword,
-		SampleEmail,
+		User:     SampleUser,
+		Password: SamplePassword,
+		Email:    SampleEmail,
 	}
 )
 

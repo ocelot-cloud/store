@@ -182,7 +182,7 @@ func ValidationCodeHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := validation.ValidateSecret(code)
 	if err != nil {
-		tools.HandleInvalidInput(w, err)
+		utils.WriteResponseError(w, utils.MapOf("invalid input"), err)
 		return
 	}
 

@@ -33,20 +33,20 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !UserRepo.DoesUserExist(creds.User) {
 		Logger.Info("user does not exist", tools.UserField, creds.User)
-		http.Error(w, "user does not exist", http.StatusNotFound)
+		http.Error(w, "user does not exist", http.StatusBadRequest)
 		return
 	}
 
 	if !UserRepo.IsPasswordCorrect(creds.User, creds.Password) {
 		Logger.Info("Password of user was not correct", tools.UserField, creds.User)
-		http.Error(w, "incorrect username or password", http.StatusUnauthorized)
+		http.Error(w, "incorrect username or password", http.StatusBadRequest)
 		return
 	}
 
 	cookie, err := utils.GenerateCookie()
 	if err != nil {
 		Logger.Error("cookie generation failed", deepstack.ErrorField, err)
-		http.Error(w, "cookie generation failed", http.StatusInternalServerError)
+		http.Error(w, "cookie generation failed", http.StatusBadRequest)
 		return
 	}
 
@@ -61,7 +61,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	err = UserRepo.HashAndSaveCookie(creds.User, cookie.Value, cookie.Expires)
 	if err != nil {
 		Logger.Error("setting cookie failed", deepstack.ErrorField, err)
-		http.Error(w, "setting cookie failed", http.StatusInternalServerError)
+		http.Error(w, "setting cookie failed", http.StatusBadRequest)
 		return
 	}
 
@@ -80,14 +80,14 @@ func UserDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !UserRepo.DoesUserExist(user) {
 		Logger.Error("user wanted to delete his account but seems not to exist although authenticated", tools.UserField, user)
-		http.Error(w, "user does not exist", http.StatusInternalServerError)
+		http.Error(w, "user does not exist", http.StatusBadRequest)
 		return
 	}
 
 	err := UserRepo.DeleteUser(user)
 	if err != nil {
 		Logger.Error("user deletion failed", tools.UserField, err)
-		http.Error(w, "user deletion failed", http.StatusInternalServerError)
+		http.Error(w, "user deletion failed", http.StatusBadRequest)
 		return
 	}
 
@@ -105,20 +105,20 @@ func ChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !UserRepo.DoesUserExist(user) {
 		Logger.Warn("somebody tried to change password but user does not exist", tools.UserField, user)
-		http.Error(w, "user does not exist", http.StatusNotFound)
+		http.Error(w, "user does not exist", http.StatusBadRequest)
 		return
 	}
 
 	if !UserRepo.IsPasswordCorrect(user, form.OldPassword) {
 		Logger.Info("incorrect credentials for user when trying to change password", tools.UserField, user)
-		http.Error(w, "incorrect username or password", http.StatusUnauthorized)
+		http.Error(w, "incorrect username or password", http.StatusBadRequest)
 		return
 	}
 
 	err = UserRepo.ChangePassword(user, form.NewPassword)
 	if err != nil {
 		Logger.Error("changing password for user failed", tools.UserField, user, deepstack.ErrorField, err)
-		http.Error(w, "error when trying to change password", http.StatusInternalServerError)
+		http.Error(w, "error when trying to change password", http.StatusBadRequest)
 		return
 	}
 
@@ -132,7 +132,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	err := UserRepo.Logout(user)
 	if err != nil {
 		Logger.Error("logout of user failed", tools.UserField, user, deepstack.ErrorField, err)
-		http.Error(w, "logout failed", http.StatusInternalServerError)
+		http.Error(w, "logout failed", http.StatusBadRequest)
 		return
 	}
 
@@ -148,27 +148,27 @@ func RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	if UserRepo.DoesUserExist(form.User) {
 		Logger.Info("user tried to register but he already exists", tools.UserField, form.User)
-		http.Error(w, "user already exists", http.StatusConflict)
+		http.Error(w, "user already exists", http.StatusBadRequest)
 		return
 	}
 
 	if UserRepo.DoesEmailExist(form.Email) {
 		Logger.Info("user tried to register but email already exists", tools.UserField, form.User, tools.EmailField, form.Email)
-		http.Error(w, "email already exists", http.StatusConflict)
+		http.Error(w, "email already exists", http.StatusBadRequest)
 		return
 	}
 
 	code, err := UserRepo.CreateUser(form)
 	if err != nil {
 		Logger.Error("user registration failed", tools.UserField, form.User, deepstack.ErrorField, err)
-		http.Error(w, "user registration failed", http.StatusInternalServerError)
+		http.Error(w, "user registration failed", http.StatusBadRequest)
 		return
 	}
 
 	err = sendVerificationEmail(form.Email, code)
 	if err != nil {
 		Logger.Error("sending verification email failed", deepstack.ErrorField, err)
-		http.Error(w, "sending verification email failed", http.StatusInternalServerError)
+		http.Error(w, "sending verification email failed", http.StatusBadRequest)
 		return
 	}
 
@@ -202,7 +202,7 @@ func CheckAuthentication(w http.ResponseWriter, r *http.Request) (string, error)
 	cookie, err := r.Cookie(tools.CookieName)
 	if err != nil {
 		Logger.Info("cookie not set in request", deepstack.ErrorField, err)
-		http.Error(w, "cookie not set in request", http.StatusUnauthorized)
+		http.Error(w, "cookie not set in request", http.StatusBadRequest)
 		return "", fmt.Errorf("")
 	}
 
@@ -214,7 +214,7 @@ func CheckAuthentication(w http.ResponseWriter, r *http.Request) (string, error)
 	user, err := UserRepo.GetUserViaCookie(cookie.Value)
 	if err != nil {
 		Logger.Info("error when getting cookie of user", deepstack.ErrorField, err)
-		http.Error(w, "cookie not found", http.StatusUnauthorized)
+		http.Error(w, "cookie not found", http.StatusBadRequest)
 		return "", fmt.Errorf("")
 	}
 
@@ -228,7 +228,7 @@ func CheckAuthentication(w http.ResponseWriter, r *http.Request) (string, error)
 	err = UserRepo.HashAndSaveCookie(user, cookie.Value, newExpirationTime)
 	if err != nil {
 		Logger.Error("setting new cookie failed", deepstack.ErrorField, err)
-		http.Error(w, "setting new cookie failed", http.StatusInternalServerError)
+		http.Error(w, "setting new cookie failed", http.StatusBadRequest)
 		return "", fmt.Errorf("")
 	}
 	cookie.Expires = newExpirationTime

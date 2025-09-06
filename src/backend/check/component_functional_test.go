@@ -23,7 +23,7 @@ func TestVersionDownload(t *testing.T) {
 	assert.Nil(t, err)
 	_, err = hub.DownloadVersion(notExistingVersionId)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "version does not exist", 404)
+	AssertDeepStackErrorWithCode(t, err, "version does not exist", 400)
 
 	versionId, err := hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
 	assert.Nil(t, err)
@@ -67,7 +67,7 @@ func TestCreateApp(t *testing.T) {
 
 	_, err = hub.CreateApp(tools.SampleApp)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "app already exists", 409)
+	AssertDeepStackErrorWithCode(t, err, "app already exists", 400)
 
 	assert.Nil(t, hub.DeleteApp(appId))
 	foundApps, err = hub.ListOwnApps()
@@ -81,7 +81,7 @@ func TestUploadVersion(t *testing.T) {
 	notExistingVersionId := "0"
 	_, err := hub.UploadVersion(notExistingVersionId, tools.SampleVersion, SampleVersionFileContent)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "app does not exist", 404)
+	AssertDeepStackErrorWithCode(t, err, "app does not exist", 400)
 
 	appId, err := hub.CreateApp(tools.SampleApp)
 	assert.Nil(t, err)
@@ -90,7 +90,7 @@ func TestUploadVersion(t *testing.T) {
 
 	_, err = hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "version already exists", 409)
+	AssertDeepStackErrorWithCode(t, err, "version already exists", 400)
 
 	versions, err := hub.GetVersions(appId)
 	assert.Nil(t, err)
@@ -104,14 +104,14 @@ func TestUploadVersion(t *testing.T) {
 
 	err = hub.DeleteVersion(versionId)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "version does not exist", 404)
+	AssertDeepStackErrorWithCode(t, err, "version does not exist", 400)
 }
 
 func TestLogin(t *testing.T) {
 	hub := GetHub()
 	err := hub.Login(tools.SampleUser, tools.SamplePassword)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "user does not exist", 404)
+	AssertDeepStackErrorWithCode(t, err, "user does not exist", 400)
 }
 
 func TestChangePassword(t *testing.T) {
@@ -122,7 +122,7 @@ func TestChangePassword(t *testing.T) {
 	assert.Nil(t, hub.ChangePassword(tools.SamplePassword, newPassword))
 	err := hub.Login(tools.SampleUser, tools.SamplePassword)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "incorrect username or password", 401)
+	AssertDeepStackErrorWithCode(t, err, "incorrect username or password", 400)
 
 	hub.Parent.Cookie = nil
 	err = hub.Login(tools.SampleUser, newPassword)
@@ -136,7 +136,7 @@ func TestRegistration(t *testing.T) {
 	assert.Nil(t, hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail))
 	err := hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "user already exists", 409)
+	AssertDeepStackErrorWithCode(t, err, "user already exists", 400)
 }
 
 func TestGetVersionsUnhappyPath(t *testing.T) {
@@ -160,7 +160,7 @@ func TestLogout(t *testing.T) {
 	assert.Nil(t, hub.Logout())
 	_, err = hub.CreateApp(tools.SampleApp)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "cookie not found", 401)
+	AssertDeepStackErrorWithCode(t, err, "cookie not found", 400)
 }
 
 func TestGetAppList(t *testing.T) {
@@ -193,7 +193,7 @@ func TestEmailAlreadyExists(t *testing.T) {
 	user2 := tools.SampleUser + "2"
 	err := hub.RegisterUser(user2, tools.SamplePassword, tools.SampleEmail)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "email already exists", 409)
+	AssertDeepStackErrorWithCode(t, err, "email already exists", 400)
 }
 
 func TestDownloadDummyVersion(t *testing.T) {

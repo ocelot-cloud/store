@@ -22,7 +22,7 @@ func AppCreationHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !users.UserRepo.DoesUserExist(user) {
 		Logger.Info("user tried to create app but it does not exist", tools.UserField, user, tools.AppField, appString)
-		http.Error(w, "user does not exists", http.StatusNotFound)
+		http.Error(w, "user does not exists", http.StatusBadRequest)
 		return
 	}
 
@@ -35,14 +35,14 @@ func AppCreationHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = AppRepo.GetAppId(user, appString.Value)
 	if err == nil {
 		Logger.Info("user tried to create app but it already exists", tools.UserField, user, tools.AppField, appString)
-		http.Error(w, "app already exists", http.StatusConflict)
+		http.Error(w, "app already exists", http.StatusBadRequest)
 		return
 	}
 
 	err = AppRepo.CreateApp(user, appString.Value)
 	if err != nil {
 		Logger.Error("user tried to create app but it failed", tools.UserField, user, tools.AppField, appString, deepstack.ErrorField, err)
-		http.Error(w, "app creation failed", http.StatusInternalServerError)
+		http.Error(w, "app creation failed", http.StatusBadRequest)
 		return
 	}
 
@@ -59,14 +59,14 @@ func AppDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !AppRepo.IsAppOwner(user, appId) {
 		Logger.Warn("user tried to delete app with ID but does not own it", tools.UserField, user, tools.AppIdField, appId)
-		http.Error(w, "you do not own this app", http.StatusUnauthorized)
+		http.Error(w, "you do not own this app", http.StatusBadRequest)
 		return
 	}
 
 	err = AppRepo.DeleteApp(appId)
 	if err != nil {
 		Logger.Error("user tried to delete app with ID but it failed", tools.UserField, user, tools.AppIdField, appId)
-		http.Error(w, "app deletion failed", http.StatusInternalServerError)
+		http.Error(w, "app deletion failed", http.StatusBadRequest)
 		return
 	}
 
@@ -94,7 +94,7 @@ func AppGetListHandler(w http.ResponseWriter, r *http.Request) {
 	list, err := AppRepo.GetAppList(user)
 	if err != nil {
 		Logger.Warn("error getting app list", deepstack.ErrorField, err)
-		http.Error(w, "error getting app list", http.StatusInternalServerError)
+		http.Error(w, "error getting app list", http.StatusBadRequest)
 	}
 
 	Logger.Info("got apps of user", tools.UserField, user)
@@ -110,7 +110,7 @@ func SearchForAppsHandler(w http.ResponseWriter, r *http.Request) {
 	apps, err := AppRepo.SearchForApps(*appSearchRequest)
 	if err != nil {
 		Logger.Warn("error finding apps", deepstack.ErrorField, err)
-		http.Error(w, "error finding apps", http.StatusInternalServerError)
+		http.Error(w, "error finding apps", http.StatusBadRequest)
 		return
 	}
 

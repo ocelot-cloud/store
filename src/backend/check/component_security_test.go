@@ -75,7 +75,7 @@ func TestChangePasswordSecurity(t *testing.T) {
 
 	err := hub.ChangePassword(correctlyFormattedButNotMatchingPassword, newPassword)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "incorrect username or password", 401)
+	AssertDeepStackErrorWithCode(t, err, "incorrect username or password", 400)
 }
 
 // TODO test input validation through utils.ReadJsonFromRequest
@@ -100,7 +100,7 @@ func TestLoginSecurity(t *testing.T) {
 	correctlyFormattedButNotMatchingPassword := tools.SamplePassword + "x"
 	err = hub.Login(tools.SampleUser, correctlyFormattedButNotMatchingPassword)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "incorrect username or password", 401)
+	AssertDeepStackErrorWithCode(t, err, "incorrect username or password", 400)
 }
 
 func checkCookie(t *testing.T, hub *store.AppStoreClientImpl) {
@@ -153,7 +153,7 @@ func testVersionOwnership(t *testing.T, hub *store.AppStoreClient, operation fun
 	assert.Nil(t, hub.Login())
 	err := operation()
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(401, "you do not own this app"), err.Error())
+	assert.Equal(t, utils.GetErrMsg(400, "you do not own this app"), err.Error())
 }
 */
 
@@ -172,7 +172,7 @@ func TestOwnershipOfDeleteVersion(t *testing.T) {
 
 	err = hub.DeleteVersion(versionId)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "you do not own this version", 401)
+	AssertDeepStackErrorWithCode(t, err, "you do not own this version", 400)
 }
 
 func TestUploadOfInvalidZipContent(t *testing.T) {
@@ -214,7 +214,7 @@ func doCookieAndHostPolicyChecks(t *testing.T, hub *store.AppStoreClient, operat
 
 	err := operation()
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(401, "cookie not set in request"), err.Error())
+	assert.Equal(t, utils.GetErrMsg(400, "cookie not set in request"), err.Error())
 
 	hub.Parent.SetCookieHeader = true
 	hub.Parent.Cookie.Value = "some-invalid-cookie-value"
@@ -226,7 +226,7 @@ func doCookieAndHostPolicyChecks(t *testing.T, hub *store.AppStoreClient, operat
 	hub.Parent.Cookie.Value = validButNonExistentCookie
 	err = operation()
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(401, "cookie not found"), err.Error())
+	assert.Equal(t, utils.GetErrMsg(400, "cookie not found"), err.Error())
 
 	assert.Nil(t, hub.Login())
 

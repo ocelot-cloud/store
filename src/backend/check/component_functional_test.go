@@ -263,5 +263,6 @@ func TestAllowEmptyStringAsSearchTerm(t *testing.T) {
 
 // TODO !! duplication with cloud -> move to "shared"
 func AssertDeepStackErrorWithCode(t *testing.T, err error, expectedResponseBodyErrorMessage string, expectedStatusCode int) {
+	asd
 	deepstack.AssertDeepStackError(t, err, "request failed", "response_body", expectedResponseBodyErrorMessage, "status_code", expectedStatusCode)
 }

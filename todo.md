@@ -1,9 +1,6 @@
 TODO
 
-* Introduce the assertion logic for component tests that I am already using in the "cloud" repo
-
-* set git hooks like in "cloud" repo + build tag when doing unit testing (and committing)
-* sometimes the application does not start due to database interference:
+* sometimes the application does not start due to database interference (should be fixed when there is only one database file left)
 
 ```
   tux@tux:~/Dokumente/workspace/store/src/ci-runner$ go build && ./ci-runner test all

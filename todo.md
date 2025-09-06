@@ -1,6 +1,27 @@
 TODO
 
+* Introduce the assertion logic for component tests that I am already using in the "cloud" repo
+
 * set git hooks like in "cloud" repo + build tag when doing unit testing (and committing)
+* sometimes the application does not start due to database interference:
+
+```
+  tux@tux:~/Dokumente/workspace/store/src/ci-runner$ go build && ./ci-runner test all
+  in directory './backend', executing 'rm -rf data'
+  => Command successful. Time taken: 0.002 seconds.
+
+==== Testing units ====
+
+in directory './backend/docker', executing 'docker compose -f docker-compose-dev.yml up -d'
+Container ocelotcloud_store_postgres  Creating
+Container ocelotcloud_store_postgres  Error response from daemon: Conflict. The container name "/ocelotcloud_store_postgres" is already in use by container "b70e97f3755bfd8c63d92fd6fd23a01ff734add5508250e97791b4cc6b0d46bc". You have to remove (or rename) that container to be able to reuse that name.
+Error response from daemon: Conflict. The container name "/ocelotcloud_store_postgres" is already in use by container "b70e97f3755bfd8c63d92fd6fd23a01ff734add5508250e97791b4cc6b0d46bc". You have to remove (or rename) that container to be able to reuse that name.
+=> Command failed. Time taken: 0.078 seconds.. Error: exit status 1
+
+cleanup method called
+calling custom cleanup function
+```
+
 * unit tests should fail if there is a compile error in the component tests
 * ged rid of native mode, only run in docker containers, have a test and prod profile config
 * introduce unit tests, mocks, wire etc; shift business logic to units

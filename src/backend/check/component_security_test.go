@@ -12,6 +12,7 @@ import (
 	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/assert"
 	"github.com/ocelot-cloud/shared/store"
+	"github.com/ocelot-cloud/shared/utils"
 )
 
 var DaysToCookieExpiration = 7
@@ -182,8 +183,7 @@ func TestUploadOfInvalidZipContent(t *testing.T) {
 	assert.Nil(t, err)
 	_, err = hub.UploadVersion(appId, tools.SampleVersion, content)
 	assert.NotNil(t, err)
-	// TODO !! also assert "response_body", problem is, that it is a deepstack.Error(), so very long, which is not the expected behavior of the http tool I use, to be investigated
-	deepstack.AssertDeepStackError(t, err, "request failed", "status_code", 400)
+	deepstack.AssertDeepStackError(t, err, "request failed", "status_code", 400, "response_body", utils.OperationFailedError)
 }
 
 // TODO !! when integration tests are applied to docker deployment, then there is not need to expose the database port to the host any longer

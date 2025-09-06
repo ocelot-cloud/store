@@ -88,10 +88,10 @@ func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO !! add deepstack errors
 	err = validation.ValidateVersion(versionUpload.Content, maintainerName, appName)
 	if err != nil {
-		Logger.Info("version upload of user invalid", tools.UserField, user, deepstack.ErrorField, err)
-		http.Error(w, "invalid version: "+err.Error(), http.StatusBadRequest)
+		utils.WriteResponseError(w, nil, err, tools.UserField, user)
 		return
 	}
 

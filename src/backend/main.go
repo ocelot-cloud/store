@@ -118,7 +118,6 @@ type HandlerInitializer struct {
 	UserRepo                 users.UserRepository // TODO !! to be removed
 }
 
-// TODO !! should be an object which is initialized with the handlers
 func (h *HandlerInitializer) InitializeHandlers(mux *http.ServeMux) {
 	unprotectedRoutes := []Route{
 		{store.LoginPath, h.UserHandler.LoginHandler},
@@ -164,7 +163,7 @@ func (h *HandlerInitializer) InitializeHandlers(mux *http.ServeMux) {
 		}
 		u.Logger.Warn("created user with weak password for manual testing", tools.UserField, sampleUser)
 		h.DatabaseSampleDataSeeder.loadSampleAppData("sampleuser", "nginx", "sample2@sample.com", "sampleuser-app", true)
-		h.DatabaseSampleDataSeeder.loadSampleAppData("maliciousmaintainer", "maliciousapp", "sample3@sample.com", "malicious-app", false) // TODO !! I think malicious app is no longer needed
+		h.DatabaseSampleDataSeeder.loadSampleAppData("maliciousmaintainer", "maliciousapp", "sample3@sample.com", "malicious-app", false) // TODO !! not sure where is the best location for download verification, in the client library or in the cloud? not sure whether I still need this app
 	}
 
 	h.registerUnprotectedRoutes(mux, unprotectedRoutes)

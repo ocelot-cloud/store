@@ -15,15 +15,11 @@ var (
 	tr = taskrunner.GetTaskRunner()
 
 	srcDir           = getAbsoluteParentDir()
-	frontendDir      = srcDir + "/frontend"
 	backendDir       = srcDir + "/backend"
 	backendDockerDir = backendDir + "/docker"
-	backendDataDir   = backendDir + "/data"
-	backendDistDir   = backendDir + "/dist"
 	backendCheckDir  = backendDir + "/check"
 
-	acceptanceTestsDir = srcDir + "/cypress"
-	ciRunnerDir        = srcDir + "/ci-runner"
+	ciRunnerDir = srcDir + "/ci-runner"
 
 	sshHost = "store"
 )
@@ -58,22 +54,13 @@ func main() {
 	}
 
 	buildCmd.AddCommand(buildBackendCmd)
-	rootCmd.AddCommand(runCmd, testCmd, updateCmd, deployCmd, downloadDependenciesCmd, analyzeCmd, buildCmd)
+	rootCmd.AddCommand(testCmd, updateCmd, deployCmd, analyzeCmd, buildCmd)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	err := rootCmd.Execute()
 	if err != nil {
 		tr.ExitWithError()
 	}
-}
-
-var runCmd = &cobra.Command{
-	Use:   "run",
-	Short: "Run the application locally",
-	Run: func(cmd *cobra.Command, args []string) {
-		build()
-		tr.ExecuteInDir(backendDir, "./store")
-	},
 }
 
 var updateCmd = &cobra.Command{
@@ -87,15 +74,6 @@ var updateCmd = &cobra.Command{
 		tr.ExecuteInDir(backendDir, "go get -u ./...")
 		tr.ExecuteInDir(backendDir, "go mod tidy")
 		tr.ExecuteInDir(backendDir, "go build")
-
-		tr.ExecuteInDir(frontendDir, "yarn upgrade --latest --pattern \"*\"")
-		tr.ExecuteInDir(frontendDir, "yarn add vue@latest vite@latest")
-		tr.ExecuteInDir(frontendDir, "yarn install")
-		tr.ExecuteInDir(frontendDir, "yarn build")
-
-		tr.ExecuteInDir(acceptanceTestsDir, "npx npm-check-updates -u")
-		tr.ExecuteInDir(acceptanceTestsDir, "npm install cypress@latest")
-		tr.ExecuteInDir(acceptanceTestsDir, "npm install")
 	},
 }
 
@@ -105,7 +83,7 @@ var deployCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var prompt = "Are you sure you want to replace the current production version of the App Store?"
 		tr.PromptForContinuation(prompt)
-		buildForDocker()
+		tr.ExecuteInDir(backendDir, "go build -a -installsuffix cgo", "CGO_ENABLED=0", "GOOS=linux", "GOARCH=amd64")
 		executeOnServer("docker rm -f store")
 		rsyncCmd := fmt.Sprintf("rsync -avz --delete docker/Dockerfile docker/docker-compose.yml assets store dist %s:", sshHost)
 		tr.ExecuteInDir(backendDir, rsyncCmd)
@@ -136,11 +114,11 @@ var testCmd = &cobra.Command{
 	},
 }
 
+// TODO !! rather make commands out of this
 var hubTestTypes = map[string]func(){
-	"units":      func() { TestUnits() },
-	"backend":    func() { TestBackend() },
-	"acceptance": func() { TestAcceptance() },
-	"all":        func() { TestHubAll() },
+	"units":     func() { TestUnits() },
+	"component": func() { TestComponent() },
+	"all":       func() { TestAll() },
 }
 
 func getKeys(m map[string]func()) []string {
@@ -149,17 +127,6 @@ func getKeys(m map[string]func()) []string {
 		keys = append(keys, k)
 	}
 	return keys
-}
-
-var downloadDependenciesCmd = &cobra.Command{
-	Use:   "download",
-	Short: "Downloads application dependencies",
-	Run: func(cmd *cobra.Command, args []string) {
-		tr.Log.Info("downloading dependencies")
-		tr.ExecuteInDir(backendDir, "go mod tidy")
-		tr.ExecuteInDir(frontendDir, "npm install")
-		tr.ExecuteInDir(acceptanceTestsDir, "npm install")
-	},
 }
 
 var analyzeCmd = &cobra.Command{

@@ -113,6 +113,9 @@ func initializeHandlers(mux *http.ServeMux) {
 		{store.SearchAppsPath, apps.SearchForAppsHandler},
 		{store.RegistrationPath, users.RegistrationHandler},
 		{store.EmailValidationPath, users.ValidationCodeHandler},
+
+		// TODO !! abstract
+		{"/api/healthcheck", users.HealthCheckHandler},
 	}
 
 	protectedRoutes := []Route{

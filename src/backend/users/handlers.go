@@ -174,6 +174,15 @@ func RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+type healthInfo struct {
+	Status string `json:"status"`
+}
+
+// TODO !! find better location
+func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	u.SendJsonResponse(w, healthInfo{Status: "ok"})
+}
+
 func ValidationCodeHandler(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 	code := queryParams.Get("code")

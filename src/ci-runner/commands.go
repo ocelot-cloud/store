@@ -1,7 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"time"
 )
 
@@ -27,8 +31,47 @@ func TestComponent() {
 	// TODO !! abstract paths and image names etc
 	tr.ExecuteInDir(backendDir, "docker build -t ocelotcloud/store:local -f docker/Dockerfile .")
 	tr.ExecuteInDir(backendDockerDir, "docker compose -f docker-compose-dev.yml up -d", "PROFILE=TEST")
-	time.Sleep(1 * time.Second) // TODO !! rather introduce a health endpoint that say "status: ok" when the port is available
+	waitForHealthEndpoint()
 	tr.ExecuteInDir(backendCheckDir, "go test -count=1 -tags=component ./...")
+}
+
+// TODO !! simplify
+func waitForHealthEndpoint() {
+	deadline := time.Now().Add(10 * time.Second)
+	client := &http.Client{Timeout: 2 * time.Second}
+	var lastErr error
+	var lastStatus int
+	fmt.Print("waiting for /api/healthcheck ")
+	for time.Now().Before(deadline) {
+		resp, err := client.Get("http://localhost:8082/api/healthcheck")
+		if err == nil {
+			var v struct {
+				Status string `json:"status"`
+			}
+			if resp.StatusCode == 200 && json.NewDecoder(resp.Body).Decode(&v) == nil && v.Status == "ok" {
+				resp.Body.Close()
+				fmt.Println("ok")
+				return
+			}
+			lastStatus = resp.StatusCode
+			io.Copy(io.Discard, resp.Body)
+			resp.Body.Close()
+			lastErr = fmt.Errorf("unexpected response")
+		} else {
+			lastErr = err
+		}
+		fmt.Print(".")
+		time.Sleep(500 * time.Millisecond)
+	}
+	fmt.Println()
+	if lastErr != nil {
+		fmt.Fprintf(os.Stderr, "healthcheck failed: %v\n", lastErr)
+	} else if lastStatus != 0 {
+		fmt.Fprintf(os.Stderr, "healthcheck failed: last status %d\n", lastStatus)
+	} else {
+		fmt.Fprintln(os.Stderr, "healthcheck failed: timeout")
+	}
+	os.Exit(1)
 }
 
 // TODO !! re-check, which assets can be deleted; also make sure that sample assets are not loaded in production mode (maybe write a test that database is empty or so in prod mode?)

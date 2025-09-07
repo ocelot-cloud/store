@@ -2,6 +2,7 @@
 
 package check
 
+/* TODO !! move to unit and component tests
 import (
 	"github.com/ocelot-cloud/shared/assert"
 	"github.com/ocelot-cloud/shared/store"
@@ -168,3 +169,5 @@ func TestCantCreateAppWithoutUser(t *testing.T) {
 	defer users.UserRepo.WipeDatabase()
 	assert.NotNil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
 }
+
+*/

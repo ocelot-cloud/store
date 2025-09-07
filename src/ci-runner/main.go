@@ -3,10 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/ocelot-cloud/shared/utils"
 	"github.com/ocelot-cloud/task-runner"
@@ -167,7 +165,6 @@ var analyzeCmd = &cobra.Command{
 	Use:   "analyze",
 	Short: "runs code analysis tools",
 	Run: func(cmd *cobra.Command, args []string) {
-		signal.Ignore(syscall.SIGPIPE) // TODO is that really needed?
 		utils.AnalyzeCode(tr, backendDir)
 	},
 }
@@ -184,9 +181,6 @@ var buildBackendCmd = &cobra.Command{
 	Use:   "backend",
 	Short: "Builds the backend",
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO !! fix this, database should not be run there
-		//  utils.BuildWholeGoProject(tr, backendDir)
+		utils.BuildWholeGoProject(tr, backendDir)
 	},
 }
-
-// TODO !! add build functions for frontend and docker container

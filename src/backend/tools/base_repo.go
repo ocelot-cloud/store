@@ -22,6 +22,7 @@ func InitializeDatabase() {
 		host = "localhost"
 		customPostgresPort = "5433"
 	} else {
+		// TODO !! always use this one
 		host = "ocelotcloud_store_postgres"
 		customPostgresPort = "5432"
 	}

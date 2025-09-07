@@ -89,8 +89,8 @@ func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO !! add deepstack errors
 	err = validation.ValidateVersion(versionUpload.Content, maintainerName, appName)
 	if err != nil {
-		// TODO !! expected error: "zip: not a valid zip file"
-		u.WriteResponseError(w, nil, err, tools.UserField, user)
+		// TODO !! expected error: "zip: not a valid zip file" -> make this a an error in "shared" for reuse?
+		u.WriteResponseError(w, u.MapOf("zip: not a valid zip file"), err, tools.UserField, user)
 		return
 	}
 

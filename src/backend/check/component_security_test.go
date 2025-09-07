@@ -12,7 +12,6 @@ import (
 	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/assert"
 	"github.com/ocelot-cloud/shared/store"
-	u "github.com/ocelot-cloud/shared/utils"
 )
 
 var DaysToCookieExpiration = 7
@@ -183,7 +182,7 @@ func TestUploadOfInvalidZipContent(t *testing.T) {
 	assert.Nil(t, err)
 	_, err = hub.UploadVersion(appId, tools.SampleVersion, content)
 	assert.NotNil(t, err)
-	deepstack.AssertDeepStackError(t, err, "request failed", "status_code", 400, "response_body", u.OperationFailedError)
+	deepstack.AssertDeepStackError(t, err, "request failed", "status_code", 400, "response_body", "zip: not a valid zip file")
 }
 
 // TODO !! when integration tests are applied to docker deployment, then there is not need to expose the database port to the host any longer

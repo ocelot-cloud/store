@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"ocelot/store/apps"
 	"ocelot/store/tools"
@@ -22,24 +23,37 @@ import (
 // TODO !! shift logic from handlers and repos to services, simplify repos to CRUD
 
 func main() {
+	deps := WireDependencies()
+	fmt.Printf("todo !! temp: %v", deps)
+
+	// TODO !! tool installation checker
 	cmd := exec.Command("docker", "compose", "version")
 	if err := cmd.Run(); err != nil {
 		u.Logger.Error("docker compose is not installed or not accessible in PATH. Tool is required for docker-compose.yml validation.")
 		os.Exit(1)
 	}
+
+	// TODO !! make this dependent on the config object -> when constructing the config object
 	if os.Getenv("USE_MOCK_EMAIL_CLIENT") == "true" {
 		u.Logger.Warn("using mock email client, should only be used for testing")
 		tools.UseMailMockClient = true
 	}
+
+	// TODO !! base config initializer
 	err := users.InitializeEnvs()
 	if err != nil {
 		u.Logger.Error("exiting due to error through env file", deepstack.ErrorField, err)
 	}
+
+	// TODO !! database initializer
 	tools.InitializeDatabase()
+
+	// TODO !! handler initializer
 	mux := http.NewServeMux()
 	initializeHandlers(mux)
 	initializeFrontendResourceDelivery(mux)
 
+	// TODO !! server.run()
 	u.Logger.Info("server starting on port", tools.PortField, tools.Port)
 	var handler http.Handler
 	if tools.Profile == tools.TEST {

@@ -3,6 +3,7 @@ TODO
 * two deployments:
   * local, app store + database
   * prod, same + watchtotwer + traefik
+* deployment: build image locally and test it; if passing, push image to dockerhub and download to hetzner server for deployment
 * sometimes the application does not start due to database interference (should be fixed when there is only one database file left)
 
 ```

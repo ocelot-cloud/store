@@ -34,7 +34,7 @@ func (r *UserRepositoryImpl) IsThereEnoughSpaceToAddVersion(user string, bytesTo
 
 func (r *UserRepositoryImpl) IsPasswordCorrect(user string, password string) bool {
 	var hashedPassword string
-	err := tools.Db.QueryRow("SELECT hashed_password FROM users WHERE user_name = $1", user).Scan(&hashedPassword)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT hashed_password FROM users WHERE user_name = $1", user).Scan(&hashedPassword)
 	if err != nil {
 		u.Logger.Error("Failed to fetch hashed password", deepstack.ErrorField, err)
 		return false
@@ -46,7 +46,7 @@ func (r *UserRepositoryImpl) IsPasswordCorrect(user string, password string) boo
 
 func (r *UserRepositoryImpl) DoesUserExist(user string) bool {
 	var exists bool
-	err := tools.Db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE user_name = $1)", user).Scan(&exists)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE user_name = $1)", user).Scan(&exists)
 	if err != nil {
 		u.Logger.Error("Failed to check user existence", deepstack.ErrorField, err)
 		return false
@@ -89,7 +89,7 @@ func (r *UserRepositoryImpl) ValidateUser(code string) error {
 		u.Logger.Error("Failed to hash password", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to hash password")
 	}
-	_, err = tools.Db.Exec("INSERT INTO users (user_name, email, hashed_password, used_space) VALUES ($1, $2, $3, $4)", form.User, form.Email, hashedPassword, 0)
+	_, err = r.DatabaseProvider.GetDb().Exec("INSERT INTO users (user_name, email, hashed_password, used_space) VALUES ($1, $2, $3, $4)", form.User, form.Email, hashedPassword, 0)
 	if err != nil {
 		u.Logger.Error("Failed to create user", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to create user")
@@ -104,7 +104,7 @@ func (r *UserRepositoryImpl) DeleteUser(user string) error {
 		return fmt.Errorf("user does not exist")
 	}
 
-	_, err := tools.Db.Exec("DELETE FROM users WHERE user_name = $1", user)
+	_, err := r.DatabaseProvider.GetDb().Exec("DELETE FROM users WHERE user_name = $1", user)
 	if err != nil {
 		u.Logger.Error("Failed to delete user", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to delete user")
@@ -116,7 +116,7 @@ func (r *UserRepositoryImpl) DeleteUser(user string) error {
 func (r *UserRepositoryImpl) HashAndSaveCookie(user string, cookie string, expirationDate time.Time) error {
 	hashedCookieValue := u.GetSHA256Hash(cookie)
 
-	_, err := tools.Db.Exec("UPDATE users SET hashed_cookie_value = $1, expiration_date = $2 WHERE user_name = $3", hashedCookieValue, expirationDate.Format(time.RFC3339), user)
+	_, err := r.DatabaseProvider.GetDb().Exec("UPDATE users SET hashed_cookie_value = $1, expiration_date = $2 WHERE user_name = $3", hashedCookieValue, expirationDate.Format(time.RFC3339), user)
 	if err != nil {
 		u.Logger.Error("Failed to hash and save cookie", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to hash and save cookie")
@@ -128,7 +128,7 @@ func (r *UserRepositoryImpl) IsCookieExpired(cookie string) bool {
 	hashedCookieValue := u.GetSHA256Hash(cookie)
 
 	var expirationDateStr string
-	err := tools.Db.QueryRow("SELECT expiration_date FROM users WHERE hashed_cookie_value = $1", hashedCookieValue).Scan(&expirationDateStr)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT expiration_date FROM users WHERE hashed_cookie_value = $1", hashedCookieValue).Scan(&expirationDateStr)
 	if err != nil {
 		u.Logger.Error("Failed to fetch expiration date", deepstack.ErrorField, err)
 		return true
@@ -154,7 +154,7 @@ func (r *UserRepositoryImpl) GetUserViaCookie(cookie string) (string, error) {
 	hashedCookieValue := u.GetSHA256Hash(cookie)
 
 	var user string
-	err := tools.Db.QueryRow("SELECT user_name FROM users WHERE hashed_cookie_value = $1", hashedCookieValue).Scan(&user)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT user_name FROM users WHERE hashed_cookie_value = $1", hashedCookieValue).Scan(&user)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			u.Logger.Info("Cookie not found")
@@ -175,7 +175,7 @@ func (r *UserRepositoryImpl) ChangePassword(user string, newPassword string) err
 		return fmt.Errorf("failed to hash password")
 	}
 
-	_, err = tools.Db.Exec("UPDATE users SET hashed_password = $1 WHERE user_name = $2", hashedPassword, user)
+	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET hashed_password = $1 WHERE user_name = $2", hashedPassword, user)
 	if err != nil {
 		u.Logger.Error("Failed to change password", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to change password")
@@ -185,7 +185,7 @@ func (r *UserRepositoryImpl) ChangePassword(user string, newPassword string) err
 }
 
 func (r *UserRepositoryImpl) WipeDatabase() {
-	_, err := tools.Db.Exec("DELETE FROM users WHERE user_name != 'sample'")
+	_, err := r.DatabaseProvider.GetDb().Exec("DELETE FROM users WHERE user_name != 'sample'")
 	if err != nil {
 		u.Logger.Error("Failed to wipe database", deepstack.ErrorField, err)
 	}
@@ -194,7 +194,7 @@ func (r *UserRepositoryImpl) WipeDatabase() {
 
 func (r *UserRepositoryImpl) GetUsedSpaceInBytes(user string) (int, error) {
 	var usedSpace int
-	err := tools.Db.QueryRow(`SELECT used_space FROM users WHERE user_name = $1`, user).Scan(&usedSpace)
+	err := r.DatabaseProvider.GetDb().QueryRow(`SELECT used_space FROM users WHERE user_name = $1`, user).Scan(&usedSpace)
 	if err != nil {
 		u.Logger.Error("Failed to get used space", deepstack.ErrorField, err)
 		return 0, fmt.Errorf("failed to get used space")
@@ -203,7 +203,7 @@ func (r *UserRepositoryImpl) GetUsedSpaceInBytes(user string) (int, error) {
 }
 
 func (r *UserRepositoryImpl) Logout(user string) error {
-	_, err := tools.Db.Exec("UPDATE users SET hashed_cookie_value = $1, expiration_date = $2 WHERE user_name = $3", nil, nil, user)
+	_, err := r.DatabaseProvider.GetDb().Exec("UPDATE users SET hashed_cookie_value = $1, expiration_date = $2 WHERE user_name = $3", nil, nil, user)
 	if err != nil {
 		u.Logger.Error("failed to logout", deepstack.ErrorField, err)
 		return errors.New("failed to logout")
@@ -222,7 +222,7 @@ func CreateAndValidateUser(form *store.RegistrationForm) error {
 
 func (r *UserRepositoryImpl) DoesEmailExist(email string) bool {
 	var exists bool
-	err := tools.Db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)", email).Scan(&exists)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)", email).Scan(&exists)
 	if err != nil {
 		u.Logger.Error("Failed to check email existence", deepstack.ErrorField, err)
 		return false
@@ -230,7 +230,9 @@ func (r *UserRepositoryImpl) DoesEmailExist(email string) bool {
 	return exists
 }
 
-type UserRepositoryImpl struct{}
+type UserRepositoryImpl struct {
+	DatabaseProvider *tools.DatabaseProviderImpl
+}
 
 // TODO !! global var
 var UserRepo UserRepository = &UserRepositoryImpl{}
@@ -251,4 +253,14 @@ type UserRepository interface {
 	IsThereEnoughSpaceToAddVersion(user string, bytesToAdd int) error
 	GetUsedSpaceInBytes(user string) (int, error)
 	WipeDatabase()
+	GetUserId(user string) (int, error)
+}
+
+func (r *UserRepositoryImpl) GetUserId(user string) (int, error) {
+	var userID int
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT user_id FROM users WHERE user_name = $1", user).Scan(&userID)
+	if err != nil {
+		return 0, fmt.Errorf("user not found: %w", err)
+	}
+	return userID, nil
 }

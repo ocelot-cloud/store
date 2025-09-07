@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"ocelot/store/apps"
 	"ocelot/store/tools"
+	"ocelot/store/users"
 	"strconv"
 	"time"
 
@@ -12,9 +13,27 @@ import (
 	u "github.com/ocelot-cloud/shared/utils"
 )
 
+type VersionRepository interface {
+	IsVersionOwner(user string, versionId int) bool
+	CreateVersion(appId int, version string, data []byte) error
+	GetVersionId(appId int, version string) (int, error)
+	DeleteVersion(versionId int) error
+	GetVersionList(appId int) ([]store.Version, error)
+	DoesVersionExist(versionId int) bool
+	GetVersionContent(versionId int) ([]byte, error)
+	GetAppIdByVersionId(versionId int) (int, error)
+	GetFullVersionInfo(versionId int) (*store.FullVersionInfo, error)
+}
+
+type VersionRepositoryImpl struct {
+	DatabaseProvider *tools.DatabaseProviderImpl
+	UserRepo         users.UserRepository
+	AppRepo          apps.AppRepository
+}
+
 func (r *VersionRepositoryImpl) GetFullVersionInfo(versionId int) (*store.FullVersionInfo, error) {
 	var fullVersionInfo store.FullVersionInfo
-	err := tools.Db.QueryRow(`
+	err := r.DatabaseProvider.GetDb().QueryRow(`
 		SELECT users.user_name, apps.app_name, versions.version_name, versions.data, versions.version_id, versions.creation_timestamp
 		FROM versions
 		JOIN apps ON versions.app_id = apps.app_id
@@ -29,7 +48,7 @@ func (r *VersionRepositoryImpl) GetFullVersionInfo(versionId int) (*store.FullVe
 
 func (r *VersionRepositoryImpl) GetAppIdByVersionId(versionId int) (int, error) {
 	var appId int
-	err := tools.Db.QueryRow("SELECT app_id FROM versions WHERE version_id = $1", versionId).Scan(&appId)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT app_id FROM versions WHERE version_id = $1", versionId).Scan(&appId)
 	if err != nil {
 		u.Logger.Error("Failed to get app ID by version ID", tools.VersionIdField, versionId, deepstack.ErrorField, err)
 		return -1, fmt.Errorf("failed to get app ID by version ID")
@@ -38,14 +57,14 @@ func (r *VersionRepositoryImpl) GetAppIdByVersionId(versionId int) (int, error) 
 }
 
 func (r *VersionRepositoryImpl) IsVersionOwner(user string, versionId int) bool {
-	userId, err := tools.GetUserId(user)
+	userId, err := r.UserRepo.GetUserId(user)
 	if err != nil {
 		u.Logger.Info("Failed to get user ID", tools.UserField, deepstack.ErrorField, err)
 		return false
 	}
 
 	var ownerId int
-	err = tools.Db.QueryRow(`
+	err = r.DatabaseProvider.GetDb().QueryRow(`
 		SELECT apps.user_id 
 		FROM versions
 		JOIN apps ON versions.app_id = apps.app_id
@@ -60,7 +79,7 @@ func (r *VersionRepositoryImpl) IsVersionOwner(user string, versionId int) bool 
 
 func (r *VersionRepositoryImpl) GetVersionContent(versionId int) ([]byte, error) {
 	var data []byte
-	err := tools.Db.QueryRow("SELECT data FROM versions WHERE version_id = $1", versionId).Scan(&data)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT data FROM versions WHERE version_id = $1", versionId).Scan(&data)
 	if err != nil {
 		return nil, err
 	}
@@ -68,19 +87,19 @@ func (r *VersionRepositoryImpl) GetVersionContent(versionId int) ([]byte, error)
 }
 
 func (r *VersionRepositoryImpl) CreateVersion(appId int, version string, data []byte) error {
-	userId, err := apps.GetUserIdOfApp(appId)
+	userId, err := r.AppRepo.GetUserIdOfApp(appId)
 	if err != nil {
 		return err
 	}
 
 	now := time.Now().UTC()
-	_, err = tools.Db.Exec("INSERT INTO versions (app_id, version_name, creation_timestamp, data) VALUES ($1, $2, $3, $4)", appId, version, now, data)
+	_, err = r.DatabaseProvider.GetDb().Exec("INSERT INTO versions (app_id, version_name, creation_timestamp, data) VALUES ($1, $2, $3, $4)", appId, version, now, data)
 	if err != nil {
 		return fmt.Errorf("failed to create version: %w", err)
 	}
 
 	dataSize := len(data)
-	_, err = tools.Db.Exec("UPDATE users SET used_space = used_space + $1 WHERE user_id = $2", dataSize, userId)
+	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET used_space = used_space + $1 WHERE user_id = $2", dataSize, userId)
 	if err != nil {
 		return fmt.Errorf("failed to update user space: %w", err)
 	}
@@ -89,25 +108,25 @@ func (r *VersionRepositoryImpl) CreateVersion(appId int, version string, data []
 }
 
 func (r *VersionRepositoryImpl) DeleteVersion(versionId int) error {
-	dataSize, err := getBlobSize(versionId)
+	dataSize, err := r.getBlobSize(versionId)
 	if err != nil {
 		return err
 	}
-	appId, err := getAppIdOfVersion(versionId)
+	appId, err := r.getAppIdOfVersion(versionId)
 	if err != nil {
 		return err
 	}
-	userId, err := apps.GetUserIdOfApp(appId)
+	userId, err := r.AppRepo.GetUserIdOfApp(appId)
 	if err != nil {
 		return err
 	}
 
-	_, err = tools.Db.Exec("DELETE FROM versions WHERE version_id = $1", versionId)
+	_, err = r.DatabaseProvider.GetDb().Exec("DELETE FROM versions WHERE version_id = $1", versionId)
 	if err != nil {
 		return fmt.Errorf("failed to delete version: %w", err)
 	}
 
-	_, err = tools.Db.Exec("UPDATE users SET used_space = used_space - $1 WHERE user_id = $2", dataSize, userId)
+	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET used_space = used_space - $1 WHERE user_id = $2", dataSize, userId)
 	if err != nil {
 		return fmt.Errorf("failed to update user space: %w", err)
 	}
@@ -115,18 +134,18 @@ func (r *VersionRepositoryImpl) DeleteVersion(versionId int) error {
 	return nil
 }
 
-func getAppIdOfVersion(versionId int) (int, error) {
+func (r *VersionRepositoryImpl) getAppIdOfVersion(versionId int) (int, error) {
 	var appId int
-	err := tools.Db.QueryRow("SELECT app_id FROM versions WHERE version_id = $1", versionId).Scan(&appId)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT app_id FROM versions WHERE version_id = $1", versionId).Scan(&appId)
 	if err != nil {
 		return -1, fmt.Errorf("failed to get app ID: %w", err)
 	}
 	return appId, nil
 }
 
-func getBlobSize(versionId int) (int64, error) {
+func (r *VersionRepositoryImpl) getBlobSize(versionId int) (int64, error) {
 	var dataSize int64
-	err := tools.Db.QueryRow("SELECT LENGTH(data) FROM versions WHERE version_id = $1", versionId).Scan(&dataSize)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT LENGTH(data) FROM versions WHERE version_id = $1", versionId).Scan(&dataSize)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get BLOB size: %w", err)
 	}
@@ -135,7 +154,7 @@ func getBlobSize(versionId int) (int64, error) {
 
 func (r *VersionRepositoryImpl) GetVersionList(appId int) ([]store.Version, error) {
 	var exists bool
-	err := tools.Db.QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE app_id = $1)", appId).Scan(&exists)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE app_id = $1)", appId).Scan(&exists)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check app existence: %w", err)
 	}
@@ -143,7 +162,7 @@ func (r *VersionRepositoryImpl) GetVersionList(appId int) ([]store.Version, erro
 		return nil, fmt.Errorf("app with id %d does not exist", appId)
 	}
 
-	rows, err := tools.Db.Query("SELECT version_name, version_id, creation_timestamp FROM versions WHERE app_id = $1 ORDER BY creation_timestamp DESC", appId)
+	rows, err := r.DatabaseProvider.GetDb().Query("SELECT version_name, version_id, creation_timestamp FROM versions WHERE app_id = $1 ORDER BY creation_timestamp DESC", appId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get versions: %w", err)
 	}
@@ -174,7 +193,7 @@ func (r *VersionRepositoryImpl) GetVersionList(appId int) ([]store.Version, erro
 
 func (r *VersionRepositoryImpl) DoesVersionExist(versionId int) bool {
 	var exists bool
-	err := tools.Db.QueryRow(`SELECT EXISTS(SELECT 1 FROM versions WHERE version_id = $1)`, versionId).Scan(&exists)
+	err := r.DatabaseProvider.GetDb().QueryRow(`SELECT EXISTS(SELECT 1 FROM versions WHERE version_id = $1)`, versionId).Scan(&exists)
 	if err != nil {
 		u.Logger.Debug("error checking if version exists")
 		return false
@@ -184,23 +203,9 @@ func (r *VersionRepositoryImpl) DoesVersionExist(versionId int) bool {
 
 func (r *VersionRepositoryImpl) GetVersionId(appId int, version string) (int, error) {
 	var versionId int
-	err := tools.Db.QueryRow("SELECT version_id FROM versions WHERE app_id = $1 AND version_name = $2", appId, version).Scan(&versionId)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT version_id FROM versions WHERE app_id = $1 AND version_name = $2", appId, version).Scan(&versionId)
 	if err != nil {
 		return -1, fmt.Errorf("version not found: %w", err)
 	}
 	return versionId, nil
-}
-
-type VersionRepositoryImpl struct{}
-
-type VersionRepository interface {
-	IsVersionOwner(user string, versionId int) bool
-	CreateVersion(appId int, version string, data []byte) error
-	GetVersionId(appId int, version string) (int, error)
-	DeleteVersion(versionId int) error
-	GetVersionList(appId int) ([]store.Version, error)
-	DoesVersionExist(versionId int) bool
-	GetVersionContent(versionId int) ([]byte, error)
-	GetAppIdByVersionId(versionId int) (int, error)
-	GetFullVersionInfo(versionId int) (*store.FullVersionInfo, error)
 }

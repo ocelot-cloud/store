@@ -2,7 +2,6 @@ package tools
 
 import (
 	"database/sql"
-	"fmt"
 	"os"
 	"sync"
 
@@ -11,11 +10,15 @@ import (
 	u "github.com/ocelot-cloud/shared/utils"
 )
 
-// TODO !! global var
-var Db *sql.DB
+type DatabaseProviderImpl struct {
+	Db *sql.DB
+}
 
-// TODO !! should return error
-func InitializeDatabase() {
+func (d *DatabaseProviderImpl) GetDb() *sql.DB {
+	return d.Db
+}
+
+func (d *DatabaseProviderImpl) InitializeDatabase() error {
 	var err error
 	var host, customPostgresPort string
 	// TODO maybe better introduce profiles? -> so acceptance testing should be run against the app store container I guess?
@@ -24,7 +27,7 @@ func InitializeDatabase() {
 
 	// TODO !! get rid of exit() and return error to top module instead
 
-	Db, err = u.WaitForPostgresDb(host, customPostgresPort)
+	d.Db, err = u.WaitForPostgresDb(host, customPostgresPort)
 	if err != nil {
 		u.Logger.Error("Failed to create database client", deepstack.ErrorField, err)
 		os.Exit(1)
@@ -43,26 +46,8 @@ func InitializeDatabase() {
 		u.Logger.Error("Failed to run migrations", deepstack.ErrorField, err)
 		os.Exit(1)
 	}
-
+	return nil
 }
 
 // TODO !! global var
 var WaitingForEmailVerificationList sync.Map
-
-func GetAppId(userID int, app string) (int, error) {
-	var appID int
-	err := Db.QueryRow("SELECT app_id FROM apps WHERE user_id = $1 AND app_name = $2", userID, app).Scan(&appID)
-	if err != nil {
-		return 0, fmt.Errorf("app not found: %v", err)
-	}
-	return appID, nil
-}
-
-func GetUserId(user string) (int, error) {
-	var userID int
-	err := Db.QueryRow("SELECT user_id FROM users WHERE user_name = $1", user).Scan(&userID)
-	if err != nil {
-		return 0, fmt.Errorf("user not found: %w", err)
-	}
-	return userID, nil
-}

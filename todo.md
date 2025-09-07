@@ -38,6 +38,7 @@ calling custom cleanup function
  i dont like .env file approach -> idea: create a single admin account, with static name "admin"; for the "apps updater" CLI tool to here and also add administrative API to it. for example: set email settings, disable/ban user, reset user password etc.
   * replace GUI with that CLI tools
   * add acceptance tests by having tests using the CLI tools and asserting the output
+* there is some security logic in the handlers for now, which should be in a service instead
 
 ### frontend 
 

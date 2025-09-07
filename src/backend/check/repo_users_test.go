@@ -144,7 +144,7 @@ func TestSpace(t *testing.T) {
 	assert.Nil(t, users.UserRepo.IsThereEnoughSpaceToAddVersion(tools.SampleUser, tenMegaBytes))
 	assert.NotNil(t, users.UserRepo.IsThereEnoughSpaceToAddVersion(tools.SampleUser, tenMegaBytes+1))
 
-	appId, err := apps.AppRepo.GetAppId(tools.SampleUser, tools.SampleApp)
+	appId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
 	assert.Nil(t, err)
 	oneKiloByte := 1024
 	randomBytes := make([]byte, oneKiloByte)
@@ -163,7 +163,7 @@ func TestUsedSpace(t *testing.T) {
 	assert.Equal(t, 0, space)
 
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
-	appId, err := apps.AppRepo.GetAppId(tools.SampleUser, tools.SampleApp)
+	appId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
 	assert.Nil(t, err)
 
 	bytes := []byte("hello")

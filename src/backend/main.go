@@ -23,15 +23,15 @@ import (
 // TODO !! shift logic from handlers and repos to services, simplify repos to CRUD
 
 func main() {
-	deps := WireDependencies()
-	fmt.Printf("todo !! temp: %v", deps)
-
 	// TODO !! tool installation checker
 	cmd := exec.Command("docker", "compose", "version")
 	if err := cmd.Run(); err != nil {
 		u.Logger.Error("docker compose is not installed or not accessible in PATH. Tool is required for docker-compose.yml validation.")
 		os.Exit(1)
 	}
+
+	deps := WireDependencies()
+	fmt.Printf("todo !! temp: %v", deps)
 
 	// TODO !! make this dependent on the config object -> when constructing the config object
 	if os.Getenv("USE_MOCK_EMAIL_CLIENT") == "true" {
@@ -46,7 +46,11 @@ func main() {
 	}
 
 	// TODO !! database initializer
-	tools.InitializeDatabase()
+	err = deps.DatabaseProvider.InitializeDatabase()
+	if err != nil {
+		u.Logger.Error("exiting due to error through database", deepstack.ErrorField, err)
+		os.Exit(1)
+	}
 
 	// TODO !! handler initializer
 	mux := http.NewServeMux()

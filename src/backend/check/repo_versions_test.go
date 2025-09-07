@@ -20,7 +20,7 @@ func TestCreateRepoVersion(t *testing.T) {
 	defer users.UserRepo.WipeDatabase()
 	assert.Nil(t, users.CreateAndValidateUser(tools.SampleForm))
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
-	appId, err := apps.AppRepo.GetAppId(tools.SampleUser, tools.SampleApp)
+	appId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
 	assert.Nil(t, err)
 	assert.Nil(t, versions.VersionRepo.CreateVersion(appId, tools.SampleVersion, []byte("asdf")))
 	versionId, err := versions.VersionRepo.GetVersionId(appId, tools.SampleVersion)
@@ -40,7 +40,7 @@ func TestGetVersionList(t *testing.T) {
 	defer users.UserRepo.WipeDatabase()
 	assert.Nil(t, users.CreateAndValidateUser(tools.SampleForm))
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
-	appId, err := apps.AppRepo.GetAppId(tools.SampleUser, tools.SampleApp)
+	appId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
 	assert.Nil(t, err)
 	foundVersions, err := versions.VersionRepo.GetVersionList(appId)
 	assert.Nil(t, err)
@@ -89,7 +89,7 @@ func TestAppIdConsistency(t *testing.T) {
 	defer users.UserRepo.WipeDatabase()
 	assert.Nil(t, users.CreateAndValidateUser(tools.SampleForm))
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
-	appId, err := apps.AppRepo.GetAppId(tools.SampleUser, tools.SampleApp)
+	appId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
 	assert.Nil(t, err)
 	assert.Nil(t, versions.VersionRepo.CreateVersion(appId, tools.SampleVersion, []byte("asdf")))
 	versionId, err := versions.VersionRepo.GetVersionId(appId, tools.SampleVersion)
@@ -110,7 +110,7 @@ func TestIsVersionOwner(t *testing.T) {
 	assert.False(t, versions.VersionRepo.IsVersionOwner(tools.SampleUser, 1))
 
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
-	appId, err := apps.AppRepo.GetAppId(tools.SampleUser, tools.SampleApp)
+	appId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
 	assert.Nil(t, err)
 	assert.False(t, versions.VersionRepo.IsVersionOwner(tools.SampleUser, 1))
 
@@ -134,7 +134,7 @@ func TestGetAppIdByVersionId(t *testing.T) {
 	defer users.UserRepo.WipeDatabase()
 	assert.Nil(t, users.CreateAndValidateUser(tools.SampleForm))
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
-	expectedAppId, err := apps.AppRepo.GetAppId(tools.SampleUser, tools.SampleApp)
+	expectedAppId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
 	assert.Nil(t, err)
 	assert.Nil(t, versions.VersionRepo.CreateVersion(expectedAppId, tools.SampleVersion, []byte("asdf")))
 	versionId, err := versions.VersionRepo.GetVersionId(expectedAppId, tools.SampleVersion)
@@ -149,7 +149,7 @@ func TestGetFullVersionInfo(t *testing.T) {
 	defer users.UserRepo.WipeDatabase()
 	assert.Nil(t, users.CreateAndValidateUser(tools.SampleForm))
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
-	appId, err := apps.AppRepo.GetAppId(tools.SampleUser, tools.SampleApp)
+	appId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
 	assert.Nil(t, err)
 	assert.Nil(t, versions.VersionRepo.CreateVersion(appId, tools.SampleVersion, SampleVersionFileContent))
 	versionId, err := versions.VersionRepo.GetVersionId(appId, tools.SampleVersion)
@@ -174,11 +174,11 @@ func TestSearchForApps(t *testing.T) {
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, app1))
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, app2))
 
-	app1Id, err := apps.AppRepo.GetAppId(tools.SampleUser, app1)
+	app1Id, err := apps.AppRepo.GetAppId2(tools.SampleUser, app1)
 	assert.Nil(t, err)
 	err = versions.VersionRepo.CreateVersion(app1Id, tools.SampleVersion, []byte("asdf"))
 	assert.Nil(t, err)
-	app2Id, err := apps.AppRepo.GetAppId(tools.SampleUser, app2)
+	app2Id, err := apps.AppRepo.GetAppId2(tools.SampleUser, app2)
 	assert.Nil(t, err)
 	sampleVersion2 := tools.SampleVersion + "x"
 	err = versions.VersionRepo.CreateVersion(app2Id, sampleVersion2, []byte("asdf"))
@@ -213,7 +213,7 @@ func TestSearchForApps_LatestVersions(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(searchedApps))
 
-	appId, err := apps.AppRepo.GetAppId(tools.SampleUser, tools.SampleApp)
+	appId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
 	assert.Nil(t, err)
 	assert.Nil(t, versions.VersionRepo.CreateVersion(appId, tools.SampleVersion, []byte("asdf")))
 	versionId, err := versions.VersionRepo.GetVersionId(appId, tools.SampleVersion)
@@ -258,13 +258,13 @@ func TestUnofficialAppFiltering(t *testing.T) {
 
 	app1 := "official_app"
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, app1))
-	app1Id, err := apps.AppRepo.GetAppId(tools.SampleUser, app1)
+	app1Id, err := apps.AppRepo.GetAppId2(tools.SampleUser, app1)
 	assert.Nil(t, err)
 	assert.Nil(t, versions.VersionRepo.CreateVersion(app1Id, tools.SampleVersion, []byte("sample-bytes")))
 
 	app2 := "unofficial_app"
 	assert.Nil(t, apps.AppRepo.CreateApp(officialUser, app2))
-	app2Id, err := apps.AppRepo.GetAppId(officialUser, app2)
+	app2Id, err := apps.AppRepo.GetAppId2(officialUser, app2)
 	assert.Nil(t, err)
 	assert.Nil(t, versions.VersionRepo.CreateVersion(app2Id, tools.SampleVersion, []byte("sample-bytes")))
 

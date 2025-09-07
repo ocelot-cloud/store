@@ -11,17 +11,42 @@ import (
 	"strconv"
 )
 
+// TODO !! never pass username if you could pass user ID instead
+type AppRepository interface {
+	IsAppOwner(user string, appId int) bool
+	DoesAppExist(appId int) bool
+	CreateApp(user, app string) error
+	DeleteApp(appId int) error
+	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error)
+	GetAppList(user string) ([]store.App, error)
+
+	// TODO !! merge to simple GetAppById
+	GetAppName(appId int) (string, error)
+	GetMaintainerName(appId int) (string, error)
+
+	// TODO !! duplication, only give ID? or maybe pass the user struct
+	GetAppId(user, app string) (int, error)
+	GetAppId2(userID int, app string) (int, error)
+
+	GetUserIdOfApp(appId int) (int, error)
+}
+
+type AppRepositoryImpl struct {
+	DatabaseProvider *tools.DatabaseProviderImpl
+	UserRepo         users.UserRepository
+}
+
 // TODO !! rename repo_apps, repo_users and repo_versions simply to repository each
 
 func (r *AppRepositoryImpl) IsAppOwner(user string, appId int) bool {
-	userId, err := tools.GetUserId(user)
+	userId, err := r.UserRepo.GetUserId(user)
 	if err != nil {
 		u.Logger.Info("Failed to get user ID", deepstack.ErrorField, err)
 		return false
 	}
 
 	var ownerId int
-	err = tools.Db.QueryRow("SELECT user_id FROM apps WHERE app_id = $1", appId).Scan(&ownerId)
+	err = r.DatabaseProvider.GetDb().QueryRow("SELECT user_id FROM apps WHERE app_id = $1", appId).Scan(&ownerId)
 	if err != nil {
 		u.Logger.Error("Failed to get app owner ID", deepstack.ErrorField, err)
 		return false
@@ -36,11 +61,11 @@ func (r *AppRepositoryImpl) CreateApp(user string, app string) error {
 		return fmt.Errorf("user does not exist")
 	}
 
-	userID, err := tools.GetUserId(user)
+	userID, err := r.UserRepo.GetUserId(user)
 	if err != nil {
 		return err
 	}
-	_, err = tools.Db.Exec(`INSERT INTO apps (user_id, app_name) VALUES ($1, $2)`, userID, app)
+	_, err = r.DatabaseProvider.GetDb().Exec(`INSERT INTO apps (user_id, app_name) VALUES ($1, $2)`, userID, app)
 	if err != nil {
 		u.Logger.Error("Failed to create app", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to create app")
@@ -50,7 +75,7 @@ func (r *AppRepositoryImpl) CreateApp(user string, app string) error {
 
 func (r *AppRepositoryImpl) DoesAppExist(appId int) bool {
 	var exists bool
-	err := tools.Db.QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE app_id = $1)", appId).Scan(&exists)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE app_id = $1)", appId).Scan(&exists)
 	if err != nil {
 		u.Logger.Error("Failed to check app existence for app", tools.AppIdField, appId, deepstack.ErrorField, err)
 		return false
@@ -59,7 +84,7 @@ func (r *AppRepositoryImpl) DoesAppExist(appId int) bool {
 }
 
 func (r *AppRepositoryImpl) DeleteApp(appId int) error {
-	userId, err := GetUserIdOfApp(appId)
+	userId, err := r.GetUserIdOfApp(appId)
 	if err != nil {
 		return err
 	}
@@ -69,13 +94,13 @@ func (r *AppRepositoryImpl) DeleteApp(appId int) error {
 		return err
 	}
 
-	_, err = tools.Db.Exec(`DELETE FROM apps WHERE app_id = $1`, appId)
+	_, err = r.DatabaseProvider.GetDb().Exec(`DELETE FROM apps WHERE app_id = $1`, appId)
 	if err != nil {
 		u.Logger.Error("Failed to delete app", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to delete app")
 	}
 
-	_, err = tools.Db.Exec("UPDATE users SET used_space = used_space - $1 WHERE user_id = $2", totalDataSize, userId)
+	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET used_space = used_space - $1 WHERE user_id = $2", totalDataSize, userId)
 	if err != nil {
 		return fmt.Errorf("failed to update user space: %w", err)
 	}
@@ -83,9 +108,10 @@ func (r *AppRepositoryImpl) DeleteApp(appId int) error {
 	return nil
 }
 
-func GetUserIdOfApp(appId int) (int, error) {
+// TODO !! or better in user repo?
+func (r *AppRepositoryImpl) GetUserIdOfApp(appId int) (int, error) {
 	var userId int
-	err := tools.Db.QueryRow(`SELECT user_id FROM apps WHERE app_id = $1`, appId).Scan(&userId)
+	err := r.DatabaseProvider.GetDb().QueryRow(`SELECT user_id FROM apps WHERE app_id = $1`, appId).Scan(&userId)
 	if err != nil {
 		u.Logger.Error("Failed to get user ID of app", tools.AppIdField, appId, deepstack.ErrorField, err)
 		return -1, fmt.Errorf("failed to get user ID of app")
@@ -95,7 +121,7 @@ func GetUserIdOfApp(appId int) (int, error) {
 
 func (r *AppRepositoryImpl) sumBlobSizes(appID int) (int64, error) {
 	var totalSize sql.NullInt64
-	err := tools.Db.QueryRow("SELECT SUM(LENGTH(data)) FROM versions WHERE app_id = $1", appID).Scan(&totalSize)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT SUM(LENGTH(data)) FROM versions WHERE app_id = $1", appID).Scan(&totalSize)
 	if err != nil {
 		return 0, fmt.Errorf("failed to calculate total BLOB size: %w", err)
 	}
@@ -128,7 +154,7 @@ func (r *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 	}
 	query += " LIMIT 100"
 
-	rows, err := tools.Db.Query(query, "%"+request.SearchTerm+"%", "%"+request.SearchTerm+"%")
+	rows, err := r.DatabaseProvider.GetDb().Query(query, "%"+request.SearchTerm+"%", "%"+request.SearchTerm+"%")
 	if err != nil {
 		u.Logger.Error("Failed to find apps", deepstack.ErrorField, err)
 		return nil, fmt.Errorf("failed to find apps")
@@ -160,12 +186,12 @@ func (r *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 }
 
 func (r *AppRepositoryImpl) GetAppId(user, app string) (int, error) {
-	userID, err := tools.GetUserId(user)
+	userID, err := r.UserRepo.GetUserId(user)
 	if err != nil {
 		return -1, err
 	}
 
-	appID, err := tools.GetAppId(userID, app)
+	appID, err := r.GetAppId2(userID, app)
 	if err != nil {
 		return -1, err
 	}
@@ -173,12 +199,12 @@ func (r *AppRepositoryImpl) GetAppId(user, app string) (int, error) {
 }
 
 func (r *AppRepositoryImpl) GetAppList(user string) ([]store.App, error) {
-	userID, err := tools.GetUserId(user)
+	userID, err := r.UserRepo.GetUserId(user)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := tools.Db.Query("SELECT app_name, app_id FROM apps WHERE user_id = $1", userID)
+	rows, err := r.DatabaseProvider.GetDb().Query("SELECT app_name, app_id FROM apps WHERE user_id = $1", userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get apps: %w", err)
 	}
@@ -203,7 +229,7 @@ func (r *AppRepositoryImpl) GetAppList(user string) ([]store.App, error) {
 
 func (r *AppRepositoryImpl) GetAppName(appId int) (string, error) {
 	var appName string
-	err := tools.Db.QueryRow("SELECT app_name FROM apps WHERE app_id = $1", appId).Scan(&appName)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT app_name FROM apps WHERE app_id = $1", appId).Scan(&appName)
 	if err != nil {
 		return "", fmt.Errorf("failed to get app name: %w", err)
 	}
@@ -212,7 +238,7 @@ func (r *AppRepositoryImpl) GetAppName(appId int) (string, error) {
 
 func (r *AppRepositoryImpl) GetMaintainerName(appId int) (string, error) {
 	var maintainer string
-	err := tools.Db.QueryRow(`
+	err := r.DatabaseProvider.GetDb().QueryRow(`
 		SELECT u.user_name
 		FROM users u
 		JOIN apps a ON u.user_id = a.user_id
@@ -224,16 +250,11 @@ func (r *AppRepositoryImpl) GetMaintainerName(appId int) (string, error) {
 	return maintainer, nil
 }
 
-type AppRepositoryImpl struct{}
-
-type AppRepository interface {
-	IsAppOwner(user string, appId int) bool
-	DoesAppExist(appId int) bool
-	CreateApp(user, app string) error
-	DeleteApp(appId int) error
-	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error)
-	GetAppId(user, app string) (int, error)
-	GetAppName(appId int) (string, error)
-	GetAppList(user string) ([]store.App, error)
-	GetMaintainerName(appId int) (string, error)
+func (r *AppRepositoryImpl) GetAppId2(userID int, app string) (int, error) {
+	var appID int
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT app_id FROM apps WHERE user_id = $1 AND app_name = $2", userID, app).Scan(&appID)
+	if err != nil {
+		return 0, fmt.Errorf("app not found: %v", err)
+	}
+	return appID, nil
 }

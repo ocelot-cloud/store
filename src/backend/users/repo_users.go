@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"ocelot/store/tools"
-	"sync"
 	"time"
 
 	"github.com/ocelot-cloud/deepstack"
@@ -37,6 +36,7 @@ type UserRepository interface {
 
 type UserRepositoryImpl struct {
 	DatabaseProvider *tools.DatabaseProviderImpl
+	EmailVerifier    *tools.EmailVerifierImpl
 }
 
 var NotEnoughSpacePrefix = "not enough space"
@@ -92,20 +92,14 @@ func (r *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) (string, e
 		key = hex.EncodeToString(randomBytes)
 	}
 	u.Logger.Info("adding user to validation list", tools.UserField, form.User)
-	tools.WaitingForEmailVerificationList.Store(key, form)
+	r.EmailVerifier.Store(key, form)
 	return key, nil
 }
 
 func (r *UserRepositoryImpl) ValidateUser(code string) error {
-	value, ok := tools.WaitingForEmailVerificationList.Load(code)
-	if !ok {
-		return fmt.Errorf("code not found")
-	}
-
-	form, ok := value.(*store.RegistrationForm)
-	if !ok {
-		u.Logger.Error("Invalid type for registration form")
-		return fmt.Errorf("invalid type for registration form")
+	form, err := r.EmailVerifier.Load(code)
+	if err != nil {
+		return err
 	}
 
 	hashedPassword, err := u.SaltAndHash(form.Password)
@@ -118,7 +112,7 @@ func (r *UserRepositoryImpl) ValidateUser(code string) error {
 		u.Logger.Error("Failed to create user", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to create user")
 	}
-	tools.WaitingForEmailVerificationList.Delete(code)
+	r.EmailVerifier.Delete(code)
 	return nil
 }
 
@@ -213,7 +207,7 @@ func (r *UserRepositoryImpl) WipeDatabase() {
 	if err != nil {
 		u.Logger.Error("Failed to wipe database", deepstack.ErrorField, err)
 	}
-	tools.WaitingForEmailVerificationList = sync.Map{}
+	r.EmailVerifier.Clear()
 }
 
 func (r *UserRepositoryImpl) GetUsedSpaceInBytes(user string) (int, error) {

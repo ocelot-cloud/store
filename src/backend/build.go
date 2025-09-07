@@ -7,6 +7,7 @@ import (
 	"ocelot/store/tools"
 	"ocelot/store/users"
 	"ocelot/store/versions"
+	"sync"
 
 	"github.com/google/wire"
 )
@@ -14,6 +15,8 @@ import (
 func WireDependencies() *InitializerDependencies {
 	wire.Build(
 		NewDatabaseProvider,
+		NewEmailVerifier,
+		
 		wire.Struct(new(InitializerDependencies), "*"),
 		wire.Struct(new(apps.AppsHandler), "*"),
 		wire.Struct(new(apps.AppRepositoryImpl), "*"),
@@ -38,4 +41,10 @@ type InitializerDependencies struct {
 
 func NewDatabaseProvider() *tools.DatabaseProviderImpl {
 	return &tools.DatabaseProviderImpl{}
+}
+
+func NewEmailVerifier() *tools.EmailVerifierImpl {
+	return &tools.EmailVerifierImpl{
+		WaitingList: sync.Map{},
+	}
 }

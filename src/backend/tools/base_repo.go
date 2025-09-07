@@ -3,7 +3,6 @@ package tools
 import (
 	"database/sql"
 	"os"
-	"sync"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/ocelot-cloud/deepstack"
@@ -49,6 +48,3 @@ func (d *DatabaseProviderImpl) InitializeDatabase() error {
 	}
 	return nil
 }
-
-// TODO !! global var
-var WaitingForEmailVerificationList sync.Map

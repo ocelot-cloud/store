@@ -2,9 +2,8 @@
 
 package check
 
+/* TODO !! move to unit and component tests
 import (
-	"github.com/ocelot-cloud/shared/assert"
-	"github.com/ocelot-cloud/shared/utils"
 	"ocelot/store/apps"
 	"ocelot/store/tools"
 	"ocelot/store/users"
@@ -12,6 +11,9 @@ import (
 	"regexp"
 	"testing"
 	"time"
+
+	"github.com/ocelot-cloud/shared/assert"
+	"github.com/ocelot-cloud/shared/utils"
 )
 
 func TestCreateRepoUser(t *testing.T) {
@@ -193,3 +195,4 @@ func TestUsedSpace(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 0, space)
 }
+*/

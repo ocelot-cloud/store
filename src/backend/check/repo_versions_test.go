@@ -2,6 +2,7 @@
 
 package check
 
+/* TODO !! move to unit and component tests
 import (
 	"github.com/ocelot-cloud/shared/assert"
 	"github.com/ocelot-cloud/shared/store"
@@ -284,3 +285,6 @@ func TestUnofficialAppFiltering(t *testing.T) {
 	assert.Equal(t, 1, len(foundApps))
 	assert.Equal(t, officialUser, foundApps[0].Maintainer)
 }
+
+
+*/

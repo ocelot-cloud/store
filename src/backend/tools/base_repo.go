@@ -19,14 +19,8 @@ func InitializeDatabase() {
 	var err error
 	var host, customPostgresPort string
 	// TODO maybe better introduce profiles? -> so acceptance testing should be run against the app store container I guess?
-	if Profile == TEST {
-		host = "localhost"
-		customPostgresPort = "5433"
-	} else {
-		// TODO !! always use this one
-		host = "ocelotcloud_store_postgres"
-		customPostgresPort = "5432"
-	}
+	host = "ocelotcloud_store_postgres"
+	customPostgresPort = "5432"
 
 	// TODO !! get rid of exit() and return error to top module instead
 

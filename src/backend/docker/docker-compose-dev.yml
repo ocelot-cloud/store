@@ -1,4 +1,12 @@
 services:
+  store:
+    image: ocelotcloud/store:local
+    container_name: ocelotcloud_store_store
+    environment:
+      - PROFILE=${PROFILE}
+    ports:
+      - 8082:8082 # TODO !! should be changed to 80
+
   postgres:
     image: postgres:17.2
     container_name: ocelotcloud_store_postgres
@@ -6,8 +14,10 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_HOST_AUTH_METHOD=trust
       - POSTGRES_DB=postgres
-    ports:
-      - "127.0.0.1:5433:5432"
-    restart: unless-stopped
     tmpfs:
       - /var/lib/postgresql/data
+
+networks:
+  ocelotcloud_store:
+    name: ocelotcloud_store
+# TODO !! should be an external network for app integration?

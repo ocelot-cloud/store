@@ -13,12 +13,12 @@ import (
 var (
 	tr = taskrunner.GetTaskRunner()
 
-	srcDir           = getAbsoluteParentDir()
-	backendDir       = srcDir + "/backend"
+	srcDir      = getAbsoluteParentDir()
+	backendDir  = srcDir + "/backend"
+	ciRunnerDir = srcDir + "/ci-runner"
+
 	backendDockerDir = backendDir + "/docker"
 	backendCheckDir  = backendDir + "/check"
-
-	ciRunnerDir = srcDir + "/ci-runner"
 
 	sshHost = "store"
 )

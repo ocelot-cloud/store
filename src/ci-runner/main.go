@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ocelot-cloud/shared/utils"
+	u "github.com/ocelot-cloud/shared/utils"
 	"github.com/ocelot-cloud/task-runner"
 	"github.com/spf13/cobra"
 )
@@ -165,7 +165,7 @@ var analyzeCmd = &cobra.Command{
 	Use:   "analyze",
 	Short: "runs code analysis tools",
 	Run: func(cmd *cobra.Command, args []string) {
-		utils.AnalyzeCode(tr, backendDir)
+		u.AnalyzeCode(tr, backendDir)
 	},
 }
 
@@ -181,6 +181,6 @@ var buildBackendCmd = &cobra.Command{
 	Use:   "backend",
 	Short: "Builds the backend",
 	Run: func(cmd *cobra.Command, args []string) {
-		utils.BuildWholeGoProject(tr, backendDir)
+		u.BuildWholeGoProject(tr, backendDir)
 	},
 }

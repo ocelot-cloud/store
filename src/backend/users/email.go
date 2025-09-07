@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/ocelot-cloud/deepstack"
-	"github.com/ocelot-cloud/shared/utils"
+	u "github.com/ocelot-cloud/shared/utils"
 	"gopkg.in/gomail.v2"
 )
 
@@ -26,19 +26,19 @@ func InitializeEnvs() error {
 		defaultEnv := []byte("HOST=http://localhost:8082\nSMTP_HOST=smtps.sample.com\nSMTP_PORT=465\nEMAIL=sample@sample.com\nEMAIL_USER=sample\nEMAIL_PASSWORD=password\n")
 		err = os.WriteFile(envFilePath, defaultEnv, 0600)
 		if err != nil {
-			Logger.Error("Failed to create .env file", deepstack.ErrorField, err)
+			u.Logger.Error("Failed to create .env file", deepstack.ErrorField, err)
 			return fmt.Errorf("failed to create .env file")
 		}
-		Logger.Info(".env file created with default values")
+		u.Logger.Info(".env file created with default values")
 		return nil
 	} else {
 		var file *os.File
 		file, err = os.Open(envFilePath)
 		if err != nil {
-			Logger.Error("Failed to open .env file", deepstack.ErrorField, err)
+			u.Logger.Error("Failed to open .env file", deepstack.ErrorField, err)
 			os.Exit(1)
 		}
-		defer utils.Close(file)
+		defer u.Close(file)
 
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
@@ -47,14 +47,14 @@ func InitializeEnvs() error {
 			if len(parts) == 2 {
 				err = os.Setenv(parts[0], parts[1])
 				if err != nil {
-					Logger.Error("failed to set environment variable", tools.EnvVarField, parts[0], deepstack.ErrorField, err)
+					u.Logger.Error("failed to set environment variable", tools.EnvVarField, parts[0], deepstack.ErrorField, err)
 					os.Exit(1)
 				}
 			}
 		}
 
 		if err := scanner.Err(); err != nil {
-			Logger.Error("Error reading .env file", deepstack.ErrorField, err)
+			u.Logger.Error("Error reading .env file", deepstack.ErrorField, err)
 			os.Exit(1)
 		}
 
@@ -63,14 +63,14 @@ func InitializeEnvs() error {
 		smtpPort := GetEnv("SMTP_PORT")
 		SMTP_PORT, err = strconv.Atoi(smtpPort)
 		if err != nil {
-			Logger.Error("Failed to parse SMTP_PORT env", tools.SmtpPortEnvField, smtpPort, deepstack.ErrorField, err)
+			u.Logger.Error("Failed to parse SMTP_PORT env", tools.SmtpPortEnvField, smtpPort, deepstack.ErrorField, err)
 			os.Exit(1)
 		}
 		EMAIL = GetEnv("EMAIL")
 		EMAIL_USER = GetEnv("EMAIL_USER")
 		EMAIL_PASSWORD = GetEnv("EMAIL_PASSWORD")
 
-		Logger.Info(".env file loaded successfully")
+		u.Logger.Info(".env file loaded successfully")
 		return err
 	}
 }
@@ -79,17 +79,17 @@ func GetEnv(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
 		// TODO this was a panic error before, but not sure whether it should be panic
-		Logger.Error("environment variable not set")
+		u.Logger.Error("environment variable not set")
 		return ""
 	} else {
-		Logger.Debug("Loaded env", tools.EnvVarField, key)
+		u.Logger.Debug("Loaded env", tools.EnvVarField, key)
 		return value
 	}
 }
 
 func sendVerificationEmail(to, code string) error {
 	if tools.UseMailMockClient {
-		Logger.Debug("Mock email client used, not sending email")
+		u.Logger.Debug("Mock email client used, not sending email")
 		return nil
 	} else {
 		verificationLink := HOST + "/validate?code=" + code
@@ -99,7 +99,7 @@ func sendVerificationEmail(to, code string) error {
 		m.SetHeader("Subject", "Verify Your Email Address")
 		m.SetBody("text/html", fmt.Sprintf("<p>Please verify your email address by clicking the following link to complete your registration for the Ocelot App Store:</p><p><a href='%s'>Verify Email</a></p>", verificationLink))
 		d := gomail.NewDialer(SMTP_HOST, SMTP_PORT, EMAIL_USER, EMAIL_PASSWORD)
-		Logger.Debug("Sending validation email to", tools.TargetEmailField, to)
+		u.Logger.Debug("Sending validation email to", tools.TargetEmailField, to)
 		return d.DialAndSend(m)
 	}
 }

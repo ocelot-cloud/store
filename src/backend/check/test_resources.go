@@ -6,7 +6,7 @@ import (
 
 	"github.com/ocelot-cloud/shared/assert"
 	"github.com/ocelot-cloud/shared/store"
-	"github.com/ocelot-cloud/shared/utils"
+	u "github.com/ocelot-cloud/shared/utils"
 )
 
 func GetHubAndLogin(t *testing.T) *store.AppStoreClientImpl {
@@ -29,7 +29,7 @@ var SampleVersionFileContent = tools.GetValidVersionBytesOfSampleMaintainerApp()
 
 func createHubClient() *store.AppStoreClientImpl {
 	return &store.AppStoreClientImpl{
-		Parent: utils.ComponentClient{
+		Parent: u.ComponentClient{
 			SetCookieHeader: true,
 			RootUrl:         tools.RootUrl,
 		},

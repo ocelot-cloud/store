@@ -1,16 +1,14 @@
 package tools
 
 import (
-	"log/slog"
 	"os"
 
-	"github.com/ocelot-cloud/deepstack"
+	u "github.com/ocelot-cloud/shared/utils"
 )
 
 var (
 	// TODO !! initializing config object should set this like the "cloud" project does
-	// TODO !! use utils.Logger instead
-	Logger     = deepstack.NewDeepStackLogger(slog.LevelDebug)
+	// TODO !! use u.u.Logger instead
 	Port       = "8082"
 	RootUrl    = "http://localhost:" + Port
 	CookieName = "auth"
@@ -50,7 +48,7 @@ func getProfile() PROFILE {
 		UseMailMockClient = false
 		profile = PROD
 	}
-	Logger.Info("profile set", ProfileField, profile.String())
+	u.Logger.Info("profile set", ProfileField, profile.String())
 	return profile
 }
 

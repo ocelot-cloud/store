@@ -21,6 +21,6 @@ func TestDontAllowDifferentHostAndOriginHeader(t *testing.T) {
 	hub.Parent.Origin = "localhost2"
 	_, err := hub.Parent.DoRequestWithFullResponse("/api/apps/list", nil)
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(400, "When 'Origin' header is set, it must match host header"), err.Error())
+	assert.Equal(t, u.GetErrMsg(400, "When 'Origin' header is set, it must match host header"), err.Error())
 }
 */

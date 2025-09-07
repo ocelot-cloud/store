@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/ocelot-cloud/shared/assert"
-	"github.com/ocelot-cloud/shared/utils"
+	u "github.com/ocelot-cloud/shared/utils"
 )
 
 func TestCreateRepoUser(t *testing.T) {
@@ -59,8 +59,8 @@ func TestCookieExpiration(t *testing.T) {
 
 	assert.True(t, users.UserRepo.IsCookieExpired("non-existing-cookie"))
 
-	timeIn30Days := utils.GetTimeInSevenDays()
-	cookie, _ := utils.GenerateCookie()
+	timeIn30Days := u.GetTimeInSevenDays()
+	cookie, _ := u.GenerateCookie()
 	assert.Nil(t, users.UserRepo.HashAndSaveCookie(tools.SampleUser, cookie.Value, timeIn30Days))
 	assert.False(t, users.UserRepo.IsCookieExpired(cookie.Value))
 

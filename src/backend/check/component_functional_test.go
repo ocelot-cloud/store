@@ -9,7 +9,7 @@ import (
 
 	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/assert"
-	"github.com/ocelot-cloud/shared/utils"
+	u "github.com/ocelot-cloud/shared/utils"
 )
 
 func TestVersionDownload(t *testing.T) {
@@ -41,8 +41,8 @@ func TestCookie(t *testing.T) {
 	hub := GetHubAndLogin(t)
 	defer hub.WipeData()
 	assert.Equal(t, tools.CookieName, hub.Parent.Cookie.Name)
-	assert.True(t, utils.GetTimeInSevenDays().Add(1*time.Second).After(hub.Parent.Cookie.Expires))
-	assert.True(t, utils.GetTimeInSevenDays().Add(-1*time.Second).Before(hub.Parent.Cookie.Expires))
+	assert.True(t, u.GetTimeInSevenDays().Add(1*time.Second).After(hub.Parent.Cookie.Expires))
+	assert.True(t, u.GetTimeInSevenDays().Add(-1*time.Second).Before(hub.Parent.Cookie.Expires))
 	assert.Equal(t, 64, len(hub.Parent.Cookie.Value))
 
 	cookie1 := hub.Parent.Cookie

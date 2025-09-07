@@ -8,7 +8,7 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/ocelot-cloud/deepstack"
-	"github.com/ocelot-cloud/shared/utils"
+	u "github.com/ocelot-cloud/shared/utils"
 )
 
 // TODO !! global var
@@ -30,23 +30,23 @@ func InitializeDatabase() {
 
 	// TODO !! get rid of exit() and return error to top module instead
 
-	Db, err = utils.WaitForPostgresDb(host, customPostgresPort)
+	Db, err = u.WaitForPostgresDb(host, customPostgresPort)
 	if err != nil {
-		Logger.Error("Failed to create database client", deepstack.ErrorField, err)
+		u.Logger.Error("Failed to create database client", deepstack.ErrorField, err)
 		os.Exit(1)
 	}
 
 	// TODO !! directories and path initialization are two separate concerns
-	assertDir, err := utils.FindDir("assets")
+	assertDir, err := u.FindDir("assets")
 	if err != nil {
-		Logger.Error("Failed to find migrations directory", deepstack.ErrorField, err)
+		u.Logger.Error("Failed to find migrations directory", deepstack.ErrorField, err)
 		os.Exit(1)
 	}
 	migrationsDir := assertDir + "/migrations"
 
-	err = utils.RunMigrations(migrationsDir, host, customPostgresPort)
+	err = u.RunMigrations(migrationsDir, host, customPostgresPort)
 	if err != nil {
-		Logger.Error("Failed to run migrations", deepstack.ErrorField, err)
+		u.Logger.Error("Failed to run migrations", deepstack.ErrorField, err)
 		os.Exit(1)
 	}
 

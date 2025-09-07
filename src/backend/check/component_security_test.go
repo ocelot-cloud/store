@@ -12,7 +12,7 @@ import (
 	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/assert"
 	"github.com/ocelot-cloud/shared/store"
-	"github.com/ocelot-cloud/shared/utils"
+	u "github.com/ocelot-cloud/shared/utils"
 )
 
 var DaysToCookieExpiration = 7
@@ -78,7 +78,7 @@ func TestChangePasswordSecurity(t *testing.T) {
 	AssertDeepStackErrorWithCode(t, err, "incorrect username or password", 400)
 }
 
-// TODO test input validation through utils.ReadJsonFromRequest
+// TODO test input validation through u.ReadJsonFromRequest
 
 func TestLoginSecurity(t *testing.T) {
 	hub := GetHub()
@@ -153,7 +153,7 @@ func testVersionOwnership(t *testing.T, hub *store.AppStoreClient, operation fun
 	assert.Nil(t, hub.Login())
 	err := operation()
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(400, "you do not own this app"), err.Error())
+	assert.Equal(t, u.GetErrMsg(400, "you do not own this app"), err.Error())
 }
 */
 
@@ -183,7 +183,7 @@ func TestUploadOfInvalidZipContent(t *testing.T) {
 	assert.Nil(t, err)
 	_, err = hub.UploadVersion(appId, tools.SampleVersion, content)
 	assert.NotNil(t, err)
-	deepstack.AssertDeepStackError(t, err, "request failed", "status_code", 400, "response_body", utils.OperationFailedError)
+	deepstack.AssertDeepStackError(t, err, "request failed", "status_code", 400, "response_body", u.OperationFailedError)
 }
 
 // TODO !! when integration tests are applied to docker deployment, then there is not need to expose the database port to the host any longer
@@ -214,19 +214,19 @@ func doCookieAndHostPolicyChecks(t *testing.T, hub *store.AppStoreClient, operat
 
 	err := operation()
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(400, "cookie not set in request"), err.Error())
+	assert.Equal(t, u.GetErrMsg(400, "cookie not set in request"), err.Error())
 
 	hub.Parent.SetCookieHeader = true
 	hub.Parent.Cookie.Value = "some-invalid-cookie-value"
 	err = operation()
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(400, "invalid cookie"), err.Error())
+	assert.Equal(t, u.GetErrMsg(400, "invalid cookie"), err.Error())
 
 	validButNonExistentCookie := "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
 	hub.Parent.Cookie.Value = validButNonExistentCookie
 	err = operation()
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(400, "cookie not found"), err.Error())
+	assert.Equal(t, u.GetErrMsg(400, "cookie not found"), err.Error())
 
 	assert.Nil(t, hub.Login())
 
@@ -236,7 +236,7 @@ func doCookieAndHostPolicyChecks(t *testing.T, hub *store.AppStoreClient, operat
 	assert.Nil(t, hub.Login())
 	err = operation()
 	assert.NotNil(t, err)
-	assert.Equal(t, utils.GetErrMsg(400, "cookie expired"), err.Error())
+	assert.Equal(t, u.GetErrMsg(400, "cookie expired"), err.Error())
 	assert.True(t, time.Now().UTC().After(hub.Parent.Cookie.Expires))
 	hub.Parent.User = tools.SampleUser
 	hub.Email = tools.SampleEmail

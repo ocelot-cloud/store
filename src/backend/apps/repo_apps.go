@@ -56,7 +56,7 @@ func (r *AppRepositoryImpl) IsAppOwner(user string, appId int) bool {
 }
 
 func (r *AppRepositoryImpl) CreateApp(user string, app string) error {
-	if !users.UserRepo.DoesUserExist(user) {
+	if !r.UserRepo.DoesUserExist(user) {
 		u.Logger.Info("User does not exist", tools.UserField, user)
 		return fmt.Errorf("user does not exist")
 	}

@@ -14,7 +14,8 @@ import (
 )
 
 type AppsHandler struct {
-	AppRepo AppRepository
+	AppRepo  AppRepository
+	UserRepo users.UserRepository
 }
 
 func (a *AppsHandler) AppCreationHandler(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +25,7 @@ func (a *AppsHandler) AppCreationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if !users.UserRepo.DoesUserExist(user) {
+	if !a.UserRepo.DoesUserExist(user) {
 		u.Logger.Info("user tried to create app but it does not exist", tools.UserField, user, tools.AppField, appString)
 		http.Error(w, "user does not exists", http.StatusBadRequest)
 		return

@@ -15,10 +15,34 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// TODO !! simplify to CRUD operations, rest should be handle by a service
+type UserRepository interface {
+	CreateUser(form *store.RegistrationForm) (string, error)
+	ValidateUser(code string) error
+	DoesUserExist(user string) bool
+	DoesEmailExist(email string) bool
+	DeleteUser(user string) error
+	IsPasswordCorrect(user string, password string) bool
+	HashAndSaveCookie(user string, cookie string, expirationDate time.Time) error
+	IsCookieExpired(cookie string) bool
+	GetUserViaCookie(cookie string) (string, error)
+	ChangePassword(user string, newPassword string) error
+	Logout(user string) error
+	IsThereEnoughSpaceToAddVersion(user string, bytesToAdd int) error
+	GetUsedSpaceInBytes(user string) (int, error)
+	WipeDatabase()
+	GetUserId(user string) (int, error)
+	CreateAndValidateUser(form *store.RegistrationForm) error
+}
+
+type UserRepositoryImpl struct {
+	DatabaseProvider *tools.DatabaseProviderImpl
+}
+
 var NotEnoughSpacePrefix = "not enough space"
 
 func (r *UserRepositoryImpl) IsThereEnoughSpaceToAddVersion(user string, bytesToAdd int) error {
-	bytesUsed, err := UserRepo.GetUsedSpaceInBytes(user)
+	bytesUsed, err := r.GetUsedSpaceInBytes(user)
 	if err != nil {
 		u.Logger.Error("checking space failed", deepstack.ErrorField, err)
 		return errors.New("checking space failed")
@@ -211,12 +235,12 @@ func (r *UserRepositoryImpl) Logout(user string) error {
 	return nil
 }
 
-func CreateAndValidateUser(form *store.RegistrationForm) error {
-	code, err := UserRepo.CreateUser(form)
+func (r *UserRepositoryImpl) CreateAndValidateUser(form *store.RegistrationForm) error {
+	code, err := r.CreateUser(form)
 	if err != nil {
 		return err
 	}
-	err = UserRepo.ValidateUser(code)
+	err = r.ValidateUser(code)
 	return err
 }
 
@@ -228,32 +252,6 @@ func (r *UserRepositoryImpl) DoesEmailExist(email string) bool {
 		return false
 	}
 	return exists
-}
-
-type UserRepositoryImpl struct {
-	DatabaseProvider *tools.DatabaseProviderImpl
-}
-
-// TODO !! global var
-var UserRepo UserRepository = &UserRepositoryImpl{}
-
-// TODO !! simplify to CRUD operations, rest should be handle by a service
-type UserRepository interface {
-	CreateUser(form *store.RegistrationForm) (string, error)
-	ValidateUser(code string) error
-	DoesUserExist(user string) bool
-	DoesEmailExist(email string) bool
-	DeleteUser(user string) error
-	IsPasswordCorrect(user string, password string) bool
-	HashAndSaveCookie(user string, cookie string, expirationDate time.Time) error
-	IsCookieExpired(cookie string) bool
-	GetUserViaCookie(cookie string) (string, error)
-	ChangePassword(user string, newPassword string) error
-	Logout(user string) error
-	IsThereEnoughSpaceToAddVersion(user string, bytesToAdd int) error
-	GetUsedSpaceInBytes(user string) (int, error)
-	WipeDatabase()
-	GetUserId(user string) (int, error)
 }
 
 func (r *UserRepositoryImpl) GetUserId(user string) (int, error) {

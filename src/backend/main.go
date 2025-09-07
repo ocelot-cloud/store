@@ -114,43 +114,47 @@ type HandlerInitializer struct {
 	AppsHandler              *apps.AppsHandler
 	VersionsHandler          *versions.VersionsHandler
 	DatabaseSampleDataSeeder *DatabaseSampleDataSeeder
+	UserHandler              *users.UserHandler
+	UserRepo                 users.UserRepository // TODO !! to be removed
 }
 
 // TODO !! should be an object which is initialized with the handlers
 func (h *HandlerInitializer) InitializeHandlers(mux *http.ServeMux) {
 	unprotectedRoutes := []Route{
-		{store.LoginPath, users.LoginHandler},
+		{store.LoginPath, h.UserHandler.LoginHandler},
+		{store.RegistrationPath, h.UserHandler.RegistrationHandler},
+		{store.EmailValidationPath, h.UserHandler.ValidationCodeHandler},
+
 		{store.DownloadPath, h.VersionsHandler.VersionDownloadHandler},
 		{store.GetVersionsPath, h.VersionsHandler.GetVersionsHandler},
 		{store.SearchAppsPath, h.AppsHandler.SearchForAppsHandler},
-		{store.RegistrationPath, users.RegistrationHandler},
-		{store.EmailValidationPath, users.ValidationCodeHandler},
 
 		// TODO !! abstract
 		{"/api/healthcheck", users.HealthCheckHandler},
 	}
 
 	protectedRoutes := []Route{
-		{store.AuthCheckPath, users.AuthCheckHandler},
+		{store.AuthCheckPath, h.UserHandler.AuthCheckHandler},
+		{store.ChangePasswordPath, h.UserHandler.ChangePasswordHandler},
+		{store.DeleteUserPath, h.UserHandler.UserDeleteHandler},
+		{store.LogoutPath, h.UserHandler.LogoutHandler},
+
 		{store.VersionUploadPath, h.VersionsHandler.VersionUploadHandler},
 		{store.VersionDeletePath, h.VersionsHandler.VersionDeleteHandler},
-		{store.ChangePasswordPath, users.ChangePasswordHandler},
 		{store.AppCreationPath, h.AppsHandler.AppCreationHandler},
 		{store.AppGetListPath, h.AppsHandler.AppGetListHandler},
 		{store.AppDeletePath, h.AppsHandler.AppDeleteHandler},
-		{store.DeleteUserPath, users.UserDeleteHandler},
-		{store.LogoutPath, users.LogoutHandler},
 	}
 
 	// TODO !! should be called in main
 	if tools.Profile == tools.TEST {
-		users.UserRepo.WipeDatabase()
+		h.UserRepo.WipeDatabase()
 		u.Logger.Warn("opening unprotected full data wipe endpoint meant for testing only")
-		unprotectedRoutes = append(unprotectedRoutes, Route{store.WipeDataPath, users.WipeDataHandler})
+		unprotectedRoutes = append(unprotectedRoutes, Route{store.WipeDataPath, h.UserHandler.WipeData})
 		// This user is created to manually test the GUI so that account registration can be skipped to save time.
 		sampleUser := "sample"
 		// The user may already exist from previous runs. In this case, ignore the error.
-		err := users.CreateAndValidateUser(&store.RegistrationForm{
+		err := h.UserRepo.CreateAndValidateUser(&store.RegistrationForm{
 			User:     sampleUser,
 			Password: "password",
 			Email:    "sample@sample.com",
@@ -163,18 +167,19 @@ func (h *HandlerInitializer) InitializeHandlers(mux *http.ServeMux) {
 		h.DatabaseSampleDataSeeder.loadSampleAppData("maliciousmaintainer", "maliciousapp", "sample3@sample.com", "malicious-app", false) // TODO !! I think malicious app is no longer needed
 	}
 
-	registerUnprotectedRoutes(mux, unprotectedRoutes)
-	registerProtectedRoutes(mux, protectedRoutes)
+	h.registerUnprotectedRoutes(mux, unprotectedRoutes)
+	h.registerProtectedRoutes(mux, protectedRoutes)
 }
 
 type DatabaseSampleDataSeeder struct {
 	AppRepo     apps.AppRepository
 	VersionRepo versions.VersionRepository
+	UserRepo    users.UserRepository
 }
 
 // TODO !! should be its own object? DatabaseSampleDataSeeder or so?
 func (d *DatabaseSampleDataSeeder) loadSampleAppData(username, appname, email, sampleDir string, shouldBeValid bool) {
-	err := users.CreateAndValidateUser(&store.RegistrationForm{
+	err := d.UserRepo.CreateAndValidateUser(&store.RegistrationForm{
 		User:     username,
 		Password: "password",
 		Email:    email,
@@ -199,21 +204,21 @@ func (d *DatabaseSampleDataSeeder) loadSampleAppData(username, appname, email, s
 	}
 }
 
-func registerUnprotectedRoutes(mux *http.ServeMux, routes []Route) {
+func (h *HandlerInitializer) registerUnprotectedRoutes(mux *http.ServeMux, routes []Route) {
 	for _, r := range routes {
 		mux.HandleFunc(r.path, r.handler)
 	}
 }
 
-func registerProtectedRoutes(mux *http.ServeMux, routes []Route) {
+func (h *HandlerInitializer) registerProtectedRoutes(mux *http.ServeMux, routes []Route) {
 	for _, r := range routes {
-		mux.Handle(r.path, authMiddleware(r.handler))
+		mux.Handle(r.path, h.authMiddleware(r.handler))
 	}
 }
 
-func authMiddleware(next http.Handler) http.Handler {
+func (h *HandlerInitializer) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, err := users.CheckAuthentication(w, r)
+		user, err := h.UserHandler.CheckAuthentication(w, r)
 		if err != nil {
 			return
 		}

@@ -18,6 +18,7 @@ import (
 type VersionsHandler struct {
 	VersionRepo VersionRepository
 	AppRepo     apps.AppRepository
+	UserRepo    users.UserRepository
 }
 
 func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +47,7 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	err = users.UserRepo.IsThereEnoughSpaceToAddVersion(user, len(versionUpload.Content))
+	err = v.UserRepo.IsThereEnoughSpaceToAddVersion(user, len(versionUpload.Content))
 	if err != nil {
 		if strings.HasPrefix(err.Error(), users.NotEnoughSpacePrefix) {
 			u.Logger.Info("version upload of user failed: not enough space", tools.UserField, user)

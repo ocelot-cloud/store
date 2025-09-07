@@ -22,6 +22,7 @@ func WireDependencies() *InitializerDependencies {
 		wire.Struct(new(DatabaseSampleDataSeeder), "*"),
 		wire.Struct(new(versions.VersionRepositoryImpl), "*"),
 		wire.Struct(new(users.UserRepositoryImpl), "*"),
+		wire.Struct(new(users.UserHandler), "*"),
 
 		wire.Bind(new(apps.AppRepository), new(*apps.AppRepositoryImpl)),
 		wire.Bind(new(versions.VersionRepository), new(*versions.VersionRepositoryImpl)),

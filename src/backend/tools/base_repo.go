@@ -32,6 +32,7 @@ func (d *DatabaseProviderImpl) InitializeDatabase() error {
 		u.Logger.Error("Failed to create database client", deepstack.ErrorField, err)
 		os.Exit(1)
 	}
+	u.Logger.Info("Database client created successfully")
 
 	// TODO !! directories and path initialization are two separate concerns
 	assertDir, err := u.FindDir("assets")

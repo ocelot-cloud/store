@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/ocelot-cloud/deepstack"
-	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
 	"github.com/ocelot-cloud/shared/validation"
 )
@@ -15,11 +14,6 @@ var (
 	SampleVersion  = "0.0.1"
 	SampleEmail    = "testuser@example.com"
 	SamplePassword = "mypassword"
-	SampleForm     = &store.RegistrationForm{
-		User:     SampleUser,
-		Password: SamplePassword,
-		Email:    SampleEmail,
-	}
 )
 
 // TODO !! return error

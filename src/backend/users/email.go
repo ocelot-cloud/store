@@ -16,6 +16,7 @@ import (
 // TODO !! get rid of .env file
 const envFilePath = "data/.env"
 
+// TODO !! global var
 var (
 	SMTP_PORT                                          int
 	HOST, SMTP_HOST, EMAIL, EMAIL_USER, EMAIL_PASSWORD string

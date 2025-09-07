@@ -13,7 +13,11 @@ import (
 	"github.com/ocelot-cloud/shared/validation"
 )
 
-func AppCreationHandler(w http.ResponseWriter, r *http.Request) {
+type AppsHandler struct {
+	AppRepo AppRepository
+}
+
+func (a *AppsHandler) AppCreationHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
 	appString, err := validation.ReadBody[store.AppNameString](w, r)
 	if err != nil {
@@ -32,14 +36,14 @@ func AppCreationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = AppRepo.GetAppId(user, appString.Value)
+	_, err = a.AppRepo.GetAppId(user, appString.Value)
 	if err == nil {
 		u.Logger.Info("user tried to create app but it already exists", tools.UserField, user, tools.AppField, appString)
 		http.Error(w, "app already exists", http.StatusBadRequest)
 		return
 	}
 
-	err = AppRepo.CreateApp(user, appString.Value)
+	err = a.AppRepo.CreateApp(user, appString.Value)
 	if err != nil {
 		u.Logger.Error("user tried to create app but it failed", tools.UserField, user, tools.AppField, appString, deepstack.ErrorField, err)
 		http.Error(w, "app creation failed", http.StatusBadRequest)
@@ -50,20 +54,20 @@ func AppCreationHandler(w http.ResponseWriter, r *http.Request) {
 	u.Logger.Info("user created app", tools.UserField, user, tools.AppField, appString)
 }
 
-func AppDeleteHandler(w http.ResponseWriter, r *http.Request) {
+func (a *AppsHandler) AppDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
 	appId, err := ReadBodyAsStringNumber(w, r)
 	if err != nil {
 		return
 	}
 
-	if !AppRepo.IsAppOwner(user, appId) {
+	if !a.AppRepo.IsAppOwner(user, appId) {
 		u.Logger.Warn("user tried to delete app with ID but does not own it", tools.UserField, user, tools.AppIdField, appId)
 		http.Error(w, "you do not own this app", http.StatusBadRequest)
 		return
 	}
 
-	err = AppRepo.DeleteApp(appId)
+	err = a.AppRepo.DeleteApp(appId)
 	if err != nil {
 		u.Logger.Error("user tried to delete app with ID but it failed", tools.UserField, user, tools.AppIdField, appId)
 		http.Error(w, "app deletion failed", http.StatusBadRequest)
@@ -88,10 +92,10 @@ func ReadBodyAsStringNumber(w http.ResponseWriter, r *http.Request) (int, error)
 	return appId, nil
 }
 
-func AppGetListHandler(w http.ResponseWriter, r *http.Request) {
+func (a *AppsHandler) AppGetListHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
 
-	list, err := AppRepo.GetAppList(user)
+	list, err := a.AppRepo.GetAppList(user)
 	if err != nil {
 		u.Logger.Warn("error getting app list", deepstack.ErrorField, err)
 		http.Error(w, "error getting app list", http.StatusBadRequest)
@@ -101,13 +105,13 @@ func AppGetListHandler(w http.ResponseWriter, r *http.Request) {
 	u.SendJsonResponse(w, list)
 }
 
-func SearchForAppsHandler(w http.ResponseWriter, r *http.Request) {
+func (a *AppsHandler) SearchForAppsHandler(w http.ResponseWriter, r *http.Request) {
 	appSearchRequest, err := validation.ReadBody[store.AppSearchRequest](w, r)
 	if err != nil {
 		return
 	}
 
-	apps, err := AppRepo.SearchForApps(*appSearchRequest)
+	apps, err := a.AppRepo.SearchForApps(*appSearchRequest)
 	if err != nil {
 		u.Logger.Warn("error finding apps", deepstack.ErrorField, err)
 		http.Error(w, "error finding apps", http.StatusBadRequest)

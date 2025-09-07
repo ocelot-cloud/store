@@ -13,11 +13,6 @@ import (
 
 // TODO !! rename repo_apps, repo_users and repo_versions simply to repository each
 
-var (
-	// TODO !! global var
-	AppRepo AppRepository = &AppRepositoryImpl{}
-)
-
 func (r *AppRepositoryImpl) IsAppOwner(user string, appId int) bool {
 	userId, err := tools.GetUserId(user)
 	if err != nil {

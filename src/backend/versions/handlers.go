@@ -15,7 +15,12 @@ import (
 	"github.com/ocelot-cloud/shared/validation"
 )
 
-func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
+type VersionsHandler struct {
+	VersionRepo VersionRepository
+	AppRepo     apps.AppRepository
+}
+
+func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
 	r.Body = http.MaxBytesReader(w, r.Body, tools.MaxPayloadSize)
 	defer u.Close(r.Body)
@@ -60,26 +65,26 @@ func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !apps.AppRepo.DoesAppExist(appId) {
+	if !v.AppRepo.DoesAppExist(appId) {
 		u.Logger.Info("user tried to upload version to app, but app does not exist", tools.UserField, user, tools.VersionField, versionUpload.Version, tools.AppIdField, versionUpload.AppId)
 		http.Error(w, "app does not exist", http.StatusBadRequest)
 		return
 	}
 
-	if !apps.AppRepo.IsAppOwner(user, appId) {
+	if !v.AppRepo.IsAppOwner(user, appId) {
 		u.Logger.Warn("user tried to delete app but does not own it", tools.UserField, user, tools.AppIdField, versionUpload.AppId)
 		http.Error(w, "you do not own this app", http.StatusBadRequest)
 		return
 	}
 
-	appName, err := apps.AppRepo.GetAppName(appId)
+	appName, err := v.AppRepo.GetAppName(appId)
 	if err != nil {
 		u.Logger.Error("getting app name failed", deepstack.ErrorField, err)
 		http.Error(w, "internal error", http.StatusBadRequest)
 		return
 	}
 
-	maintainerName, err := apps.AppRepo.GetMaintainerName(appId)
+	maintainerName, err := v.AppRepo.GetMaintainerName(appId)
 	if err != nil {
 		u.Logger.Error("getting maintainer name failed", deepstack.ErrorField, err)
 		http.Error(w, "internal error", http.StatusBadRequest)
@@ -94,14 +99,14 @@ func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = VersionRepo.GetVersionId(appId, versionUpload.Version)
+	_, err = v.VersionRepo.GetVersionId(appId, versionUpload.Version)
 	if err == nil {
 		u.Logger.Info("user tried to upload version to app, but version already exists", tools.UserField, user, tools.VersionField, versionUpload.Version, tools.AppIdField, versionUpload.AppId)
 		http.Error(w, "version already exists", http.StatusBadRequest)
 		return
 	}
 
-	err = VersionRepo.CreateVersion(appId, versionUpload.Version, versionUpload.Content)
+	err = v.VersionRepo.CreateVersion(appId, versionUpload.Version, versionUpload.Content)
 	if err != nil {
 		u.Logger.Error("creating version failed", deepstack.ErrorField, err)
 		http.Error(w, "invalid input", http.StatusBadRequest)
@@ -112,26 +117,26 @@ func VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func VersionDeleteHandler(w http.ResponseWriter, r *http.Request) {
+func (v *VersionsHandler) VersionDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
 	versionId, err := apps.ReadBodyAsStringNumber(w, r)
 	if err != nil {
 		return
 	}
 
-	if !VersionRepo.DoesVersionExist(versionId) {
+	if !v.VersionRepo.DoesVersionExist(versionId) {
 		u.Logger.Info("someone tried to delete version but it does not exist", tools.VersionIdField, versionId)
 		http.Error(w, "version does not exist", http.StatusBadRequest)
 		return
 	}
 
-	if !VersionRepo.IsVersionOwner(user, versionId) {
+	if !v.VersionRepo.IsVersionOwner(user, versionId) {
 		u.Logger.Warn("user tried to delete version but does not own it", tools.UserField, user, tools.VersionIdField, versionId)
 		http.Error(w, "you do not own this version", http.StatusBadRequest)
 		return
 	}
 
-	err = VersionRepo.DeleteVersion(versionId)
+	err = v.VersionRepo.DeleteVersion(versionId)
 	if err != nil {
 		u.Logger.Info("deleting version failed", tools.VersionIdField, versionId, deepstack.ErrorField, err)
 		http.Error(w, "invalid input", http.StatusBadRequest)
@@ -141,19 +146,19 @@ func VersionDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "version deleted", http.StatusOK)
 }
 
-func GetVersionsHandler(w http.ResponseWriter, r *http.Request) {
+func (v *VersionsHandler) GetVersionsHandler(w http.ResponseWriter, r *http.Request) {
 	appId, err := apps.ReadBodyAsStringNumber(w, r)
 	if err != nil {
 		return
 	}
 
-	if !apps.AppRepo.DoesAppExist(appId) {
+	if !v.AppRepo.DoesAppExist(appId) {
 		u.Logger.Info("someone tried to list versions but app does not exist", tools.AppIdField, appId)
 		http.Error(w, "app does not exist", http.StatusBadRequest)
 		return
 	}
 
-	versionsList, err := VersionRepo.GetVersionList(appId)
+	versionsList, err := v.VersionRepo.GetVersionList(appId)
 	if err != nil {
 		u.Logger.Error("getting version list failed for app", tools.AppIdField, appId)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -163,19 +168,19 @@ func GetVersionsHandler(w http.ResponseWriter, r *http.Request) {
 	u.SendJsonResponse(w, versionsList)
 }
 
-func VersionDownloadHandler(w http.ResponseWriter, r *http.Request) {
+func (v *VersionsHandler) VersionDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	versionId, err := apps.ReadBodyAsStringNumber(w, r)
 	if err != nil {
 		return
 	}
 
-	if !VersionRepo.DoesVersionExist(versionId) {
+	if !v.VersionRepo.DoesVersionExist(versionId) {
 		u.Logger.Info("version does not exist", tools.VersionIdField, versionId)
 		http.Error(w, "version does not exist", http.StatusBadRequest)
 		return
 	}
 
-	versionInfo, err := VersionRepo.GetFullVersionInfo(versionId)
+	versionInfo, err := v.VersionRepo.GetFullVersionInfo(versionId)
 	if err != nil {
 		u.Logger.Error("error when accessing version info", deepstack.ErrorField, err)
 		http.Error(w, "error when accessing version info", http.StatusBadRequest)

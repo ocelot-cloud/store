@@ -50,7 +50,8 @@ func main() {
 
 	// TODO !! handler initializer
 	mux := http.NewServeMux()
-	initializeHandlers(mux)
+	// TODO !! mux should be injected internally I guess and not via main?
+	deps.HandlerInitializer.InitializeHandlers(mux)
 
 	// TODO !! server.run()
 	applyOriginCheckingHandler(mux)
@@ -105,12 +106,19 @@ type Route struct {
 	handler http.HandlerFunc
 }
 
-func initializeHandlers(mux *http.ServeMux) {
+type HandlerInitializer struct {
+	AppsHandler              *apps.AppsHandler
+	VersionsHandler          *versions.VersionsHandler
+	DatabaseSampleDataSeeder *DatabaseSampleDataSeeder
+}
+
+// TODO !! should be an object which is initialized with the handlers
+func (h *HandlerInitializer) InitializeHandlers(mux *http.ServeMux) {
 	unprotectedRoutes := []Route{
 		{store.LoginPath, users.LoginHandler},
-		{store.DownloadPath, versions.VersionDownloadHandler},
-		{store.GetVersionsPath, versions.GetVersionsHandler},
-		{store.SearchAppsPath, apps.SearchForAppsHandler},
+		{store.DownloadPath, h.VersionsHandler.VersionDownloadHandler},
+		{store.GetVersionsPath, h.VersionsHandler.GetVersionsHandler},
+		{store.SearchAppsPath, h.AppsHandler.SearchForAppsHandler},
 		{store.RegistrationPath, users.RegistrationHandler},
 		{store.EmailValidationPath, users.ValidationCodeHandler},
 
@@ -120,16 +128,17 @@ func initializeHandlers(mux *http.ServeMux) {
 
 	protectedRoutes := []Route{
 		{store.AuthCheckPath, users.AuthCheckHandler},
-		{store.VersionUploadPath, versions.VersionUploadHandler},
-		{store.VersionDeletePath, versions.VersionDeleteHandler},
+		{store.VersionUploadPath, h.VersionsHandler.VersionUploadHandler},
+		{store.VersionDeletePath, h.VersionsHandler.VersionDeleteHandler},
 		{store.ChangePasswordPath, users.ChangePasswordHandler},
-		{store.AppCreationPath, apps.AppCreationHandler},
-		{store.AppGetListPath, apps.AppGetListHandler},
-		{store.AppDeletePath, apps.AppDeleteHandler},
+		{store.AppCreationPath, h.AppsHandler.AppCreationHandler},
+		{store.AppGetListPath, h.AppsHandler.AppGetListHandler},
+		{store.AppDeletePath, h.AppsHandler.AppDeleteHandler},
 		{store.DeleteUserPath, users.UserDeleteHandler},
 		{store.LogoutPath, users.LogoutHandler},
 	}
 
+	// TODO !! should be called in main
 	if tools.Profile == tools.TEST {
 		users.UserRepo.WipeDatabase()
 		u.Logger.Warn("opening unprotected full data wipe endpoint meant for testing only")
@@ -146,15 +155,21 @@ func initializeHandlers(mux *http.ServeMux) {
 			u.Logger.Debug("Failed to create user - maybe because he already exists, error", tools.UserField, sampleUser, deepstack.ErrorField, err)
 		}
 		u.Logger.Warn("created user with weak password for manual testing", tools.UserField, sampleUser)
-		loadSampleAppData("sampleuser", "nginx", "sample2@sample.com", "sampleuser-app", true)
-		loadSampleAppData("maliciousmaintainer", "maliciousapp", "sample3@sample.com", "malicious-app", false)
+		h.DatabaseSampleDataSeeder.loadSampleAppData("sampleuser", "nginx", "sample2@sample.com", "sampleuser-app", true)
+		h.DatabaseSampleDataSeeder.loadSampleAppData("maliciousmaintainer", "maliciousapp", "sample3@sample.com", "malicious-app", false) // TODO !! I think malicious app is no longer needed
 	}
 
 	registerUnprotectedRoutes(mux, unprotectedRoutes)
 	registerProtectedRoutes(mux, protectedRoutes)
 }
 
-func loadSampleAppData(username, appname, email, sampleDir string, shouldBeValid bool) {
+type DatabaseSampleDataSeeder struct {
+	AppRepo     apps.AppRepository
+	VersionRepo versions.VersionRepository
+}
+
+// TODO !! should be its own object? DatabaseSampleDataSeeder or so?
+func (d *DatabaseSampleDataSeeder) loadSampleAppData(username, appname, email, sampleDir string, shouldBeValid bool) {
 	err := users.CreateAndValidateUser(&store.RegistrationForm{
 		User:     username,
 		Password: "password",
@@ -164,16 +179,16 @@ func loadSampleAppData(username, appname, email, sampleDir string, shouldBeValid
 		u.Logger.Error("Failed to create user", tools.UserField, username, deepstack.ErrorField, err)
 		os.Exit(1)
 	}
-	if err = apps.AppRepo.CreateApp(username, appname); err != nil {
+	if err = d.AppRepo.CreateApp(username, appname); err != nil {
 		u.Logger.Error("Failed to create app", tools.AppField, appname, deepstack.ErrorField, err)
 		os.Exit(1)
 	}
-	appId, err := apps.AppRepo.GetAppId(username, appname)
+	appId, err := d.AppRepo.GetAppId(username, appname)
 	if err != nil {
 		u.Logger.Error("Failed to get app ID", deepstack.ErrorField, err)
 		os.Exit(1)
 	}
-	if err = versions.VersionRepo.CreateVersion(appId, "0.0.1",
+	if err = d.VersionRepo.CreateVersion(appId, "0.0.1",
 		tools.GetVersionBytesOfSampleUserApp(sampleDir, username, appname, shouldBeValid)); err != nil {
 		u.Logger.Error("Failed to create sample version", deepstack.ErrorField, err)
 		os.Exit(1)

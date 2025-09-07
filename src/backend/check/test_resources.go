@@ -9,6 +9,8 @@ import (
 	u "github.com/ocelot-cloud/shared/utils"
 )
 
+var SampleVersionFileContent = tools.GetValidVersionBytesOfSampleMaintainerApp()
+
 func GetHubAndLogin(t *testing.T) *store.AppStoreClientImpl {
 	client := GetHub()
 	assert.Nil(t, client.RegisterUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail))
@@ -23,9 +25,6 @@ func GetHub() *store.AppStoreClientImpl {
 	hub.WipeData()
 	return hub
 }
-
-// TODO !! global var
-var SampleVersionFileContent = tools.GetValidVersionBytesOfSampleMaintainerApp()
 
 func createHubClient() *store.AppStoreClientImpl {
 	return &store.AppStoreClientImpl{

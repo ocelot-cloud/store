@@ -16,18 +16,6 @@ import (
 
 var DaysToCookieExpiration = 7
 
-func TestCorsHeaderArePresentInTestProfile(t *testing.T) {
-	hub := GetHubAndLogin(t)
-	defer hub.WipeData()
-	response, err := hub.Parent.DoRequestWithFullResponse(store.AppGetListPath, nil)
-	assert.Nil(t, err)
-
-	assert.Equal(t, "", response.Header.Get("Access-Control-Allow-Origin"))
-	assert.Equal(t, "true", response.Header.Get("Access-Control-Allow-Credentials"))
-	assert.Equal(t, "POST, GET, OPTIONS, PUT, DELETE", response.Header.Get("Access-Control-Allow-Methods"))
-	assert.Equal(t, "Accept, Content-Type, Content-Length, Authorization", response.Header.Get("Access-Control-Allow-Headers"))
-}
-
 func TestFindAppsSecurity(t *testing.T) {
 	hub := GetHubAndLogin(t)
 	hub.Parent.SetCookieHeader = false

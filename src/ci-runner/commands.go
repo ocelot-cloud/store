@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 func TestAll() {
 	TestUnits()
@@ -24,7 +27,7 @@ func TestComponent() {
 	// TODO !! abstract paths and image names etc
 	tr.ExecuteInDir(backendDir, "docker build -t ocelotcloud/store:local -f docker/Dockerfile .")
 	tr.ExecuteInDir(backendDockerDir, "docker compose -f docker-compose-dev.yml up -d", "PROFILE=TEST")
-	tr.WaitUntilPortIsReady("8082")
+	time.Sleep(1 * time.Second) // TODO !! rather introduce a health endpoint that say "status: ok" when the port is available
 	tr.ExecuteInDir(backendCheckDir, "go test -count=1 -tags=component ./...")
 }
 

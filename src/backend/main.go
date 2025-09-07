@@ -51,24 +51,17 @@ func main() {
 	// TODO !! handler initializer
 	mux := http.NewServeMux()
 	initializeHandlers(mux)
-	initializeFrontendResourceDelivery(mux)
 
 	// TODO !! server.run()
-	u.Logger.Info("server starting on port", tools.PortField, tools.Port)
-	var handler http.Handler
-	if tools.Profile == tools.TEST {
-		u.Logger.Warn("CORS is disabled in test mode")
-		handler = GetCorsDisablingHandler(mux)
-	} else {
-		handler = applyOriginCheckingHandler(mux)
-	}
+	applyOriginCheckingHandler(mux)
 	srv := &http.Server{
 		Addr:         ":" + tools.Port,
-		Handler:      handler,
+		Handler:      applyOriginCheckingHandler(mux),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
+	u.Logger.Info("server starting on port", tools.PortField, tools.Port)
 	err = srv.ListenAndServe()
 	if err != nil {
 		u.Logger.Error("Server stopped", deepstack.ErrorField, err)
@@ -76,21 +69,7 @@ func main() {
 	}
 }
 
-// TODO !! make the integration tests run against a locally build docker container, so that CORS disabling is not longer needed
-func GetCorsDisablingHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Authorization")
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
+// TODO !! not necessary I guess, strict cookie policy should suffice?
 func applyOriginCheckingHandler(mux *http.ServeMux) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := removeSchemeAndPortIfPresent(r.Header.Get("Origin"))
@@ -220,26 +199,4 @@ func authMiddleware(next http.Handler) http.Handler {
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
-}
-
-func initializeFrontendResourceDelivery(mux *http.ServeMux) {
-	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Attempt to open the requested file within the ./dist directory.
-		_, err := http.Dir("./dist").Open(r.URL.Path)
-
-		// If the requested file does not exist (err is not nil) and the path does not seem to refer to
-		// a static file (i.e. no dot extension like ".css"), then serve index.html. This caters to SPA routing needs,
-		// allowing frontend routes to be handled by index.html.
-		// This means that users can directly access pages with paths such as "example.com/some/path".
-		if err != nil && !strings.Contains(r.URL.Path, ".") {
-			u.Logger.Debug("Serving index.html for SPA route/path", tools.UrlPathField, r.URL.Path)
-			http.ServeFile(w, r, "./dist/index.html")
-			return
-		}
-
-		// If the request is for a static file or if the file exists, serve it directly.
-		// This handles requests for JS, CSS, images, etc.
-		u.Logger.Debug("Serving static content", tools.UrlPathField, r.URL.Path)
-		http.FileServer(http.Dir("./dist")).ServeHTTP(w, r)
-	}))
 }

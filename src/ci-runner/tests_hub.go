@@ -10,6 +10,9 @@ func TestUnits() {
 	tr.Log.TaskDescription("Testing units")
 	defer tr.Cleanup()
 	// TODO it should not be necessary to set a profile for unit tests; the TEST profile should become the default; PROD should become the app store packaged in a container I guess?
+	// TODO !! put the "delete mocks and wire_gen" logic from cloud in shared and use it here
+	// TODO !! first wire and then mockery or vise versa? use cloud approach, maybe put to "shared"
+	tr.ExecuteInDir(backendDir, "wire")
 	tr.ExecuteInDir(backendDir, "go test -count=1 -tags=unit ./...", "PROFILE=TEST")
 }
 

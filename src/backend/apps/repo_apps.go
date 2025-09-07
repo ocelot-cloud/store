@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	// TODO !! global var
 	AppRepo AppRepository = &AppRepositoryImpl{}
 	Logger                = tools.Logger
 )

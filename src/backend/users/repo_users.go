@@ -232,6 +232,7 @@ func (u *UserRepositoryImpl) DoesEmailExist(email string) bool {
 
 type UserRepositoryImpl struct{}
 
+// TODO !! global var
 var UserRepo UserRepository = &UserRepositoryImpl{}
 
 // TODO !! simplify to CRUD operations, rest should be handle by a service

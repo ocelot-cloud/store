@@ -12,6 +12,7 @@ import (
 	"github.com/ocelot-cloud/shared/utils"
 )
 
+// TODO !! global var
 var VersionRepo VersionRepository = &VersionRepositoryImpl{}
 
 func (u *VersionRepositoryImpl) GetFullVersionInfo(versionId int) (*store.FullVersionInfo, error) {

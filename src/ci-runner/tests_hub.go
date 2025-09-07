@@ -17,6 +17,7 @@ func TestUnits() {
 	tr.ExecuteInDir(backendDir, "go test -count=1 -tags=unit ./...", "PROFILE=TEST")
 }
 
+// TODO !! global var
 var isPostgresDbStarted = false
 
 func startCockroachDb() {

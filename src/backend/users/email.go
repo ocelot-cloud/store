@@ -13,6 +13,7 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
+// TODO !! get rid of .env file
 const envFilePath = "data/.env"
 
 var (

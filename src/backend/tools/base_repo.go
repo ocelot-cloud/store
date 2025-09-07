@@ -11,6 +11,7 @@ import (
 	"github.com/ocelot-cloud/shared/utils"
 )
 
+// TODO !! global var
 var Db *sql.DB
 
 // TODO !! should return error
@@ -51,6 +52,7 @@ func InitializeDatabase() {
 
 }
 
+// TODO !! global var
 var WaitingForEmailVerificationList sync.Map
 
 func GetAppId(userID int, app string) (int, error) {

@@ -24,6 +24,7 @@ func GetHub() *store.AppStoreClientImpl {
 	return hub
 }
 
+// TODO !! global var
 var SampleVersionFileContent = tools.GetValidVersionBytesOfSampleMaintainerApp()
 
 func createHubClient() *store.AppStoreClientImpl {

@@ -49,6 +49,7 @@ func main() {
 	}
 	defer tr.Cleanup()
 
+	// TODO !! get rid of those env variables; only use "PROFILE=TEST"
 	tr.Config.DefaultEnvironmentVariables = []string{"USE_MOCK_EMAIL_CLIENT=true", "RUN_NATIVELY=true", "LOG_LEVEL=DEBUG"}
 
 	rootCmd := &cobra.Command{

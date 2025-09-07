@@ -14,19 +14,3 @@ runs:
         cache-dependency-path: |
           src/backend/go.mod
           src/ci-runner/go.mod
-
-    - name: Set up Node.js with npm
-      uses: actions/setup-node@v3
-      with:
-        node-version: '22.14.0'
-        cache: 'npm'
-        cache-dependency-path: |
-          src/cypress/package-lock.json
-
-    - name: Set up Node.js with yarn
-      uses: actions/setup-node@v3
-      with:
-        node-version: '22.14.0'
-        cache: 'yarn'
-        cache-dependency-path: |
-          src/frontend/yarn.lock

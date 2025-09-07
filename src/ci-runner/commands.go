@@ -35,12 +35,9 @@ func TestComponent() {
 	tr.ExecuteInDir(backendCheckDir, "go test -count=1 -tags=component ./...")
 }
 
-// TODO !! simplify
 func waitForHealthEndpoint() {
 	deadline := time.Now().Add(10 * time.Second)
-	client := &http.Client{Timeout: 2 * time.Second}
-	var lastErr error
-	var lastStatus int
+	client := &http.Client{Timeout: 1 * time.Second}
 	fmt.Print("waiting for /api/healthcheck ")
 	for time.Now().Before(deadline) {
 		resp, err := client.Get("http://localhost:8082/api/healthcheck")
@@ -50,27 +47,16 @@ func waitForHealthEndpoint() {
 			}
 			if resp.StatusCode == 200 && json.NewDecoder(resp.Body).Decode(&v) == nil && v.Status == "ok" {
 				resp.Body.Close()
-				fmt.Println("ok")
+				tr.Log.Info("healthcheck ok")
 				return
 			}
-			lastStatus = resp.StatusCode
 			io.Copy(io.Discard, resp.Body)
 			resp.Body.Close()
-			lastErr = fmt.Errorf("unexpected response")
-		} else {
-			lastErr = err
 		}
 		fmt.Print(".")
 		time.Sleep(500 * time.Millisecond)
 	}
-	fmt.Println()
-	if lastErr != nil {
-		fmt.Fprintf(os.Stderr, "healthcheck failed: %v\n", lastErr)
-	} else if lastStatus != 0 {
-		fmt.Fprintf(os.Stderr, "healthcheck failed: last status %d\n", lastStatus)
-	} else {
-		fmt.Fprintln(os.Stderr, "healthcheck failed: timeout")
-	}
+	tr.Log.Error("healthcheck failed")
 	os.Exit(1)
 }
 

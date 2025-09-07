@@ -1,3 +1,4 @@
+# TODO !! no longer necessary I guess? website and store are deployed separately now
 http:
   routers:
     ocelot-router:

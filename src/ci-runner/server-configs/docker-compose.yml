@@ -1,3 +1,5 @@
+# TODO !! shouldnt the app store service be here?
+# TODO !! can be merged with other docker files?
 services:
   traefik:
     image: "traefik:latest"

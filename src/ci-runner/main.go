@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -60,13 +59,7 @@ var updateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Updates project dependencies",
 	Run: func(cmd *cobra.Command, args []string) {
-		tr.ExecuteInDir(ciRunnerDir, "go get -u ./...")
-		tr.ExecuteInDir(ciRunnerDir, "go mod tidy")
-		tr.ExecuteInDir(ciRunnerDir, "go build")
-
-		tr.ExecuteInDir(backendDir, "go get -u ./...")
-		tr.ExecuteInDir(backendDir, "go mod tidy")
-		tr.ExecuteInDir(backendDir, "go build")
+		update()
 	},
 }
 
@@ -74,22 +67,8 @@ var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy current version to server",
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO !! rather upload to dockerhub and pull from there to server
-		var prompt = "Are you sure you want to replace the current production version of the App Store?"
-		tr.PromptForContinuation(prompt)
-		tr.ExecuteInDir(backendDir, "go build -a -installsuffix cgo", "CGO_ENABLED=0", "GOOS=linux", "GOARCH=amd64")
-		executeOnServer("docker rm -f store")
-		rsyncCmd := fmt.Sprintf("rsync -avz --delete docker/Dockerfile docker/docker-compose.yml assets store dist %s:", sshHost)
-		tr.ExecuteInDir(backendDir, rsyncCmd)
-		// TODO !! why two times docker compose up? Can be removed?
-		executeOnServer("docker compose up -d")
-		executeOnServer("docker compose up -d --build --force-recreate --remove-orphans store")
+		deploy()
 	},
-}
-
-func executeOnServer(command string) {
-	sshCommand := fmt.Sprintf("ssh %s %s", sshHost, command)
-	tr.Execute(sshCommand)
 }
 
 var testCmd = &cobra.Command{

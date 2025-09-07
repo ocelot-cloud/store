@@ -16,7 +16,7 @@ func WireDependencies() *InitializerDependencies {
 	wire.Build(
 		NewDatabaseProvider,
 		NewEmailVerifier,
-		
+
 		wire.Struct(new(InitializerDependencies), "*"),
 		wire.Struct(new(apps.AppsHandler), "*"),
 		wire.Struct(new(apps.AppRepositoryImpl), "*"),
@@ -35,8 +35,9 @@ func WireDependencies() *InitializerDependencies {
 }
 
 type InitializerDependencies struct {
-	HandlerInitializer *HandlerInitializer
-	DatabaseProvider   *tools.DatabaseProviderImpl
+	HandlerInitializer       *HandlerInitializer
+	DatabaseProvider         *tools.DatabaseProviderImpl
+	DatabaseSampleDataSeeder *DatabaseSampleDataSeeder
 }
 
 func NewDatabaseProvider() *tools.DatabaseProviderImpl {

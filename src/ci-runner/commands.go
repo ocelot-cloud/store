@@ -38,7 +38,7 @@ func TestComponent() {
 func waitForHealthEndpoint() {
 	deadline := time.Now().Add(10 * time.Second)
 	client := &http.Client{Timeout: 1 * time.Second}
-	fmt.Print("waiting for /api/healthcheck ")
+	tr.Log.Info("waiting for /api/healthcheck ")
 	for time.Now().Before(deadline) {
 		resp, err := client.Get("http://localhost:8082/api/healthcheck")
 		if err == nil {
@@ -47,7 +47,7 @@ func waitForHealthEndpoint() {
 			}
 			if resp.StatusCode == 200 && json.NewDecoder(resp.Body).Decode(&v) == nil && v.Status == "ok" {
 				resp.Body.Close()
-				tr.Log.Info("healthcheck ok")
+				tr.Log.Info(" -> healthcheck ok")
 				return
 			}
 			io.Copy(io.Discard, resp.Body)

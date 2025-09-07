@@ -88,8 +88,12 @@ func GetEnv(key string) string {
 	}
 }
 
-func sendVerificationEmail(to, code string) error {
-	if tools.UseMailMockClient {
+type EmailClient struct {
+	Config *tools.Config
+}
+
+func (e *EmailClient) SendVerificationEmail(to, code string) error {
+	if e.Config.UseMailMockClient {
 		u.Logger.Debug("Mock email client used, not sending email")
 		return nil
 	} else {

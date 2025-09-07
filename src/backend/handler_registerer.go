@@ -21,6 +21,7 @@ type HandlerInitializer struct {
 	AppsHandler     *apps.AppsHandler
 	VersionsHandler *versions.VersionsHandler
 	UserHandler     *users.UserHandler
+	Config          *tools.Config
 }
 
 func (h *HandlerInitializer) InitializeHandlers(mux *http.ServeMux) {
@@ -50,7 +51,7 @@ func (h *HandlerInitializer) InitializeHandlers(mux *http.ServeMux) {
 		{store.AppDeletePath, h.AppsHandler.AppDeleteHandler},
 	}
 
-	if tools.Profile == tools.TEST {
+	if h.Config.OpenWipeEndpoint {
 		u.Logger.Warn("opening unprotected full data wipe endpoint meant for testing only")
 		unprotectedRoutes = append(unprotectedRoutes, Route{store.WipeDataPath, h.UserHandler.WipeData})
 	}

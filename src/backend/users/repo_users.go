@@ -37,6 +37,7 @@ type UserRepository interface {
 type UserRepositoryImpl struct {
 	DatabaseProvider *tools.DatabaseProviderImpl
 	EmailVerifier    *tools.EmailVerifierImpl
+	Config           *tools.Config
 }
 
 var NotEnoughSpacePrefix = "not enough space"
@@ -80,7 +81,8 @@ func (r *UserRepositoryImpl) DoesUserExist(user string) bool {
 
 func (r *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) (string, error) {
 	var key string
-	if tools.UseMailMockClient {
+	// TODO !! quite implicit logic. Maybe a better option to say in test mode, when we create a user, his account needs no code for validation
+	if r.Config.CreateSampleData {
 		// TODO static sample key for testing, use from shared module
 		key = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 	} else {

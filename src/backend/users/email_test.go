@@ -1,14 +1,17 @@
 package users
 
 import (
-	"github.com/ocelot-cloud/shared/assert"
 	"os"
 	"testing"
+
+	"github.com/ocelot-cloud/shared/assert"
 )
 
+// TODO !! I should somehow make it so that I can test the logic still by hand?
 func DISABLED_TestSendMail(t *testing.T) {
 	to := "sample@sample.com"
-	assert.Nil(t, sendVerificationEmail(to, "1234"))
+	emailClient := EmailClient{} // TODO !! requires settings the fields accordingly
+	assert.Nil(t, emailClient.SendVerificationEmail(to, "1234"))
 }
 
 func TestInitializeEnv(t *testing.T) {

@@ -18,7 +18,9 @@ const (
 )
 
 type UserHandler struct {
-	UserRepo UserRepository
+	UserRepo    UserRepository
+	EmailClient *EmailClient
+	Config      *tools.Config
 }
 
 func (h *UserHandler) WipeData(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +54,8 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if tools.Profile == tools.TEST {
+	if h.Config.UseSpecialExpiration {
+		// TODO !! I find this approach very ugly, should be refactored somehow -> when logging in, return user including his expiration data of cookie and assert this instead
 		if creds.User == TestUserWithExpiredCookie {
 			cookie.Expires = time.Now().UTC().Add(-1 * time.Second)
 		} else if creds.User == TestUserWithOldButNotExpiredCookie {
@@ -167,7 +170,7 @@ func (h *UserHandler) RegistrationHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = sendVerificationEmail(form.Email, code)
+	err = h.EmailClient.SendVerificationEmail(form.Email, code)
 	if err != nil {
 		u.Logger.Error("sending verification email failed", deepstack.ErrorField, err)
 		http.Error(w, "sending verification email failed", http.StatusBadRequest)

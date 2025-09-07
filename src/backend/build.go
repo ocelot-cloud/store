@@ -16,6 +16,7 @@ func WireDependencies() *InitializerDependencies {
 	wire.Build(
 		NewDatabaseProvider,
 		NewEmailVerifier,
+		tools.NewConfig,
 
 		wire.Struct(new(InitializerDependencies), "*"),
 		wire.Struct(new(apps.AppsHandler), "*"),
@@ -26,6 +27,7 @@ func WireDependencies() *InitializerDependencies {
 		wire.Struct(new(versions.VersionRepositoryImpl), "*"),
 		wire.Struct(new(users.UserRepositoryImpl), "*"),
 		wire.Struct(new(users.UserHandler), "*"),
+		wire.Struct(new(users.EmailClient), "*"),
 
 		wire.Bind(new(apps.AppRepository), new(*apps.AppRepositoryImpl)),
 		wire.Bind(new(versions.VersionRepository), new(*versions.VersionRepositoryImpl)),

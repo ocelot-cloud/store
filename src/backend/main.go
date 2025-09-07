@@ -28,12 +28,6 @@ func main() {
 	deps := WireDependencies()
 	fmt.Printf("todo !! temp: %v", deps)
 
-	// TODO !! make this dependent on the config object -> when constructing the config object
-	if os.Getenv("USE_MOCK_EMAIL_CLIENT") == "true" {
-		u.Logger.Warn("using mock email client, should only be used for testing")
-		tools.UseMailMockClient = true
-	}
-
 	// TODO !! base config initializer
 	err := users.InitializeEnvs()
 	if err != nil {

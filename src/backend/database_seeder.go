@@ -16,11 +16,12 @@ type DatabaseSampleDataSeeder struct {
 	AppRepo     apps.AppRepository
 	VersionRepo versions.VersionRepository
 	UserRepo    users.UserRepository
+	Config      *tools.Config
 }
 
 func (d *DatabaseSampleDataSeeder) SeedSampleDataForTestMode() {
 	// TODO !! should be called in main
-	if tools.Profile == tools.TEST {
+	if d.Config.CreateSampleData {
 		d.UserRepo.WipeDatabase()
 		// This user is created to manually test the GUI so that account registration can be skipped to save time.
 		sampleUser := "sample"

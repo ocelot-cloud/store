@@ -18,6 +18,7 @@ var (
 
 	backendDockerDir = backendDir + "/docker"
 	backendCheckDir  = backendDir + "/check"
+	backendSetupDir  = backendDir + "/setup"
 
 	sshHost = "store"
 )

@@ -1,0 +1,89 @@
+//go:build component
+
+package check
+
+import (
+	"ocelot/store/tools"
+	"testing"
+
+	"github.com/ocelot-cloud/shared/assert"
+)
+
+func TestCreateApp(t *testing.T) {
+	hub := GetHubAndLogin(t)
+	defer hub.WipeData()
+	appId, err := hub.CreateApp(tools.SampleApp)
+	assert.Nil(t, err)
+	foundApps, err := hub.ListOwnApps()
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(foundApps))
+	foundApp := foundApps[0]
+	assert.Equal(t, tools.SampleUser, foundApp.Maintainer)
+	assert.Equal(t, tools.SampleApp, foundApp.Name)
+
+	_, err = hub.CreateApp(tools.SampleApp)
+	assert.NotNil(t, err)
+	AssertDeepStackErrorWithCode(t, err, "app already exists", 400)
+
+	assert.Nil(t, hub.DeleteApp(appId))
+	foundApps, err = hub.ListOwnApps()
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(foundApps))
+}
+
+func TestGetAppList(t *testing.T) {
+	hub := GetHubAndLogin(t)
+	defer hub.WipeData()
+	apps, err := hub.ListOwnApps()
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(apps))
+	_, err = hub.CreateApp(tools.SampleApp)
+	assert.Nil(t, err)
+	apps, err = hub.ListOwnApps()
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(apps))
+	assert.Equal(t, tools.SampleApp, apps[0].Name)
+}
+
+func TestCreationOfOcelotCloudAppIsForbidden(t *testing.T) {
+	hub := GetHubAndLogin(t)
+	defer hub.WipeData()
+	_, err := hub.CreateApp("ocelotcloud")
+	assert.NotNil(t, err)
+	AssertDeepStackErrorWithCode(t, err, "app name is reserved", 400)
+}
+
+func TestUnofficialAppFilteringWhenSearching(t *testing.T) {
+	hub := GetHubAndLogin(t)
+	defer hub.WipeData()
+	appId, err := hub.CreateApp(tools.SampleApp)
+	assert.Nil(t, err)
+	_, err = hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
+	assert.Nil(t, err)
+
+	apps, err := hub.SearchForApps(tools.SampleApp, true)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(apps))
+	assert.Equal(t, appId, apps[0].AppId)
+
+	apps, err = hub.SearchForApps(tools.SampleApp, false)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(apps))
+}
+
+func TestAllowEmptyStringAsSearchTerm(t *testing.T) {
+	hub := GetHubAndLogin(t)
+	defer hub.WipeData()
+	apps, err := hub.SearchForApps("", true)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(apps))
+
+	appId, err := hub.CreateApp(tools.SampleApp)
+	assert.Nil(t, err)
+	_, err = hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
+	assert.Nil(t, err)
+
+	apps, err = hub.SearchForApps("", true)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(apps))
+}

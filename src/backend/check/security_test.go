@@ -13,6 +13,7 @@ import (
 	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/assert"
 	"github.com/ocelot-cloud/shared/store"
+	u "github.com/ocelot-cloud/shared/utils"
 )
 
 var DaysToCookieExpiration = 7
@@ -230,3 +231,19 @@ func doCookieAndHostPolicyChecks(t *testing.T, hub *store.AppStoreClient, operat
 	hub.Email = tools.SampleEmail
 }
 */
+
+func TestCookie(t *testing.T) {
+	hub := GetHubAndLogin(t)
+	defer hub.WipeData()
+	assert.Equal(t, tools.CookieName, hub.Parent.Cookie.Name)
+	assert.True(t, u.GetTimeInSevenDays().Add(1*time.Second).After(hub.Parent.Cookie.Expires))
+	assert.True(t, u.GetTimeInSevenDays().Add(-1*time.Second).Before(hub.Parent.Cookie.Expires))
+	assert.Equal(t, 64, len(hub.Parent.Cookie.Value))
+
+	cookie1 := hub.Parent.Cookie
+	err := hub.Login(tools.SampleUser, tools.SamplePassword)
+	assert.Nil(t, err)
+	cookie2 := hub.Parent.Cookie
+	assert.NotNil(t, cookie2)
+	assert.NotEqual(t, cookie1.Value, cookie2.Value)
+}

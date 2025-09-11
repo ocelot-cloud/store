@@ -21,8 +21,7 @@ func GetValidVersionBytesOfSampleMaintainerApp() []byte {
 		u.Logger.Error("Failed to find assets directory", deepstack.ErrorField, err)
 		// TODO !! return error
 	}
-	// TODO !! simple call it "sampleapp"
-	sampleAppDir := assetsDir + "/samplemaintainer-app"
+	sampleAppDir := assetsDir + "/sample-app"
 	versionBytes, err := validation.ZipDirectory(sampleAppDir)
 	if err != nil {
 		u.Logger.Error("Failed to read sample version file", deepstack.ErrorField, err)

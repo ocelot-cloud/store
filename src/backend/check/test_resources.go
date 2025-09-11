@@ -2,6 +2,7 @@ package check
 
 import (
 	"ocelot/store/tools"
+	"ocelot/store/users"
 	"testing"
 
 	"github.com/ocelot-cloud/shared/assert"
@@ -30,7 +31,7 @@ func createHubClient() *store.AppStoreClientImpl {
 	return &store.AppStoreClientImpl{
 		Parent: u.ComponentClient{
 			SetCookieHeader: true,
-			RootUrl:         "http://localhost",
+			RootUrl:         users.DefaultAppStoreHost,
 		},
 	}
 }

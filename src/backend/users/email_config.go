@@ -6,7 +6,7 @@ import (
 )
 
 // TODO !! to be tested
-// TODO !! add handler for getting/setting email config -> use hardcoded password from env as auth?
+// TODO !! add handler for getting/setting email config + component tests -> use hardcoded password from env for auth?; Application should crash on start when this variable is empty/not set
 
 type EmailConfig struct {
 	AppStoreHost         string
@@ -30,7 +30,7 @@ const (
 	emailUserKey     = "EMAIL_ACCOUNT_USERNAME"
 	emailPasswordKey = "EMAIL_ACCOUNT_PASSWORD"
 
-	defaultAppStoreHost  = "http://localhost"
+	DefaultAppStoreHost  = "http://localhost"
 	defaultSMTPHost      = "smtps.sample.com"
 	defaultSMTPPort      = 465
 	defaultEmail         = "sample@sample.com"
@@ -44,7 +44,7 @@ type EmailConfigStoreImpl struct {
 
 func (s *EmailConfigStoreImpl) GetEmailConfig() (EmailConfig, error) {
 	cfg := EmailConfig{
-		AppStoreHost:         defaultAppStoreHost,
+		AppStoreHost:         DefaultAppStoreHost,
 		SMTPHost:             defaultSMTPHost,
 		SMTPPort:             defaultSMTPPort,
 		EmailAddress:         defaultEmail,

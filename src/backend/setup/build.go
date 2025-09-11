@@ -1,6 +1,6 @@
 //go:build wireinject
 
-package main
+package setup
 
 import (
 	"ocelot/store/apps"

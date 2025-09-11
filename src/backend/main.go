@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"ocelot/store/setup"
 	"ocelot/store/tools"
 	"os"
 	"os/exec"
@@ -24,7 +25,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	deps := WireDependencies()
+	deps := setup.WireDependencies()
 	fmt.Printf("todo !! temp: %v", deps)
 
 	// TODO !! database initializer

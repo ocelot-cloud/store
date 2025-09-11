@@ -104,3 +104,7 @@ func TestDownloadDummyVersion(t *testing.T) {
 	assert.Equal(t, tools.SampleVersion, info.VersionName)
 	assert.True(t, len(info.Content) > 100)
 }
+
+// TODO
+// TODO !! when uploading a version, i need to trigger a lock, which use user specific to prevent a parallel upload
+// TODO !! limit the creation of apps to a maximum of 100

@@ -54,6 +54,16 @@ func TestLogout(t *testing.T) {
 	u.AssertDeepStackErrorFromRequest(t, err, "cookie not found")
 }
 
+// TODO !! cant register twice with same 1) name or 2) email
+// TODO !! empty or wrong registration code should not be accepted
+/* TODO !! assert validation code?
+assert.Equal(t, 64, len(code))
+assert.True(t, consistOfHexadecimalCharactersOnly(code))
+
+func consistOfHexadecimalCharactersOnly(code string) bool {
+	return regexp.MustCompile(`^[0-9a-f]+$`).MatchString(code)
+}
+*/
 func TestRegistrationAndValidation(t *testing.T) {
 	hub := GetHub()
 	defer hub.WipeData()
@@ -75,5 +85,10 @@ func TestEmailAlreadyExists(t *testing.T) {
 
 // TODO !!
 func TestCascadingDeletionOfAppsAndVersionsWhenDeletingUser(t *testing.T) {
+
+}
+
+// TODO !!
+func TestTolerateTwoUsersWithSamePassword(t *testing.T) {
 
 }

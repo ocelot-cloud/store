@@ -205,3 +205,5 @@ func TestCookie(t *testing.T) {
 	assert.NotNil(t, cookie2)
 	assert.NotEqual(t, cookie1.Value, cookie2.Value)
 }
+
+// TODO !! test cookie renewal on authenticated endpoint calls

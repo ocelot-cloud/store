@@ -163,7 +163,7 @@ func (h *UserHandler) RegistrationHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	code, err := h.UserRepo.CreateUser(form)
+	code, err := h.UserRepo.CreateUserAndReturnRegistrationCode(form)
 	if err != nil {
 		u.Logger.Error("user registration failed", tools.UserField, form.User, deepstack.ErrorField, err)
 		http.Error(w, "user registration failed", http.StatusBadRequest)
@@ -200,7 +200,7 @@ func (h *UserHandler) ValidationCodeHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = h.UserRepo.ValidateUser(code)
+	err = h.UserRepo.ValidateUserViaRegistrationCode(code)
 	if err != nil {
 		u.Logger.Error("validation process of user failed", deepstack.ErrorField, err)
 		http.Error(w, "validation process failed", http.StatusBadRequest)

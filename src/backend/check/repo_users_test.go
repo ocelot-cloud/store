@@ -102,31 +102,31 @@ func TestEmailDuringUserCreation(t *testing.T) {
 
 	newForm := *tools.SampleForm
 	newForm.User = tools.SampleUser + "x"
-	code, err := users.UserRepo.CreateUser(&newForm)
+	code, err := users.UserRepo.CreateUserAndReturnRegistrationCode(&newForm)
 	assert.Nil(t, err)
-	assert.NotNil(t, users.UserRepo.ValidateUser(code))
+	assert.NotNil(t, users.UserRepo.ValidateUserViaRegistrationCode(code))
 	assert.False(t, users.UserRepo.DoesUserExist(tools.SampleUser+"x"))
 
 	newForm.Email = tools.SampleEmail + "x"
-	code, err = users.UserRepo.CreateUser(&newForm)
+	code, err = users.UserRepo.CreateUserAndReturnRegistrationCode(&newForm)
 	assert.Nil(t, err)
-	assert.Nil(t, users.UserRepo.ValidateUser(code))
+	assert.Nil(t, users.UserRepo.ValidateUserViaRegistrationCode(code))
 	assert.True(t, users.UserRepo.DoesUserExist(tools.SampleUser+"x"))
 }
 
 func TestValidationCode(t *testing.T) {
 	defer users.UserRepo.WipeDatabase()
-	code, err := users.UserRepo.CreateUser(tools.SampleForm)
+	code, err := users.UserRepo.CreateUserAndReturnRegistrationCode(tools.SampleForm)
 	assert.Nil(t, err)
 	assert.Equal(t, 64, len(code))
 	assert.True(t, consistOfHexadecimalCharactersOnly(code))
 
 	assert.False(t, users.UserRepo.DoesUserExist(tools.SampleUser))
-	err = users.UserRepo.ValidateUser(code)
+	err = users.UserRepo.ValidateUserViaRegistrationCode(code)
 	assert.Nil(t, err)
 	assert.True(t, users.UserRepo.DoesUserExist(tools.SampleUser))
 
-	err = users.UserRepo.ValidateUser(code)
+	err = users.UserRepo.ValidateUserViaRegistrationCode(code)
 	assert.NotNil(t, err)
 	assert.Equal(t, "code not found", err.Error())
 }

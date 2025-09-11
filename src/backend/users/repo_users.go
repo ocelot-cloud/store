@@ -14,19 +14,25 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// TODO !! add option to change email address
+
 // TODO !! simplify to CRUD operations, rest should be handle by a service
 type UserRepository interface {
-	CreateUser(form *store.RegistrationForm) (string, error)
-	ValidateUser(code string) error
+	// TODO !! keep functions
+	// TODO CreateUser(form *store.RegistrationForm) error
+	ValidateUserViaRegistrationCode(code string) error
 	DoesUserExist(user string) bool
 	DoesEmailExist(email string) bool
 	DeleteUser(user string) error
+	GetUserViaCookie(cookie string) (string, error)       // TODO should return user object; and gt hashed Cookie as argument
+	ChangePassword(user string, newPassword string) error // TODO !! pass userID, not name
+	Logout(user string) error
+
+	// TODO !! replace functions
+	CreateUserAndReturnRegistrationCode(form *store.RegistrationForm) (string, error) // TODo !! contains business logic
 	IsPasswordCorrect(user string, password string) bool
 	HashAndSaveCookie(user string, cookie string, expirationDate time.Time) error
 	IsCookieExpired(cookie string) bool
-	GetUserViaCookie(cookie string) (string, error)
-	ChangePassword(user string, newPassword string) error
-	Logout(user string) error
 	IsThereEnoughSpaceToAddVersion(user string, bytesToAdd int) error
 	GetUsedSpaceInBytes(user string) (int, error)
 	WipeDatabase()
@@ -79,7 +85,7 @@ func (r *UserRepositoryImpl) DoesUserExist(user string) bool {
 	return exists
 }
 
-func (r *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) (string, error) {
+func (r *UserRepositoryImpl) CreateUserAndReturnRegistrationCode(form *store.RegistrationForm) (string, error) {
 	var key string
 	// TODO !! quite implicit logic. Maybe a better option to say in test mode, when we create a user, his account needs no code for validation
 	if r.Config.CreateSampleData {
@@ -98,7 +104,7 @@ func (r *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) (string, e
 	return key, nil
 }
 
-func (r *UserRepositoryImpl) ValidateUser(code string) error {
+func (r *UserRepositoryImpl) ValidateUserViaRegistrationCode(code string) error {
 	form, err := r.EmailVerifier.Load(code)
 	if err != nil {
 		return err
@@ -232,11 +238,11 @@ func (r *UserRepositoryImpl) Logout(user string) error {
 }
 
 func (r *UserRepositoryImpl) CreateAndValidateUser(form *store.RegistrationForm) error {
-	code, err := r.CreateUser(form)
+	code, err := r.CreateUserAndReturnRegistrationCode(form)
 	if err != nil {
 		return err
 	}
-	err = r.ValidateUser(code)
+	err = r.ValidateUserViaRegistrationCode(code)
 	return err
 }
 

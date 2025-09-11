@@ -22,6 +22,7 @@ type VersionsHandler struct {
 	VersionService *VersionService
 }
 
+// TODO !! too long, shift to service, maybe simplify?
 func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
 	r.Body = http.MaxBytesReader(w, r.Body, tools.MaxPayloadSize)

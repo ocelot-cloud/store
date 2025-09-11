@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ocelot-cloud/shared/assert"
+	u "github.com/ocelot-cloud/shared/utils"
 )
 
 func TestCreateApp(t *testing.T) {
@@ -23,7 +24,7 @@ func TestCreateApp(t *testing.T) {
 
 	_, err = hub.CreateApp(tools.SampleApp)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "app already exists", 400)
+	u.AssertDeepStackErrorFromRequest(t, err, "app already exists")
 
 	assert.Nil(t, hub.DeleteApp(appId))
 	foundApps, err = hub.ListOwnApps()
@@ -50,7 +51,7 @@ func TestCreationOfOcelotCloudAppIsForbidden(t *testing.T) {
 	defer hub.WipeData()
 	_, err := hub.CreateApp("ocelotcloud")
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "app name is reserved", 400)
+	u.AssertDeepStackErrorFromRequest(t, err, "app name is reserved")
 }
 
 func TestUnofficialAppFilteringWhenSearching(t *testing.T) {

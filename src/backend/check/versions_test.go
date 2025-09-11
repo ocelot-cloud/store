@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/ocelot-cloud/shared/assert"
+	u "github.com/ocelot-cloud/shared/utils"
 )
 
 func TestVersionDownload(t *testing.T) {
@@ -21,7 +22,7 @@ func TestVersionDownload(t *testing.T) {
 	assert.Nil(t, err)
 	_, err = hub.DownloadVersion(notExistingVersionId)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, versions.VersionDoesNotExistError, 400)
+	u.AssertDeepStackErrorFromRequest(t, err, versions.VersionDoesNotExistError)
 
 	versionId, err := hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
 	assert.Nil(t, err)
@@ -41,7 +42,7 @@ func TestUploadVersion(t *testing.T) {
 	notExistingVersionId := "0"
 	_, err := hub.UploadVersion(notExistingVersionId, tools.SampleVersion, SampleVersionFileContent)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "app does not exist", 400)
+	u.AssertDeepStackErrorFromRequest(t, err, "app does not exist")
 
 	appId, err := hub.CreateApp(tools.SampleApp)
 	assert.Nil(t, err)
@@ -50,7 +51,7 @@ func TestUploadVersion(t *testing.T) {
 
 	_, err = hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "version already exists", 400)
+	u.AssertDeepStackErrorFromRequest(t, err, "version already exists")
 
 	versions, err := hub.GetVersions(appId)
 	assert.Nil(t, err)
@@ -64,7 +65,7 @@ func TestUploadVersion(t *testing.T) {
 
 	err = hub.DeleteVersion(versionId)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "version does not exist", 400)
+	u.AssertDeepStackErrorFromRequest(t, err, "version does not exist")
 }
 
 // TODO !! not sure what this test is asserting? why unhappy path?

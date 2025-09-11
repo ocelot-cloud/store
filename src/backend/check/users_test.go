@@ -7,13 +7,14 @@ import (
 	"testing"
 
 	"github.com/ocelot-cloud/shared/assert"
+	u "github.com/ocelot-cloud/shared/utils"
 )
 
 func TestLogin(t *testing.T) {
 	hub := GetHub()
 	err := hub.Login(tools.SampleUser, tools.SamplePassword)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "user does not exist", 400)
+	u.AssertDeepStackErrorFromRequest(t, err, "user does not exist")
 }
 
 func TestChangePassword(t *testing.T) {
@@ -24,7 +25,7 @@ func TestChangePassword(t *testing.T) {
 	assert.Nil(t, hub.ChangePassword(tools.SamplePassword, newPassword))
 	err := hub.Login(tools.SampleUser, tools.SamplePassword)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "incorrect username or password", 400)
+	u.AssertDeepStackErrorFromRequest(t, err, "incorrect username or password")
 
 	hub.Parent.Cookie = nil
 	err = hub.Login(tools.SampleUser, newPassword)
@@ -39,7 +40,7 @@ func TestRegistration(t *testing.T) {
 	assert.Nil(t, hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail))
 	err := hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "user already exists", 400)
+	u.AssertDeepStackErrorFromRequest(t, err, "user already exists")
 }
 
 func TestLogout(t *testing.T) {
@@ -50,7 +51,7 @@ func TestLogout(t *testing.T) {
 	assert.Nil(t, hub.Logout())
 	_, err = hub.CreateApp(tools.SampleApp)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "cookie not found", 400)
+	u.AssertDeepStackErrorFromRequest(t, err, "cookie not found")
 }
 
 func TestRegistrationAndValidation(t *testing.T) {
@@ -69,5 +70,5 @@ func TestEmailAlreadyExists(t *testing.T) {
 	user2 := tools.SampleUser + "2"
 	err := hub.RegisterUser(user2, tools.SamplePassword, tools.SampleEmail)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "email already exists", 400)
+	u.AssertDeepStackErrorFromRequest(t, err, "email already exists")
 }

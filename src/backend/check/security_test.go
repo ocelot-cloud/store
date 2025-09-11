@@ -64,7 +64,7 @@ func TestChangePasswordSecurity(t *testing.T) {
 
 	err := hub.ChangePassword(correctlyFormattedButNotMatchingPassword, newPassword)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "incorrect username or password", 400)
+	u.AssertDeepStackErrorFromRequest(t, err, "incorrect username or password")
 }
 
 // TODO test input validation through u.ReadJsonFromRequest
@@ -89,7 +89,7 @@ func TestLoginSecurity(t *testing.T) {
 	correctlyFormattedButNotMatchingPassword := tools.SamplePassword + "x"
 	err = hub.Login(tools.SampleUser, correctlyFormattedButNotMatchingPassword)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "incorrect username or password", 400)
+	u.AssertDeepStackErrorFromRequest(t, err, "incorrect username or password")
 }
 
 func checkCookie(t *testing.T, hub *store.AppStoreClientImpl) {
@@ -109,7 +109,7 @@ func TestCookieExpirationAndRenewal(t *testing.T) {
 	assert.True(t, time.Now().UTC().After(hub.Parent.Cookie.Expires))
 	_, err := hub.CreateApp(tools.SampleApp)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "cookie expired", 400)
+	u.AssertDeepStackErrorFromRequest(t, err, "cookie expired")
 
 	// TODO !! too complex? to be simplified?
 	// There is some specific logic for this user in the production code when handling cookie.
@@ -161,7 +161,7 @@ func TestOwnershipOfDeleteVersion(t *testing.T) {
 
 	err = hub.DeleteVersion(versionId)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, versions.NotOwningThisVersionError, 400)
+	u.AssertDeepStackErrorFromRequest(t, err, versions.NotOwningThisVersionError)
 }
 
 func TestUploadOfInvalidZipContent(t *testing.T) {
@@ -172,6 +172,7 @@ func TestUploadOfInvalidZipContent(t *testing.T) {
 	assert.Nil(t, err)
 	_, err = hub.UploadVersion(appId, tools.SampleVersion, content)
 	assert.NotNil(t, err)
+	// TODO !! can status code context be removed? I think "zip: not a valid zip file" should be the errors message
 	deepstack.AssertDeepStackError(t, err, "request failed", "status_code", 400, "response_body", "zip: not a valid zip file")
 }
 

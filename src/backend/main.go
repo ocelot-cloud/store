@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"ocelot/store/setup"
 	"ocelot/store/tools"
@@ -26,14 +25,8 @@ func main() {
 	}
 
 	deps := setup.WireDependencies()
-	err := deps.PathProvider.Initialize()
-	if err != nil {
-		u.Logger.Error("exiting due to error through path provider", deepstack.ErrorField, err)
-		os.Exit(1)
-	}
-	fmt.Printf("todo !! temp: %v", deps)
-
-	// TODO !! database initializer
+	err := initializeApplication(deps)
+	// TODO !! all other lines of the main function should be move into this function, and called from "deps"
 	err = deps.DatabaseProvider.InitializeDatabase()
 	if err != nil {
 		u.Logger.Error("exiting due to error through database", deepstack.ErrorField, err)
@@ -59,4 +52,12 @@ func main() {
 		u.Logger.Error("Server stopped", deepstack.ErrorField, err)
 		os.Exit(1)
 	}
+}
+
+func initializeApplication(deps *setup.InitializerDependencies) interface{} {
+	err := deps.PathProvider.Initialize()
+	if err != nil {
+		return err
+	}
+	return nil
 }

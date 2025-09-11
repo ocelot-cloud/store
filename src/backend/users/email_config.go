@@ -3,10 +3,12 @@ package users
 import (
 	"ocelot/store/tools"
 	"strconv"
+
+	u "github.com/ocelot-cloud/shared/utils"
 )
 
 // TODO !! to be tested
-// TODO !! add handler for getting/setting email config + component tests -> use hardcoded password from env for auth?; Application should crash on start when this variable is empty/not set
+// TODO !! add handler for getting/setting email config + component tests -> use hardcoded password from env for auth?; Application should crash start when this variable is empty/not set
 
 type EmailConfig struct {
 	AppStoreHost         string
@@ -60,7 +62,7 @@ func (s *EmailConfigStoreImpl) GetEmailConfig() (EmailConfig, error) {
 	if err != nil {
 		return cfg, err
 	}
-	defer row.Close()
+	defer u.Close(row)
 
 	m := map[string]string{}
 	for row.Next() {

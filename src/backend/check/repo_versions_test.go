@@ -26,7 +26,7 @@ func TestCreateRepoVersion(t *testing.T) {
 	versionId, err := versions.VersionRepo.GetVersionId(appId, tools.SampleVersion)
 	assert.Nil(t, err)
 	assert.True(t, versions.VersionRepo.DoesVersionExist(versionId))
-	versions, err := versions.VersionRepo.GetVersionList(appId)
+	versions, err := versions.VersionRepo.ListVersionsOfApp(appId)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(versions))
 	version := versions[0]
@@ -42,7 +42,7 @@ func TestGetVersionList(t *testing.T) {
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
 	appId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
 	assert.Nil(t, err)
-	foundVersions, err := versions.VersionRepo.GetVersionList(appId)
+	foundVersions, err := versions.VersionRepo.ListVersionsOfApp(appId)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(foundVersions))
 	versionId, err := versions.VersionRepo.GetVersionId(appId, tools.SampleVersion)
@@ -50,7 +50,7 @@ func TestGetVersionList(t *testing.T) {
 	assert.False(t, versions.VersionRepo.DoesVersionExist(versionId))
 
 	assert.Nil(t, versions.VersionRepo.CreateVersion(appId, tools.SampleVersion, []byte("asdf")))
-	foundVersions, err = versions.VersionRepo.GetVersionList(appId)
+	foundVersions, err = versions.VersionRepo.ListVersionsOfApp(appId)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(foundVersions))
 	assert.Equal(t, tools.SampleVersion, foundVersions[0].Name)
@@ -64,13 +64,13 @@ func TestGetVersionList(t *testing.T) {
 	assert.True(t, foundVersions[0].CreationTimestamp.After(time.Now().UTC().Add(-1*time.Second)))
 
 	assert.Nil(t, versions.VersionRepo.DeleteVersion(versionId))
-	foundVersions, err = versions.VersionRepo.GetVersionList(appId)
+	foundVersions, err = versions.VersionRepo.ListVersionsOfApp(appId)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(foundVersions))
 	assert.False(t, versions.VersionRepo.DoesVersionExist(versionId))
 
 	assert.Nil(t, versions.VersionRepo.CreateVersion(appId, tools.SampleVersion, []byte("asdf")))
-	foundVersions, err = versions.VersionRepo.GetVersionList(appId)
+	foundVersions, err = versions.VersionRepo.ListVersionsOfApp(appId)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(foundVersions))
 	assert.Equal(t, tools.SampleVersion, foundVersions[0].Name)
@@ -80,7 +80,7 @@ func TestGetVersionList(t *testing.T) {
 }
 
 func TestGetVersionListForNonExistingVersions(t *testing.T) {
-	list, err := versions.VersionRepo.GetVersionList(-1)
+	list, err := versions.VersionRepo.ListVersionsOfApp(-1)
 	assert.NotNil(t, err)
 	assert.Nil(t, list)
 }
@@ -99,7 +99,7 @@ func TestAppIdConsistency(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, strconv.Itoa(appId), appList[0].Id)
 
-	versionList, err := versions.VersionRepo.GetVersionList(appId)
+	versionList, err := versions.VersionRepo.ListVersionsOfApp(appId)
 	assert.Nil(t, err)
 	assert.Equal(t, strconv.Itoa(versionId), versionList[0].Id)
 }
@@ -107,17 +107,17 @@ func TestAppIdConsistency(t *testing.T) {
 func TestIsVersionOwner(t *testing.T) {
 	defer users.UserRepo.WipeDatabase()
 	assert.Nil(t, users.CreateAndValidateUser(tools.SampleForm))
-	assert.False(t, versions.VersionRepo.IsVersionOwner(tools.SampleUser, 1))
+	assert.False(t, versions.VersionRepo.DoesUserOwnVersion(tools.SampleUser, 1))
 
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
 	appId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
 	assert.Nil(t, err)
-	assert.False(t, versions.VersionRepo.IsVersionOwner(tools.SampleUser, 1))
+	assert.False(t, versions.VersionRepo.DoesUserOwnVersion(tools.SampleUser, 1))
 
 	assert.Nil(t, versions.VersionRepo.CreateVersion(appId, tools.SampleVersion, []byte("asdf")))
 	versionId, err := versions.VersionRepo.GetVersionId(appId, tools.SampleVersion)
 	assert.Nil(t, err)
-	assert.True(t, versions.VersionRepo.IsVersionOwner(tools.SampleUser, versionId))
+	assert.True(t, versions.VersionRepo.DoesUserOwnVersion(tools.SampleUser, versionId))
 
 	sampleForm2 := *tools.SampleForm
 	sampleForm2.User = tools.SampleUser + "2"
@@ -125,9 +125,9 @@ func TestIsVersionOwner(t *testing.T) {
 	assert.Nil(t, users.CreateAndValidateUser(&sampleForm2))
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser+"2", tools.SampleApp))
 	assert.Nil(t, versions.VersionRepo.CreateVersion(appId, tools.SampleVersion, []byte("asdf")))
-	assert.False(t, versions.VersionRepo.IsVersionOwner(tools.SampleUser+"2", appId))
+	assert.False(t, versions.VersionRepo.DoesUserOwnVersion(tools.SampleUser+"2", appId))
 
-	assert.False(t, versions.VersionRepo.IsVersionOwner("notExistingUser", versionId))
+	assert.False(t, versions.VersionRepo.DoesUserOwnVersion("notExistingUser", versionId))
 }
 
 func TestGetAppIdByVersionId(t *testing.T) {

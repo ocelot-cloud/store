@@ -13,13 +13,18 @@ import (
 	u "github.com/ocelot-cloud/shared/utils"
 )
 
+// TODO !! simplify
 type VersionRepository interface {
-	IsVersionOwner(user string, versionId int) bool
+	// TODO !! keep functions
+	DoesUserOwnVersion(user string, versionId int) bool // TODO !! pass ID not name
 	CreateVersion(appId int, version string, data []byte) error
-	GetVersionId(appId int, version string) (int, error)
+	// TODO !! add: GetVersion(versionId int) (store.Version, error)
 	DeleteVersion(versionId int) error
-	GetVersionList(appId int) ([]store.Version, error)
+	ListVersionsOfApp(appId int) ([]store.FullVersionInfo, error)
+
+	// TODO !! remove functions
 	DoesVersionExist(versionId int) bool
+	GetVersionId(appId int, version string) (int, error)
 	GetVersionContent(versionId int) ([]byte, error)
 	GetAppIdByVersionId(versionId int) (int, error)
 	GetFullVersionInfo(versionId int) (*store.FullVersionInfo, error)
@@ -56,7 +61,7 @@ func (r *VersionRepositoryImpl) GetAppIdByVersionId(versionId int) (int, error) 
 	return appId, nil
 }
 
-func (r *VersionRepositoryImpl) IsVersionOwner(user string, versionId int) bool {
+func (r *VersionRepositoryImpl) DoesUserOwnVersion(user string, versionId int) bool {
 	userId, err := r.UserRepo.GetUserId(user)
 	if err != nil {
 		u.Logger.Info("Failed to get user ID", tools.UserField, deepstack.ErrorField, err)
@@ -152,7 +157,7 @@ func (r *VersionRepositoryImpl) getBlobSize(versionId int) (int64, error) {
 	return dataSize, nil
 }
 
-func (r *VersionRepositoryImpl) GetVersionList(appId int) ([]store.Version, error) {
+func (r *VersionRepositoryImpl) ListVersionsOfApp(appId int) ([]store.Version, error) {
 	var exists bool
 	err := r.DatabaseProvider.GetDb().QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE app_id = $1)", appId).Scan(&exists)
 	if err != nil {

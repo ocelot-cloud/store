@@ -131,7 +131,7 @@ func (v *VersionsHandler) VersionDeleteHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if !v.VersionRepo.IsVersionOwner(user, versionId) {
+	if !v.VersionRepo.DoesUserOwnVersion(user, versionId) {
 		u.Logger.Warn("user tried to delete version but does not own it", tools.UserField, user, tools.VersionIdField, versionId)
 		http.Error(w, "you do not own this version", http.StatusBadRequest)
 		return
@@ -159,7 +159,7 @@ func (v *VersionsHandler) GetVersionsHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	versionsList, err := v.VersionRepo.GetVersionList(appId)
+	versionsList, err := v.VersionRepo.ListVersionsOfApp(appId)
 	if err != nil {
 		u.Logger.Error("getting version list failed for app", tools.AppIdField, appId)
 		http.Error(w, err.Error(), http.StatusBadRequest)

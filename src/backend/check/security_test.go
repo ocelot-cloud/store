@@ -6,11 +6,9 @@ import (
 	"net/http"
 	"ocelot/store/tools"
 	"ocelot/store/users"
-	"ocelot/store/versions"
 	"testing"
 	"time"
 
-	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/assert"
 	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
@@ -123,47 +121,6 @@ func TestCookieExpirationAndRenewal(t *testing.T) {
 	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration+1).After(hub.Parent.Cookie.Expires))
 }
 
-/* TODO !! reimplement
-func TestOwnership(t *testing.T) {
-	hub := GetHub()
-	testVersionOwnership(t, hub, hub.DeleteApp)
-	hub = GetHub()
-	testVersionOwnership(t, hub, hub.UploadVersion)
-}
-
-func testVersionOwnership(t *testing.T, hub *store.AppStoreClient, operation func() error) {
-	defer hub.WipeData()
-	assert.Nil(t, hub.RegisterAndValidateUser())
-	assert.Nil(t, hub.Login())
-	assert.Nil(t, hub.CreateApp())
-	hub.Parent.User = tools.SampleUser + "2"
-	hub.Email = tools.SampleEmail + "x"
-	assert.Nil(t, hub.RegisterAndValidateUser())
-	assert.Nil(t, hub.Login())
-	err := operation()
-	assert.NotNil(t, err)
-	assert.Equal(t, u.GetErrMsg(400, "you do not own this app"), err.Error())
-}
-*/
-
-func TestOwnershipOfDeleteVersion(t *testing.T) {
-	hub := GetHubAndLogin(t)
-	defer hub.WipeData()
-
-	// TODO this block occurs quite often, can be abstracted
-	appId, err := hub.CreateApp(tools.SampleApp)
-	assert.Nil(t, err)
-	versionId, err := hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
-	assert.Nil(t, err)
-
-	assert.Nil(t, hub.RegisterAndValidateUser(tools.SampleUser+"2", tools.SamplePassword, tools.SampleEmail+"x"))
-	assert.Nil(t, hub.Login(tools.SampleUser+"2", tools.SamplePassword))
-
-	err = hub.DeleteVersion(versionId)
-	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, versions.NotOwningThisVersionError)
-}
-
 func TestUploadOfInvalidZipContent(t *testing.T) {
 	hub := GetHubAndLogin(t)
 	defer hub.WipeData()
@@ -173,12 +130,12 @@ func TestUploadOfInvalidZipContent(t *testing.T) {
 	_, err = hub.UploadVersion(appId, tools.SampleVersion, content)
 	assert.NotNil(t, err)
 	// TODO !! can status code context be removed? I think "zip: not a valid zip file" should be the errors message
-	deepstack.AssertDeepStackError(t, err, "request failed", "status_code", 400, "response_body", "zip: not a valid zip file")
+	u.AssertDeepStackErrorFromRequest(t, err, "zip: not a valid zip file")
 }
 
 // TODO !! when integration tests are applied to docker deployment, then there is not need to expose the database port to the host any longer
 
-/* TODO !!
+/* TODO !! -> use two sample endpoints for protection, one for anonymous and one for authenticated users
 func TestCookieAndHostProtection(t *testing.T) {
 	hub := GetHub()
 	tests := []func() error{

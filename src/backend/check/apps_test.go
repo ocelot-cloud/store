@@ -10,7 +10,7 @@ import (
 	u "github.com/ocelot-cloud/shared/utils"
 )
 
-func TestCreateApp(t *testing.T) {
+func TestCreateAndDeleteApp(t *testing.T) {
 	hub := GetHubAndLogin(t)
 	defer hub.WipeData()
 	appId, err := hub.CreateApp(tools.SampleApp)
@@ -87,4 +87,24 @@ func TestAllowEmptyStringAsSearchTerm(t *testing.T) {
 	apps, err = hub.SearchForApps("", true)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(apps))
+}
+
+// TODO !!
+func TestCascadingDeletionOfVersionsWhenDeletingApp(t *testing.T) {
+
+}
+
+// TODO
+func TestTolerateTwoDifferentUsersCreateAppWithSameName(t *testing.T) {
+
+}
+
+// TODO !!
+func TestSearchForNonExistingAppsReturnsEmptyList(t *testing.T) {
+
+}
+
+// TODO !!
+func TestCantCreateAppTwiceForSameUser(t *testing.T) {
+
 }

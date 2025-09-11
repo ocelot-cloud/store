@@ -72,3 +72,8 @@ func TestEmailAlreadyExists(t *testing.T) {
 	assert.NotNil(t, err)
 	u.AssertDeepStackErrorFromRequest(t, err, "email already exists")
 }
+
+// TODO !!
+func TestCascadingDeletionOfAppsAndVersionsWhenDeletingUser(t *testing.T) {
+
+}

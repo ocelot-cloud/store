@@ -30,7 +30,7 @@ func createHubClient() *store.AppStoreClientImpl {
 	return &store.AppStoreClientImpl{
 		Parent: u.ComponentClient{
 			SetCookieHeader: true,
-			RootUrl:         tools.RootUrl,
+			RootUrl:         "http://localhost",
 		},
 	}
 }

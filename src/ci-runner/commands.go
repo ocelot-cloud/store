@@ -40,7 +40,8 @@ func waitForHealthEndpoint() {
 	client := &http.Client{Timeout: 1 * time.Second}
 	tr.Log.Info("waiting for /api/healthcheck ")
 	for time.Now().Before(deadline) {
-		resp, err := client.Get("http://localhost:8082/api/healthcheck")
+		// TODO !! abstract "http://localhost"
+		resp, err := client.Get("http://localhost/api/healthcheck")
 		if err == nil {
 			var v struct {
 				Status string `json:"status"`

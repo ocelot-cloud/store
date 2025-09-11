@@ -1,5 +1,6 @@
 TODO
 
+* get rid of "data" and ."env" files
 * two deployments:
   * local, app store + database
   * prod, same + watchtotwer + traefik

@@ -8,8 +8,7 @@ WORKDIR /opt/app
 COPY --chown=app:app ./store  /opt/app/store
 COPY --chown=app:app ./assets /opt/app/assets
 RUN chmod 500 /opt/app/store
-# TODO !! expose port 80 later
 USER app
-EXPOSE 8082
+EXPOSE 80:8080
 VOLUME ["/opt/app/data"]
 ENTRYPOINT ["/opt/app/store"]

@@ -30,7 +30,7 @@ const (
 	emailUserKey     = "EMAIL_ACCOUNT_USERNAME"
 	emailPasswordKey = "EMAIL_ACCOUNT_PASSWORD"
 
-	defaultAppStoreHost  = "http://localhost:8082"
+	defaultAppStoreHost  = "http://localhost"
 	defaultSMTPHost      = "smtps.sample.com"
 	defaultSMTPPort      = 465
 	defaultEmail         = "sample@sample.com"

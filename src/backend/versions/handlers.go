@@ -159,7 +159,14 @@ func (v *VersionsHandler) VersionDownloadHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if !v.VersionRepo.DoesVersionExist(versionId) {
+	// TODO !! shift check to service
+	doesExist, err := v.VersionRepo.DoesVersionExist(versionId)
+	if err != nil {
+		u.Logger.Error("error when checking if version exists", deepstack.ErrorField, err)
+		http.Error(w, "error when checking if version exists", http.StatusBadRequest)
+		return
+	}
+	if !doesExist {
 		u.Logger.Info("version does not exist", tools.VersionIdField, versionId)
 		http.Error(w, "version does not exist", http.StatusBadRequest)
 		return

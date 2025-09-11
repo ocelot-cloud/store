@@ -16,6 +16,7 @@ import (
 // TODO !! simplify
 type VersionRepository interface {
 	// TODO !! keep functions
+	DoesVersionExist(versionId int) (bool, error)
 	DoesUserOwnVersion(user string, versionId int) bool // TODO !! pass ID not name
 	CreateVersion(appId int, version string, data []byte) error
 	// TODO !! add: GetVersion(versionId int) (store.Version, error)
@@ -23,7 +24,6 @@ type VersionRepository interface {
 	ListVersionsOfApp(appId int) ([]store.Version, error) // TODO !! instead should return []FullVersionInfo
 
 	// TODO !! remove functions
-	DoesVersionExist(versionId int) bool
 	GetVersionId(appId int, version string) (int, error)
 	GetVersionContent(versionId int) ([]byte, error)
 	GetAppIdByVersionId(versionId int) (int, error)
@@ -197,14 +197,13 @@ func (r *VersionRepositoryImpl) ListVersionsOfApp(appId int) ([]store.Version, e
 	return versions, nil
 }
 
-func (r *VersionRepositoryImpl) DoesVersionExist(versionId int) bool {
+func (r *VersionRepositoryImpl) DoesVersionExist(versionId int) (bool, error) {
 	var exists bool
 	err := r.DatabaseProvider.GetDb().QueryRow(`SELECT EXISTS(SELECT 1 FROM versions WHERE version_id = $1)`, versionId).Scan(&exists)
 	if err != nil {
-		u.Logger.Debug("error checking if version exists")
-		return false
+		return false, err
 	}
-	return exists
+	return exists, nil
 }
 
 func (r *VersionRepositoryImpl) GetVersionId(appId int, version string) (int, error) {

@@ -63,4 +63,30 @@ func TestOwnershipOfDeleteVersion(t *testing.T) {
 	assert.NotNil(t, err)
 	u.AssertDeepStackErrorFromRequest(t, err, versions.NotOwningThisVersionError)
 }
+
+func TestIsVersionOwner(t *testing.T) {
+	defer users.UserRepo.WipeDatabase()
+	assert.Nil(t, users.CreateAndValidateUser(tools.SampleForm))
+	assert.False(t, versions.VersionRepo.DoesUserOwnVersion(tools.SampleUser, 1))
+
+	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
+	appId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
+	assert.Nil(t, err)
+	assert.False(t, versions.VersionRepo.DoesUserOwnVersion(tools.SampleUser, 1))
+
+	assert.Nil(t, versions.VersionRepo.CreateVersion(appId, tools.SampleVersion, []byte("asdf")))
+	versionId, err := versions.VersionRepo.GetVersionId(appId, tools.SampleVersion)
+	assert.Nil(t, err)
+	assert.True(t, versions.VersionRepo.DoesUserOwnVersion(tools.SampleUser, versionId))
+
+	sampleForm2 := *tools.SampleForm
+	sampleForm2.User = tools.SampleUser + "2"
+	sampleForm2.Email = tools.SampleEmail + "2"
+	assert.Nil(t, users.CreateAndValidateUser(&sampleForm2))
+	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser+"2", tools.SampleApp))
+	assert.Nil(t, versions.VersionRepo.CreateVersion(appId, tools.SampleVersion, []byte("asdf")))
+	assert.False(t, versions.VersionRepo.DoesUserOwnVersion(tools.SampleUser+"2", appId))
+
+	assert.False(t, versions.VersionRepo.DoesUserOwnVersion("notExistingUser", versionId))
+}
 */

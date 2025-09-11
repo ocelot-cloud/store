@@ -105,6 +105,8 @@ func TestDownloadDummyVersion(t *testing.T) {
 	assert.True(t, len(info.Content) > 100)
 }
 
-// TODO
+// TODO !! try listing versions of non-existing app id
+// TODO !! test listing versions of app? -> also check that versions returned have the same parent app id fitting to the app ID used for lsiting them; listing should not contain app contents
 // TODO !! when uploading a version, i need to trigger a lock, which use user specific to prevent a parallel upload
 // TODO !! limit the creation of apps to a maximum of 100
+// TODO !! not sure whether already done, but check when downloading all infos are correct

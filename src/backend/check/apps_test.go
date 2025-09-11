@@ -54,6 +54,8 @@ func TestCreationOfOcelotCloudAppIsForbidden(t *testing.T) {
 	u.AssertDeepStackErrorFromRequest(t, err, "app name is reserved")
 }
 
+// TODO !! all search cases covered?
+
 func TestUnofficialAppFilteringWhenSearching(t *testing.T) {
 	hub := GetHubAndLogin(t)
 	defer hub.WipeData()
@@ -108,3 +110,5 @@ func TestSearchForNonExistingAppsReturnsEmptyList(t *testing.T) {
 func TestCantCreateAppTwiceForSameUser(t *testing.T) {
 
 }
+
+// TODO !! when searching apps and there are two versions, assert that the latest is returned

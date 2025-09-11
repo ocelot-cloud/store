@@ -13,22 +13,23 @@ import (
 
 // TODO !! never pass username if you could pass user ID instead
 type AppRepository interface {
-	IsAppOwner(user string, appId int) bool
+	// TODO !! keep functions
+	DoesUserOwnApp(user string, appId int) bool // TODO !! should pass userID
 	DoesAppExist(appId int) bool
-	CreateApp(user, app string) error
+	CreateApp(user, app string) error // TODO !! should pass userID
 	DeleteApp(appId int) error
-	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error)
 	GetAppList(user string) ([]store.App, error)
+	// TODO !! add : GetAppById(appId int) (store.App, error)
 
-	// TODO !! merge to simple GetAppById
+	// TODO !! remove functions
+	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error) // TODO !! not sure whether it makes sense to maybe improve my search function, like explicitly say have a field for maintainer and app you can search for; if empty, its ignored
 	GetAppName(appId int) (string, error)
 	GetMaintainerName(appId int) (string, error)
-
 	// TODO !! duplication, only give ID? or maybe pass the user struct
 	GetAppId(user, app string) (int, error)
-	GetAppId2(userID int, app string) (int, error)
-
 	GetUserIdOfApp(appId int) (int, error)
+
+	GetAppId2(userID int, app string) (int, error) // TODO !! looks like sth I dont need?
 }
 
 type AppRepositoryImpl struct {
@@ -38,7 +39,7 @@ type AppRepositoryImpl struct {
 
 // TODO !! rename repo_apps, repo_users and repo_versions simply to repository each
 
-func (r *AppRepositoryImpl) IsAppOwner(user string, appId int) bool {
+func (r *AppRepositoryImpl) DoesUserOwnApp(user string, appId int) bool {
 	userId, err := r.UserRepo.GetUserId(user)
 	if err != nil {
 		u.Logger.Info("Failed to get user ID", deepstack.ErrorField, err)

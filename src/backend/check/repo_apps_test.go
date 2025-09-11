@@ -131,20 +131,20 @@ func TestGetAppListRepo(t *testing.T) {
 func TestIsAppOwner(t *testing.T) {
 	defer users.UserRepo.WipeDatabase()
 	assert.Nil(t, users.CreateAndValidateUser(tools.SampleForm))
-	assert.False(t, apps.AppRepo.IsAppOwner(tools.SampleUser, 1))
+	assert.False(t, apps.AppRepo.DoesUserOwnApp(tools.SampleUser, 1))
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
 	appId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
 	assert.Nil(t, err)
-	assert.True(t, apps.AppRepo.IsAppOwner(tools.SampleUser, appId))
+	assert.True(t, apps.AppRepo.DoesUserOwnApp(tools.SampleUser, appId))
 
 	sampleForm2 := *tools.SampleForm
 	sampleForm2.User = tools.SampleUser + "2"
 	sampleForm2.Email = tools.SampleEmail + "x"
 	assert.Nil(t, users.CreateAndValidateUser(&sampleForm2))
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser+"2", tools.SampleApp))
-	assert.False(t, apps.AppRepo.IsAppOwner(tools.SampleUser+"2", appId))
+	assert.False(t, apps.AppRepo.DoesUserOwnApp(tools.SampleUser+"2", appId))
 
-	assert.False(t, apps.AppRepo.IsAppOwner("notExistingUser", appId))
+	assert.False(t, apps.AppRepo.DoesUserOwnApp("notExistingUser", appId))
 }
 
 func TestGetAppName(t *testing.T) {

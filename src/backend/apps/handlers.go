@@ -62,7 +62,7 @@ func (a *AppsHandler) AppDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !a.AppRepo.IsAppOwner(user, appId) {
+	if !a.AppRepo.DoesUserOwnApp(user, appId) {
 		u.Logger.Warn("user tried to delete app with ID but does not own it", tools.UserField, user, tools.AppIdField, appId)
 		http.Error(w, "you do not own this app", http.StatusBadRequest)
 		return

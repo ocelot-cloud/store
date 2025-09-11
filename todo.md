@@ -1,29 +1,11 @@
 TODO
 
-* get rid of "data" and ."env" files
+* replace repo tests by component tests to not leave out important use cases in test suite
+* get rid of "data" folders (using same logger approach as in cloud)
 * two deployments:
   * local, app store + database
   * prod, same + watchtotwer + traefik
 * deployment: build image locally and test it; if passing, push image to dockerhub and download to hetzner server for deployment
-* sometimes the application does not start due to database interference (should be fixed when there is only one database file left)
-
-```
-  tux@tux:~/Dokumente/workspace/store/src/ci-runner$ go build && ./ci-runner test all
-  in directory './backend', executing 'rm -rf data'
-  => Command successful. Time taken: 0.002 seconds.
-
-==== Testing units ====
-
-in directory './backend/docker', executing 'docker compose -f docker-compose-dev.yml up -d'
-Container ocelotcloud_store_postgres  Creating
-Container ocelotcloud_store_postgres  Error response from daemon: Conflict. The container name "/ocelotcloud_store_postgres" is already in use by container "b70e97f3755bfd8c63d92fd6fd23a01ff734add5508250e97791b4cc6b0d46bc". You have to remove (or rename) that container to be able to reuse that name.
-Error response from daemon: Conflict. The container name "/ocelotcloud_store_postgres" is already in use by container "b70e97f3755bfd8c63d92fd6fd23a01ff734add5508250e97791b4cc6b0d46bc". You have to remove (or rename) that container to be able to reuse that name.
-=> Command failed. Time taken: 0.078 seconds.. Error: exit status 1
-
-cleanup method called
-calling custom cleanup function
-```
-
 * get rid of all panics and exit(1)
 * replace "http.Error(w," with new logging+response system
 * ged rid of native mode, only run in docker containers, have a test and prod profile config

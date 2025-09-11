@@ -5,12 +5,9 @@ import "os"
 const (
 	MaxPayloadSize = 1024 * 1024 // = 1 MiB
 	MaxStorageSize = 10 * MaxPayloadSize
-
-	// TODO !! initializing config object should set this like the "cloud" project does
-	// TODO !! use u.u.Logger instead
-	Port       = "8082"
-	RootUrl    = "http://localhost:" + Port
-	CookieName = "auth"
+	Port           = "8082"
+	RootUrl        = "http://localhost:" + Port
+	CookieName     = "auth"
 )
 
 type Config struct {

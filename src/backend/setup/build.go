@@ -26,7 +26,6 @@ func WireDependencies() *InitializerDependencies {
 		wire.Struct(new(apps.AppRepositoryImpl), "*"),
 		wire.Struct(new(HandlerInitializer), "*"),
 		wire.Struct(new(versions.VersionsHandler), "*"),
-		wire.Struct(new(DatabaseSampleDataSeeder), "*"),
 		wire.Struct(new(versions.VersionRepositoryImpl), "*"),
 		wire.Struct(new(users.UserRepositoryImpl), "*"),
 		wire.Struct(new(users.UserHandler), "*"),
@@ -43,11 +42,10 @@ func WireDependencies() *InitializerDependencies {
 }
 
 type InitializerDependencies struct {
-	HandlerInitializer       *HandlerInitializer
-	DatabaseProvider         *tools.DatabaseProviderImpl
-	DatabaseSampleDataSeeder *DatabaseSampleDataSeeder
-	PathProvider             *tools.PathProviderImpl
-	Server                   *Server
+	HandlerInitializer *HandlerInitializer
+	DatabaseProvider   *tools.DatabaseProviderImpl
+	PathProvider       *tools.PathProviderImpl
+	Server             *Server
 }
 
 func NewDatabaseProvider(pathProvider *tools.PathProviderImpl) *tools.DatabaseProviderImpl {

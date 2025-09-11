@@ -29,7 +29,6 @@ func initializeApplication(deps *setup.InitializerDependencies) error {
 	if err := deps.DatabaseProvider.InitializeDatabase(); err != nil {
 		return err
 	}
-	deps.DatabaseSampleDataSeeder.SeedSampleDataForTestMode()
 	deps.HandlerInitializer.InitializeHandlers()
 	return deps.Server.Run()
 }

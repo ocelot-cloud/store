@@ -26,10 +26,15 @@ func main() {
 	}
 
 	deps := setup.WireDependencies()
+	err := deps.PathProvider.Initialize()
+	if err != nil {
+		u.Logger.Error("exiting due to error through path provider", deepstack.ErrorField, err)
+		os.Exit(1)
+	}
 	fmt.Printf("todo !! temp: %v", deps)
 
 	// TODO !! database initializer
-	err := deps.DatabaseProvider.InitializeDatabase()
+	err = deps.DatabaseProvider.InitializeDatabase()
 	if err != nil {
 		u.Logger.Error("exiting due to error through database", deepstack.ErrorField, err)
 		os.Exit(1)

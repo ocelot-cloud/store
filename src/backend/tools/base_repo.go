@@ -10,7 +10,8 @@ import (
 )
 
 type DatabaseProviderImpl struct {
-	Db *sql.DB
+	Db           *sql.DB
+	PathProvider *PathProviderImpl
 }
 
 func (d *DatabaseProviderImpl) GetDb() *sql.DB {
@@ -33,15 +34,7 @@ func (d *DatabaseProviderImpl) InitializeDatabase() error {
 	}
 	u.Logger.Info("Database client created successfully")
 
-	// TODO !! directories and path initialization are two separate concerns
-	assertDir, err := u.FindDir("assets")
-	if err != nil {
-		u.Logger.Error("Failed to find migrations directory", deepstack.ErrorField, err)
-		os.Exit(1)
-	}
-	migrationsDir := assertDir + "/migrations"
-
-	err = u.RunMigrations(migrationsDir, host, customPostgresPort)
+	err = u.RunMigrations(d.PathProvider.GetMigrationsDir(), host, customPostgresPort)
 	if err != nil {
 		u.Logger.Error("Failed to run migrations", deepstack.ErrorField, err)
 		os.Exit(1)

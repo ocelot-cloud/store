@@ -3,14 +3,33 @@ package check
 import (
 	"ocelot/store/tools"
 	"ocelot/store/users"
+	"os"
 	"testing"
 
+	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/assert"
 	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
+	"github.com/ocelot-cloud/shared/validation"
 )
 
-var SampleVersionFileContent = tools.GetValidVersionBytesOfSampleMaintainerApp()
+var SampleVersionFileContent = GetValidVersionBytesOfSampleMaintainerApp()
+
+func GetValidVersionBytesOfSampleMaintainerApp() []byte {
+	assetsDir, err := u.FindDir("assets")
+	if err != nil {
+		u.Logger.Error("Failed to find assets directory", deepstack.ErrorField, err)
+		// TODO !! return error
+	}
+	// TODO !! simple call it "sampleapp"
+	sampleAppDir := assetsDir + "/samplemaintainer-app"
+	versionBytes, err := validation.ZipDirectory(sampleAppDir)
+	if err != nil {
+		u.Logger.Error("Failed to read sample version file", deepstack.ErrorField, err)
+		os.Exit(1)
+	}
+	return versionBytes
+}
 
 func GetHubAndLogin(t *testing.T) *store.AppStoreClientImpl {
 	client := GetHub()

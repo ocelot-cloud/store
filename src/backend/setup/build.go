@@ -17,6 +17,7 @@ func WireDependencies() *InitializerDependencies {
 		NewDatabaseProvider,
 		NewEmailVerifier,
 		tools.NewConfig,
+		NewPathProvider,
 
 		wire.Struct(new(InitializerDependencies), "*"),
 		wire.Struct(new(apps.AppsHandler), "*"),
@@ -42,14 +43,22 @@ type InitializerDependencies struct {
 	HandlerInitializer       *HandlerInitializer
 	DatabaseProvider         *tools.DatabaseProviderImpl
 	DatabaseSampleDataSeeder *DatabaseSampleDataSeeder
+	PathProvider             *tools.PathProviderImpl
 }
 
-func NewDatabaseProvider() *tools.DatabaseProviderImpl {
-	return &tools.DatabaseProviderImpl{}
+func NewDatabaseProvider(pathProvider *tools.PathProviderImpl) *tools.DatabaseProviderImpl {
+	return &tools.DatabaseProviderImpl{
+		Db:           nil,
+		PathProvider: pathProvider,
+	}
 }
 
 func NewEmailVerifier() *tools.EmailVerifierImpl {
 	return &tools.EmailVerifierImpl{
 		WaitingList: sync.Map{},
 	}
+}
+
+func NewPathProvider() *tools.PathProviderImpl {
+	return &tools.PathProviderImpl{}
 }

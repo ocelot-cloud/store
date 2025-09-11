@@ -9,6 +9,6 @@ COPY --chown=app:app ./store  /opt/app/store
 COPY --chown=app:app ./assets /opt/app/assets
 RUN chmod 500 /opt/app/store
 USER app
-EXPOSE 80:8080
+EXPOSE 8080
 VOLUME ["/opt/app/data"]
 ENTRYPOINT ["/opt/app/store"]

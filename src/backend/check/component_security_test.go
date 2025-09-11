@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"ocelot/store/tools"
 	"ocelot/store/users"
+	"ocelot/store/versions"
 	"testing"
 	"time"
 
@@ -159,7 +160,7 @@ func TestOwnershipOfDeleteVersion(t *testing.T) {
 
 	err = hub.DeleteVersion(versionId)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "you do not own this version", 400)
+	AssertDeepStackErrorWithCode(t, err, versions.NotOwningThisVersionError, 400)
 }
 
 func TestUploadOfInvalidZipContent(t *testing.T) {

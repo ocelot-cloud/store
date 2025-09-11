@@ -4,6 +4,7 @@ package check
 
 import (
 	"ocelot/store/tools"
+	"ocelot/store/versions"
 	"testing"
 	"time"
 
@@ -23,7 +24,7 @@ func TestVersionDownload(t *testing.T) {
 	assert.Nil(t, err)
 	_, err = hub.DownloadVersion(notExistingVersionId)
 	assert.NotNil(t, err)
-	AssertDeepStackErrorWithCode(t, err, "version does not exist", 400)
+	AssertDeepStackErrorWithCode(t, err, versions.VersionDoesNotExistError, 400)
 
 	versionId, err := hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
 	assert.Nil(t, err)

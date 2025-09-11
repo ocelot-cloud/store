@@ -16,9 +16,10 @@ import (
 )
 
 type VersionsHandler struct {
-	VersionRepo VersionRepository
-	AppRepo     apps.AppRepository
-	UserRepo    users.UserRepository
+	VersionRepo    VersionRepository
+	AppRepo        apps.AppRepository
+	UserRepo       users.UserRepository
+	VersionService *VersionService
 }
 
 func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -119,32 +120,15 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 }
 
 func (v *VersionsHandler) VersionDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	user := tools.GetUserFromContext(r)
+	user := tools.GetUserFromContext(r) // TODO !! should be a user, not only a string
 	versionId, err := apps.ReadBodyAsStringNumber(w, r)
 	if err != nil {
 		return
 	}
-
-	if !v.VersionRepo.DoesVersionExist(versionId) {
-		u.Logger.Info("someone tried to delete version but it does not exist", tools.VersionIdField, versionId)
-		http.Error(w, "version does not exist", http.StatusBadRequest)
-		return
-	}
-
-	if !v.VersionRepo.DoesUserOwnVersion(user, versionId) {
-		u.Logger.Warn("user tried to delete version but does not own it", tools.UserField, user, tools.VersionIdField, versionId)
-		http.Error(w, "you do not own this version", http.StatusBadRequest)
-		return
-	}
-
-	err = v.VersionRepo.DeleteVersion(versionId)
+	err = v.VersionService.DeleteVersionWithChecks(user, versionId)
 	if err != nil {
-		u.Logger.Info("deleting version failed", tools.VersionIdField, versionId, deepstack.ErrorField, err)
-		http.Error(w, "invalid input", http.StatusBadRequest)
-		return
+		u.WriteResponseError(w, u.MapOf(NotOwningThisVersionError, VersionDoesNotExistError), err, tools.UserField, user, tools.VersionIdField, versionId)
 	}
-	u.Logger.Info("version was deleted", tools.VersionIdField, versionId)
-	http.Error(w, "version deleted", http.StatusOK)
 }
 
 func (v *VersionsHandler) GetVersionsHandler(w http.ResponseWriter, r *http.Request) {

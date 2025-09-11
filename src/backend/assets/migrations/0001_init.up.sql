@@ -25,3 +25,8 @@ CREATE TABLE IF NOT EXISTS versions (
     UNIQUE(app_id, version_id),
     FOREIGN KEY (app_id) REFERENCES apps(app_id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS configs (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);

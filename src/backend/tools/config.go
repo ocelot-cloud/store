@@ -5,9 +5,10 @@ import "os"
 const (
 	MaxPayloadSize = 1024 * 1024 // = 1 MiB
 	MaxStorageSize = 10 * MaxPayloadSize
-	Port           = "8082"
-	RootUrl        = "http://localhost:" + Port
-	CookieName     = "auth"
+	// TODO !! I think this is purely for testing? Actually, we want it to run on 8080
+	Port       = "8082"
+	RootUrl    = "http://localhost:" + Port
+	CookieName = "auth"
 )
 
 type Config struct {

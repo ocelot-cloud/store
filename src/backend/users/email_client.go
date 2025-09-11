@@ -9,7 +9,8 @@ import (
 )
 
 type EmailClient struct {
-	Config *tools.Config
+	Config           *tools.Config
+	EmailConfigStore *EmailConfigStoreImpl
 }
 
 func (e *EmailClient) SendVerificationEmail(to, code string) error {
@@ -17,13 +18,17 @@ func (e *EmailClient) SendVerificationEmail(to, code string) error {
 		u.Logger.Debug("Mock email client used, not sending email")
 		return nil
 	} else {
-		verificationLink := HOST + "/validate?code=" + code
+		emailConfig, err := e.EmailConfigStore.GetEmailConfig()
+		if err != nil {
+			return err
+		}
+		verificationLink := emailConfig.AppStoreHost + "/validate?code=" + code
 		m := gomail.NewMessage()
-		m.SetHeader("From", EMAIL)
+		m.SetHeader("From", emailConfig.EmailAddress)
 		m.SetHeader("To", to)
 		m.SetHeader("Subject", "Verify Your Email Address")
 		m.SetBody("text/html", fmt.Sprintf("<p>Please verify your email address by clicking the following link to complete your registration for the Ocelot App Store:</p><p><a href='%s'>Verify Email</a></p>", verificationLink))
-		d := gomail.NewDialer(SMTP_HOST, SMTP_PORT, EMAIL_USER, EMAIL_PASSWORD)
+		d := gomail.NewDialer(emailConfig.SMTPHost, emailConfig.SMTPPort, emailConfig.EmailAccountUsername, emailConfig.EmailAccountPassword)
 		u.Logger.Debug("Sending validation email to", tools.TargetEmailField, to)
 		return d.DialAndSend(m)
 	}

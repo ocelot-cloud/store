@@ -1,88 +1,114 @@
 package users
 
 import (
-	"bufio"
-	"fmt"
 	"ocelot/store/tools"
-	"os"
 	"strconv"
-	"strings"
-
-	"github.com/ocelot-cloud/deepstack"
-	u "github.com/ocelot-cloud/shared/utils"
 )
 
-// TODO !! get rid of .env file
-const envFilePath = "data/.env"
+// TODO !! to be tested
+// TODO !! add handler for getting/setting email config -> use hardcoded password from env as auth?
 
-// TODO !! global var
-var (
-	SMTP_PORT                                          int
-	HOST, SMTP_HOST, EMAIL, EMAIL_USER, EMAIL_PASSWORD string
-)
-
-func InitializeEnvs() error {
-	if _, err := os.Stat(envFilePath); os.IsNotExist(err) {
-		defaultEnv := []byte("HOST=http://localhost:8082\nSMTP_HOST=smtps.sample.com\nSMTP_PORT=465\nEMAIL=sample@sample.com\nEMAIL_USER=sample\nEMAIL_PASSWORD=password\n")
-		err = os.WriteFile(envFilePath, defaultEnv, 0600)
-		if err != nil {
-			u.Logger.Error("Failed to create .env file", deepstack.ErrorField, err)
-			return fmt.Errorf("failed to create .env file")
-		}
-		u.Logger.Info(".env file created with default values")
-		return nil
-	} else {
-		var file *os.File
-		file, err = os.Open(envFilePath)
-		if err != nil {
-			u.Logger.Error("Failed to open .env file", deepstack.ErrorField, err)
-			os.Exit(1)
-		}
-		defer u.Close(file)
-
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := scanner.Text()
-			parts := strings.SplitN(line, "=", 2)
-			if len(parts) == 2 {
-				err = os.Setenv(parts[0], parts[1])
-				if err != nil {
-					u.Logger.Error("failed to set environment variable", tools.EnvVarField, parts[0], deepstack.ErrorField, err)
-					os.Exit(1)
-				}
-			}
-		}
-
-		if err := scanner.Err(); err != nil {
-			u.Logger.Error("Error reading .env file", deepstack.ErrorField, err)
-			os.Exit(1)
-		}
-
-		HOST = GetEnv("HOST")
-		SMTP_HOST = GetEnv("SMTP_HOST")
-		smtpPort := GetEnv("SMTP_PORT")
-		SMTP_PORT, err = strconv.Atoi(smtpPort)
-		if err != nil {
-			u.Logger.Error("Failed to parse SMTP_PORT env", tools.SmtpPortEnvField, smtpPort, deepstack.ErrorField, err)
-			os.Exit(1)
-		}
-		EMAIL = GetEnv("EMAIL")
-		EMAIL_USER = GetEnv("EMAIL_USER")
-		EMAIL_PASSWORD = GetEnv("EMAIL_PASSWORD")
-
-		u.Logger.Info(".env file loaded successfully")
-		return err
-	}
+type EmailConfig struct {
+	AppStoreHost         string
+	SMTPHost             string
+	SMTPPort             int
+	EmailAddress         string
+	EmailAccountUsername string
+	EmailAccountPassword string
 }
 
-func GetEnv(key string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		// TODO this was a panic error before, but not sure whether it should be panic
-		u.Logger.Error("environment variable not set")
-		return ""
-	} else {
-		u.Logger.Debug("Loaded env", tools.EnvVarField, key)
-		return value
+type EmailConfigStore interface {
+	GetEmailConfig() (EmailConfig, error)
+	SetEmailConfig(cfg EmailConfig) error
+}
+
+const (
+	appStoreHost     = "APP_STORE_HOST"
+	smtpHostKey      = "EMAIL_SMTP_HOST"
+	smtpPortKey      = "EMAIL_SMTP_PORT"
+	emailKey         = "EMAIL_ADDRESS"
+	emailUserKey     = "EMAIL_ACCOUNT_USERNAME"
+	emailPasswordKey = "EMAIL_ACCOUNT_PASSWORD"
+
+	defaultAppStoreHost  = "http://localhost:8082"
+	defaultSMTPHost      = "smtps.sample.com"
+	defaultSMTPPort      = 465
+	defaultEmail         = "sample@sample.com"
+	defaultEmailUser     = "sample"
+	defaultEmailPassword = "password"
+)
+
+type EmailConfigStoreImpl struct {
+	DatabaseProvider *tools.DatabaseProviderImpl
+}
+
+func (s *EmailConfigStoreImpl) GetEmailConfig() (EmailConfig, error) {
+	cfg := EmailConfig{
+		AppStoreHost:         defaultAppStoreHost,
+		SMTPHost:             defaultSMTPHost,
+		SMTPPort:             defaultSMTPPort,
+		EmailAddress:         defaultEmail,
+		EmailAccountUsername: defaultEmailUser,
+		EmailAccountPassword: defaultEmailPassword,
 	}
+
+	row, err := s.DatabaseProvider.GetDb().Query(`
+		SELECT key, value
+		FROM configs
+		WHERE key IN ($1,$2,$3,$4,$5,$6)
+	`, appStoreHost, smtpHostKey, smtpPortKey, emailKey, emailUserKey, emailPasswordKey)
+	if err != nil {
+		return cfg, err
+	}
+	defer row.Close()
+
+	m := map[string]string{}
+	for row.Next() {
+		var k, v string
+		if err := row.Scan(&k, &v); err != nil {
+			return cfg, err
+		}
+		m[k] = v
+	}
+	if v, ok := m[appStoreHost]; ok {
+		cfg.AppStoreHost = v
+	}
+	if v, ok := m[smtpHostKey]; ok {
+		cfg.SMTPHost = v
+	}
+	if v, ok := m[smtpPortKey]; ok {
+		if p, err := strconv.Atoi(v); err == nil {
+			cfg.SMTPPort = p
+		}
+	}
+	if v, ok := m[emailKey]; ok {
+		cfg.EmailAddress = v
+	}
+	if v, ok := m[emailUserKey]; ok {
+		cfg.EmailAccountUsername = v
+	}
+	if v, ok := m[emailPasswordKey]; ok {
+		cfg.EmailAccountPassword = v
+	}
+
+	return cfg, row.Err()
+}
+
+func (s *EmailConfigStoreImpl) SetEmailConfig(cfg EmailConfig) error {
+	if _, err := s.DatabaseProvider.GetDb().Exec(`
+		INSERT INTO configs(key, value) VALUES
+			($1,$2),($3,$4),($5,$6),($7,$8),($9,$10),($11,$12)
+		ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+	`,
+		appStoreHost, cfg.AppStoreHost,
+		smtpHostKey, cfg.SMTPHost,
+		smtpPortKey, strconv.Itoa(cfg.SMTPPort),
+		emailKey, cfg.EmailAddress,
+		emailUserKey, cfg.EmailAccountUsername,
+		emailPasswordKey, cfg.EmailAccountPassword,
+	); err != nil {
+		return err
+	}
+
+	return nil
 }

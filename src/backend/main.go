@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"ocelot/store/tools"
-	"ocelot/store/users"
 	"os"
 	"os/exec"
 	"time"
@@ -28,14 +27,8 @@ func main() {
 	deps := WireDependencies()
 	fmt.Printf("todo !! temp: %v", deps)
 
-	// TODO !! base config initializer
-	err := users.InitializeEnvs()
-	if err != nil {
-		u.Logger.Error("exiting due to error through env file", deepstack.ErrorField, err)
-	}
-
 	// TODO !! database initializer
-	err = deps.DatabaseProvider.InitializeDatabase()
+	err := deps.DatabaseProvider.InitializeDatabase()
 	if err != nil {
 		u.Logger.Error("exiting due to error through database", deepstack.ErrorField, err)
 		os.Exit(1)

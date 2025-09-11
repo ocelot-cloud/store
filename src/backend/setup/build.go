@@ -3,6 +3,7 @@
 package setup
 
 import (
+	"net/http"
 	"ocelot/store/apps"
 	"ocelot/store/tools"
 	"ocelot/store/users"
@@ -18,6 +19,7 @@ func WireDependencies() *InitializerDependencies {
 		NewEmailVerifier,
 		tools.NewConfig,
 		NewPathProvider,
+		NewMux,
 
 		wire.Struct(new(InitializerDependencies), "*"),
 		wire.Struct(new(apps.AppsHandler), "*"),
@@ -31,6 +33,7 @@ func WireDependencies() *InitializerDependencies {
 		wire.Struct(new(users.EmailClient), "*"),
 		wire.Struct(new(users.EmailConfigStoreImpl), "*"),
 		wire.Struct(new(versions.VersionService), "*"),
+		wire.Struct(new(Server), "*"),
 
 		wire.Bind(new(apps.AppRepository), new(*apps.AppRepositoryImpl)),
 		wire.Bind(new(versions.VersionRepository), new(*versions.VersionRepositoryImpl)),
@@ -44,6 +47,7 @@ type InitializerDependencies struct {
 	DatabaseProvider         *tools.DatabaseProviderImpl
 	DatabaseSampleDataSeeder *DatabaseSampleDataSeeder
 	PathProvider             *tools.PathProviderImpl
+	Server                   *Server
 }
 
 func NewDatabaseProvider(pathProvider *tools.PathProviderImpl) *tools.DatabaseProviderImpl {
@@ -61,4 +65,8 @@ func NewEmailVerifier() *tools.EmailVerifierImpl {
 
 func NewPathProvider() *tools.PathProviderImpl {
 	return &tools.PathProviderImpl{}
+}
+
+func NewMux() *http.ServeMux {
+	return http.NewServeMux()
 }

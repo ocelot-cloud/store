@@ -39,5 +39,6 @@ func (d *DatabaseProviderImpl) InitializeDatabase() error {
 		u.Logger.Error("Failed to run migrations", deepstack.ErrorField, err)
 		os.Exit(1)
 	}
+
 	return nil
 }

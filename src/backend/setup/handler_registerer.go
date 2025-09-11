@@ -22,9 +22,10 @@ type HandlerInitializer struct {
 	VersionsHandler *versions.VersionsHandler
 	UserHandler     *users.UserHandler
 	Config          *tools.Config
+	Mux             *http.ServeMux
 }
 
-func (h *HandlerInitializer) InitializeHandlers(mux *http.ServeMux) {
+func (h *HandlerInitializer) InitializeHandlers() {
 	unprotectedRoutes := []Route{
 		{store.LoginPath, h.UserHandler.LoginHandler},
 		{store.RegistrationPath, h.UserHandler.RegistrationHandler},
@@ -56,19 +57,19 @@ func (h *HandlerInitializer) InitializeHandlers(mux *http.ServeMux) {
 		unprotectedRoutes = append(unprotectedRoutes, Route{store.WipeDataPath, h.UserHandler.WipeData})
 	}
 
-	h.registerUnprotectedRoutes(mux, unprotectedRoutes)
-	h.registerProtectedRoutes(mux, protectedRoutes)
+	h.registerUnprotectedRoutes(unprotectedRoutes)
+	h.registerProtectedRoutes(protectedRoutes)
 }
 
-func (h *HandlerInitializer) registerUnprotectedRoutes(mux *http.ServeMux, routes []Route) {
+func (h *HandlerInitializer) registerUnprotectedRoutes(routes []Route) {
 	for _, r := range routes {
-		mux.HandleFunc(r.path, r.handler)
+		h.Mux.HandleFunc(r.path, r.handler)
 	}
 }
 
-func (h *HandlerInitializer) registerProtectedRoutes(mux *http.ServeMux, routes []Route) {
+func (h *HandlerInitializer) registerProtectedRoutes(routes []Route) {
 	for _, r := range routes {
-		mux.Handle(r.path, h.authMiddleware(r.handler))
+		h.Mux.Handle(r.path, h.authMiddleware(r.handler))
 	}
 }
 

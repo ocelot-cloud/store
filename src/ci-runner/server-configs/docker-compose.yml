@@ -1,4 +1,4 @@
-# TODO !! shouldnt the app store service be here?
+# TODO !! shouldnt the app store service be here? -> yes, should be pulled from dockerhub
 # TODO !! can be merged with other docker files?
 services:
   traefik:

@@ -20,7 +20,7 @@ type VersionRepository interface {
 	CreateVersion(appId int, version string, data []byte) error
 	// TODO !! add: GetVersion(versionId int) (store.Version, error)
 	DeleteVersion(versionId int) error
-	ListVersionsOfApp(appId int) ([]store.FullVersionInfo, error)
+	ListVersionsOfApp(appId int) ([]store.Version, error) // TODO !! instead should return []FullVersionInfo
 
 	// TODO !! remove functions
 	DoesVersionExist(versionId int) bool
@@ -37,6 +37,7 @@ type VersionRepositoryImpl struct {
 }
 
 func (r *VersionRepositoryImpl) GetFullVersionInfo(versionId int) (*store.FullVersionInfo, error) {
+
 	var fullVersionInfo store.FullVersionInfo
 	err := r.DatabaseProvider.GetDb().QueryRow(`
 		SELECT users.user_name, apps.app_name, versions.version_name, versions.data, versions.version_id, versions.creation_timestamp

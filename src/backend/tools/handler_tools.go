@@ -20,5 +20,5 @@ type User struct {
 	HashedPassword    string
 	HashedCookieValue *string
 	ExpirationDate    *string
-	UsedSpace         int
+	UsedSpaceInBytes  int
 }

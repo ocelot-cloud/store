@@ -1,5 +1,6 @@
 TODO
 
+* replace used_space by used_space_in_bytes
 * maybe make an implementation for user registration/validation like: if test mode -> return static sample registration code, otherwise create a random one
 * introduce deepstack error wrapping in repos
 * remove "log/respond" duplication in handlers

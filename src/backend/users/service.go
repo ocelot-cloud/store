@@ -3,6 +3,8 @@ package users
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
+	"fmt"
 	"ocelot/store/tools"
 	"time"
 
@@ -87,4 +89,19 @@ func (r *UserServiceImpl) IsCookieExpired(cookie string) (bool, error) {
 		return true, u.Logger.NewError(err.Error())
 	}
 	return time.Now().UTC().After(expirationDate), nil
+}
+
+// TODO !! this seems to be a check I should do when uploading and app, directy in the service, so this becomes a non-public method
+func (r *UserServiceImpl) IsThereEnoughSpaceToAddVersion(userId, bytesToAdd int) error {
+	user, err := r.UserRepo.GetUserById(userId)
+	if err != nil {
+		return err
+	}
+	if user.UsedSpaceInBytes+bytesToAdd > tools.MaxStorageSize {
+		u.Logger.Info("user tried to upload version, but storage limit would be exceeded")
+		usedStorageInPercent := user.UsedSpaceInBytes * 100 / tools.MaxStorageSize
+		msg := fmt.Sprintf(NotEnoughSpacePrefix+", you can't store more then 10MiB of version content, currently used storage in bytes: %d/%d (%d percent)", user.UsedSpaceInBytes, tools.MaxStorageSize, usedStorageInPercent)
+		return errors.New(msg)
+	}
+	return nil
 }

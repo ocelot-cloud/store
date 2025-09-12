@@ -62,7 +62,7 @@ func (r *UserRepositoryImpl) GetUserById(userId int) (*tools.User, error) {
 		&user.HashedPassword,
 		&user.HashedCookieValue,
 		&user.ExpirationDate,
-		&user.UsedSpace,
+		&user.UsedSpaceInBytes,
 	)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func (r *UserRepositoryImpl) UpdateUser(user *tools.User) error {
 		user.HashedPassword,
 		user.HashedCookieValue,
 		user.ExpirationDate,
-		user.UsedSpace,
+		user.UsedSpaceInBytes,
 		user.UserId,
 	)
 	if err != nil {
@@ -115,27 +115,12 @@ func (r *UserRepositoryImpl) GetUserByName(userName string) (*tools.User, error)
 		&user.HashedPassword,
 		&user.HashedCookieValue,
 		&user.ExpirationDate,
-		&user.UsedSpace,
+		&user.UsedSpaceInBytes,
 	)
 	if err != nil {
 		return nil, err
 	}
 	return &user, nil
-}
-
-func (r *UserRepositoryImpl) IsThereEnoughSpaceToAddVersion(user string, bytesToAdd int) error {
-	bytesUsed, err := r.GetUsedSpaceInBytes(user)
-	if err != nil {
-		u.Logger.Error("checking space failed", deepstack.ErrorField, err)
-		return errors.New("checking space failed")
-	}
-	if bytesUsed+bytesToAdd > tools.MaxStorageSize {
-		u.Logger.Info("user tried to upload version, but storage limit would be exceeded", tools.UserField, user)
-		usedStorageInPercent := bytesUsed * 100 / tools.MaxStorageSize
-		msg := fmt.Sprintf(NotEnoughSpacePrefix+", you can't store more then 10MiB of version content, currently used storage in bytes: %d/%d (%d percent)", bytesUsed, tools.MaxStorageSize, usedStorageInPercent)
-		return errors.New(msg)
-	}
-	return nil
 }
 
 func (r *UserRepositoryImpl) DoesUserExist(user string) bool {
@@ -191,7 +176,7 @@ func (r *UserRepositoryImpl) GetUserViaCookie(hashedCookieValue string) (*tools.
 		&user.HashedPassword,
 		&user.HashedCookieValue,
 		&user.ExpirationDate,
-		&user.UsedSpace,
+		&user.UsedSpaceInBytes,
 	)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {

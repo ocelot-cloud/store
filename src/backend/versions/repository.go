@@ -133,7 +133,7 @@ func (r *VersionRepositoryImpl) ListVersionsOfApp(appId int) ([]store.Version, e
 		return nil, fmt.Errorf("app with id %d does not exist", appId)
 	}
 
-	rows, err := r.DatabaseProvider.GetDb().Query("SELECT version_name, version_id, creation_timestamp FROM versions WHERE app_id = $1 ORDER BY creation_timestamp DESC", appId)
+	rows, err := r.DatabaseProvider.GetDb().Query("SELECT version_name, version_id, creation_timestamp FROM versions WHERE app_id = $1", appId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get versions: %w", err)
 	}

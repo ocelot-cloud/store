@@ -18,8 +18,8 @@ type VersionRepository interface {
 	DoesUserOwnVersion(userId, versionId int) (bool, error)
 	CreateVersion(appId int, version string, data []byte) error
 	DeleteVersion(versionId int) error
-	ListVersionsOfApp(appId int) ([]store.Version, error)
-	GetVersion(versionId int) (*store.FullVersionInfo, error)
+	ListVersionsOfApp(appId int) ([]store.LeanVersionDto, error)
+	GetVersion(versionId int) (*store.Version, error)
 }
 
 type VersionRepositoryImpl struct {
@@ -28,20 +28,19 @@ type VersionRepositoryImpl struct {
 	AppRepo          apps.AppRepository
 }
 
-func (r *VersionRepositoryImpl) GetVersion(versionId int) (*store.FullVersionInfo, error) {
-
-	var fullVersionInfo store.FullVersionInfo
+func (r *VersionRepositoryImpl) GetVersion(versionId int) (*store.Version, error) {
+	var version store.Version
 	err := r.DatabaseProvider.GetDb().QueryRow(`
 		SELECT users.user_name, apps.app_name, versions.version_name, versions.data, versions.version_id, versions.creation_timestamp
 		FROM versions
 		JOIN apps ON versions.app_id = apps.app_id
 		JOIN users ON apps.user_id = users.user_id
 		WHERE versions.version_id = $1
-	`, versionId).Scan(&fullVersionInfo.Maintainer, &fullVersionInfo.AppName, &fullVersionInfo.VersionName, &fullVersionInfo.Content, &fullVersionInfo.Id, &fullVersionInfo.VersionCreationTimestamp)
+	`, versionId).Scan(&version.Maintainer, &version.AppName, &version.VersionName, &version.Content, &version.Id, &version.VersionCreationTimestamp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get full version info: %w", err)
 	}
-	return &fullVersionInfo, nil
+	return &version, nil
 }
 
 func (r *VersionRepositoryImpl) DoesUserOwnVersion(userId, versionId int) (bool, error) {
@@ -123,7 +122,8 @@ func (r *VersionRepositoryImpl) getBlobSize(versionId int) (int64, error) {
 	return dataSize, nil
 }
 
-func (r *VersionRepositoryImpl) ListVersionsOfApp(appId int) ([]store.Version, error) {
+// TODO !! should not return DTO?
+func (r *VersionRepositoryImpl) ListVersionsOfApp(appId int) ([]store.LeanVersionDto, error) {
 	var exists bool
 	err := r.DatabaseProvider.GetDb().QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE app_id = $1)", appId).Scan(&exists)
 	if err != nil {
@@ -139,7 +139,7 @@ func (r *VersionRepositoryImpl) ListVersionsOfApp(appId int) ([]store.Version, e
 	}
 	defer u.Close(rows)
 
-	var versions []store.Version
+	var versions []store.LeanVersionDto
 	for rows.Next() {
 		var version string
 		var id int
@@ -148,9 +148,9 @@ func (r *VersionRepositoryImpl) ListVersionsOfApp(appId int) ([]store.Version, e
 			return nil, fmt.Errorf("failed to scan version: %w", err)
 		}
 		creationTimestamp = creationTimestamp.UTC()
-		versions = append(versions, store.Version{
-			Name:              version,
+		versions = append(versions, store.LeanVersionDto{
 			Id:                strconv.Itoa(id),
+			Name:              version,
 			CreationTimestamp: creationTimestamp,
 		})
 	}

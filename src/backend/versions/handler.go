@@ -29,7 +29,7 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 	r.Body = http.MaxBytesReader(w, r.Body, tools.MaxPayloadSize)
 	defer u.Close(r.Body)
 
-	var versionUpload store.VersionUpload
+	var versionUpload store.VersionUploadDto
 	err := json.NewDecoder(r.Body).Decode(&versionUpload)
 	if err != nil {
 		if err.Error() == "http: request body too large" {

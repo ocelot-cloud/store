@@ -25,40 +25,10 @@ func (a *AppsHandler) AppCreationHandler(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		return
 	}
-
-	if !a.UserRepo.DoesUserExist(user.Name) {
-		u.Logger.Info("user tried to create app but it does not exist", tools.UserField, user, tools.AppField, appString)
-		http.Error(w, "user does not exists", http.StatusBadRequest)
-		return
-	}
-
-	if appString.Value == "ocelotcloud" {
-		u.Logger.Info("user tried to create app but it is reserved", tools.UserField, user, tools.AppField, appString)
-		http.Error(w, "app name is reserved", http.StatusBadRequest)
-		return
-	}
-
-	doesExist, err := a.AppRepo.DoesAppExist(user.Id, appString.Value)
+	err = a.AppService.CreateAppWithChecks(user.Id, appString.Value)
 	if err != nil {
-		u.Logger.Error("error when checking if app exists", deepstack.ErrorField, err)
-		http.Error(w, "error when checking if app exists", http.StatusBadRequest)
-		return
+		u.WriteResponseError(w, u.MapOf(AppNameReservedError, AppAlreadyExistsError), err)
 	}
-	if doesExist {
-		u.Logger.Info("user tried to create app but it already exists", tools.UserField, user, tools.AppField, appString)
-		http.Error(w, "app already exists", http.StatusBadRequest)
-		return
-	}
-
-	err = a.AppRepo.CreateApp(user.Id, appString.Value)
-	if err != nil {
-		u.Logger.Error("user tried to create app but it failed", tools.UserField, user, tools.AppField, appString, deepstack.ErrorField, err)
-		http.Error(w, "app creation failed", http.StatusBadRequest)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	u.Logger.Info("user created app", tools.UserField, user, tools.AppField, appString)
 }
 
 func (a *AppsHandler) AppDeleteHandler(w http.ResponseWriter, r *http.Request) {

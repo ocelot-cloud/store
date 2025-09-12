@@ -13,20 +13,13 @@ import (
 	u "github.com/ocelot-cloud/shared/utils"
 )
 
-// TODO !! simplify
 type VersionRepository interface {
-	// TODO !! keep functions
 	DoesVersionIdExist(versionId int) (bool, error)
 	DoesVersionNameExist(appId int, version string) (bool, error)
 	DoesUserOwnVersion(user string, versionId int) bool // TODO !! pass ID not name
 	CreateVersion(appId int, version string, data []byte) error
-	// TODO !! add: GetVersion(versionId int) (store.Version, error)
 	DeleteVersion(versionId int) error
-	ListVersionsOfApp(appId int) ([]store.Version, error) // TODO !! instead should return []FullVersionInfo
-
-	// TODO !! remove functions
-	GetVersionContent(versionId int) ([]byte, error)
-	GetAppIdByVersionId(versionId int) (int, error)
+	ListVersionsOfApp(appId int) ([]store.Version, error)
 	GetFullVersionInfo(versionId int) (*store.FullVersionInfo, error)
 }
 
@@ -52,16 +45,6 @@ func (r *VersionRepositoryImpl) GetFullVersionInfo(versionId int) (*store.FullVe
 	return &fullVersionInfo, nil
 }
 
-func (r *VersionRepositoryImpl) GetAppIdByVersionId(versionId int) (int, error) {
-	var appId int
-	err := r.DatabaseProvider.GetDb().QueryRow("SELECT app_id FROM versions WHERE version_id = $1", versionId).Scan(&appId)
-	if err != nil {
-		u.Logger.Error("Failed to get app ID by version ID", tools.VersionIdField, versionId, deepstack.ErrorField, err)
-		return -1, fmt.Errorf("failed to get app ID by version ID")
-	}
-	return appId, nil
-}
-
 func (r *VersionRepositoryImpl) DoesUserOwnVersion(user string, versionId int) bool {
 	userId, err := r.UserRepo.GetUserId(user)
 	if err != nil {
@@ -82,16 +65,6 @@ func (r *VersionRepositoryImpl) DoesUserOwnVersion(user string, versionId int) b
 
 	return userId == ownerId
 }
-
-func (r *VersionRepositoryImpl) GetVersionContent(versionId int) ([]byte, error) {
-	var data []byte
-	err := r.DatabaseProvider.GetDb().QueryRow("SELECT data FROM versions WHERE version_id = $1", versionId).Scan(&data)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
 func (r *VersionRepositoryImpl) CreateVersion(appId int, version string, data []byte) error {
 	userId, err := r.AppRepo.GetUserIdOfApp(appId)
 	if err != nil {

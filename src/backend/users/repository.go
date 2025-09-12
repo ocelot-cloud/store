@@ -11,11 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// TODO !! add option to change email address; maybe make a field like "was email verified"?
-
-// TODO !! simplify to CRUD operations, rest should be handle by a service
 type UserRepository interface {
-	// TODO !! keep functions
 	CreateUser(form *store.RegistrationForm) error
 	DoesUserExist(user string) bool
 	DoesEmailExist(email string) bool

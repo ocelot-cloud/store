@@ -27,6 +27,7 @@ TODO
   * add acceptance tests by having tests using the CLI tools and asserting the output
 * there is some security logic in the handlers for now, which should be in a service instead
 * vai unit tests, check that a user cant upload a version > 1 MB, or apps with total size of > 10 MB
+* add option to change email address; maybe make a field like "was email verified"?
 
 ### frontend 
 

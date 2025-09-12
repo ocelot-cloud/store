@@ -50,8 +50,8 @@ func (r *UserRepositoryImpl) GetUserByName(userName string) (*tools.User, error)
 			user_name, 
 			email, 
 			hashed_password, 
-			COALESCE(hashed_cookie_value, ''), 
-			COALESCE(expiration_date, ''), 
+			hashed_cookie_value,
+			expiration_date, 
 			used_space
 		 FROM users 
 		 WHERE user_name = $1`,

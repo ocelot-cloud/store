@@ -200,7 +200,7 @@ func (r *UserRepositoryImpl) ChangePassword(userId int, newPassword string) erro
 }
 
 func (r *UserRepositoryImpl) WipeDatabase() {
-	_, err := r.DatabaseProvider.GetDb().Exec("DELETE FROM users WHERE user_name != 'sample'")
+	_, err := r.DatabaseProvider.GetDb().Exec("DELETE FROM users")
 	if err != nil {
 		u.Logger.Error("Failed to wipe database", deepstack.ErrorField, err)
 	}

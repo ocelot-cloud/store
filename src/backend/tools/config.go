@@ -16,10 +16,10 @@ const (
 )
 
 type Config struct {
-	UseMailMockClient    bool
-	UseSpecialExpiration bool
-	CreateSampleData     bool
-	OpenWipeEndpoint     bool
+	UseMailMockClient       bool
+	UseSpecialExpiration    bool
+	UseSampleDataForTesting bool
+	OpenWipeEndpoint        bool
 }
 
 func NewConfig() *Config {
@@ -27,13 +27,13 @@ func NewConfig() *Config {
 	if os.Getenv("PROFILE") == "TEST" {
 		config.UseMailMockClient = true
 		config.UseSpecialExpiration = true
-		config.CreateSampleData = true
+		config.UseSampleDataForTesting = true
 		config.OpenWipeEndpoint = true
 		u.Logger = deepstack.NewDeepStackLogger(slog.LevelDebug)
 	} else {
 		config.UseMailMockClient = false
 		config.UseSpecialExpiration = false
-		config.CreateSampleData = false
+		config.UseSampleDataForTesting = false
 		config.OpenWipeEndpoint = false
 		u.Logger = deepstack.NewDeepStackLogger(slog.LevelInfo, u.NewFileHandler(slog.LevelInfo))
 	}

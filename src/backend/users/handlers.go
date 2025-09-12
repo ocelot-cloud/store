@@ -21,6 +21,7 @@ type UserHandler struct {
 	UserRepo    UserRepository
 	EmailClient *EmailClient
 	Config      *tools.Config
+	UserService *UserServiceImpl
 }
 
 func (h *UserHandler) WipeData(w http.ResponseWriter, r *http.Request) {
@@ -163,7 +164,7 @@ func (h *UserHandler) RegistrationHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	code, err := h.UserRepo.CreateUserAndReturnRegistrationCode(form)
+	code, err := h.UserService.CreateUserAndReturnRegistrationCode(form)
 	if err != nil {
 		u.Logger.Error("user registration failed", tools.UserField, form.User, deepstack.ErrorField, err)
 		http.Error(w, "user registration failed", http.StatusBadRequest)

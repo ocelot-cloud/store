@@ -33,6 +33,7 @@ func WireDependencies() *InitializerDependencies {
 		wire.Struct(new(users.EmailConfigStoreImpl), "*"),
 		wire.Struct(new(versions.VersionService), "*"),
 		wire.Struct(new(Server), "*"),
+		wire.Struct(new(users.UserServiceImpl), "*"),
 
 		wire.Bind(new(apps.AppRepository), new(*apps.AppRepositoryImpl)),
 		wire.Bind(new(versions.VersionRepository), new(*versions.VersionRepositoryImpl)),

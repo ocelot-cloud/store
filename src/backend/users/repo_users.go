@@ -1,15 +1,12 @@
 package users
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"ocelot/store/tools"
 	"time"
 
 	"github.com/ocelot-cloud/deepstack"
-	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -19,7 +16,7 @@ import (
 // TODO !! simplify to CRUD operations, rest should be handle by a service
 type UserRepository interface {
 	// TODO !! keep functions
-	// TODO CreateUser(form *store.RegistrationForm) error
+	// TODO !! add CreateUser(form *store.RegistrationForm) error
 	ValidateUserViaRegistrationCode(code string) error
 	DoesUserExist(user string) bool
 	DoesEmailExist(email string) bool
@@ -29,7 +26,6 @@ type UserRepository interface {
 	Logout(user string) error
 
 	// TODO !! replace functions
-	CreateUserAndReturnRegistrationCode(form *store.RegistrationForm) (string, error) // TODo !! contains business logic
 	IsPasswordCorrect(user string, password string) bool
 	HashAndSaveCookie(user string, cookie string, expirationDate time.Time) error
 	IsCookieExpired(cookie string) bool
@@ -37,13 +33,11 @@ type UserRepository interface {
 	GetUsedSpaceInBytes(user string) (int, error)
 	WipeDatabase()
 	GetUserId(user string) (int, error)
-	CreateAndValidateUser(form *store.RegistrationForm) error
 }
 
 type UserRepositoryImpl struct {
 	DatabaseProvider *tools.DatabaseProviderImpl
-	EmailVerifier    *tools.EmailVerifierImpl
-	Config           *tools.Config
+	EmailVerifier    *tools.EmailVerifierImpl // TODO !! get rid of dependency, not realted to persistence
 }
 
 var NotEnoughSpacePrefix = "not enough space"
@@ -83,25 +77,6 @@ func (r *UserRepositoryImpl) DoesUserExist(user string) bool {
 		return false
 	}
 	return exists
-}
-
-func (r *UserRepositoryImpl) CreateUserAndReturnRegistrationCode(form *store.RegistrationForm) (string, error) {
-	var key string
-	// TODO !! quite implicit logic. Maybe a better option to say in test mode, when we create a user, his account needs no code for validation
-	if r.Config.CreateSampleData {
-		// TODO static sample key for testing, use from shared module
-		key = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-	} else {
-		randomBytes := make([]byte, 32)
-		if _, err := rand.Read(randomBytes); err != nil {
-			u.Logger.Error("Failed to generate cookie", deepstack.ErrorField, err)
-			return "", err
-		}
-		key = hex.EncodeToString(randomBytes)
-	}
-	u.Logger.Info("adding user to validation list", tools.UserField, form.User)
-	r.EmailVerifier.Store(key, form)
-	return key, nil
 }
 
 func (r *UserRepositoryImpl) ValidateUserViaRegistrationCode(code string) error {
@@ -239,15 +214,6 @@ func (r *UserRepositoryImpl) Logout(user string) error {
 		return errors.New("failed to logout")
 	}
 	return nil
-}
-
-func (r *UserRepositoryImpl) CreateAndValidateUser(form *store.RegistrationForm) error {
-	code, err := r.CreateUserAndReturnRegistrationCode(form)
-	if err != nil {
-		return err
-	}
-	err = r.ValidateUserViaRegistrationCode(code)
-	return err
 }
 
 func (r *UserRepositoryImpl) DoesEmailExist(email string) bool {

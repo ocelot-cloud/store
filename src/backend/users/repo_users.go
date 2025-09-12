@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ocelot-cloud/deepstack"
+	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -16,8 +17,7 @@ import (
 // TODO !! simplify to CRUD operations, rest should be handle by a service
 type UserRepository interface {
 	// TODO !! keep functions
-	// TODO !! add CreateUser(form *store.RegistrationForm) error
-	ValidateUserViaRegistrationCode(code string) error
+	CreateUser(form *store.RegistrationForm) error
 	DoesUserExist(user string) bool
 	DoesEmailExist(email string) bool
 	DeleteUser(user string) error
@@ -79,12 +79,8 @@ func (r *UserRepositoryImpl) DoesUserExist(user string) bool {
 	return exists
 }
 
-func (r *UserRepositoryImpl) ValidateUserViaRegistrationCode(code string) error {
-	form, err := r.EmailVerifier.Load(code)
-	if err != nil {
-		return err
-	}
-
+func (r *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) error {
+	// TODO !! can this operation ever fail? if not, remove the error returned
 	hashedPassword, err := u.SaltAndHash(form.Password)
 	if err != nil {
 		u.Logger.Error("Failed to hash password", deepstack.ErrorField, err)
@@ -95,7 +91,6 @@ func (r *UserRepositoryImpl) ValidateUserViaRegistrationCode(code string) error 
 		u.Logger.Error("Failed to create user", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to create user")
 	}
-	r.EmailVerifier.Delete(code)
 	return nil
 }
 

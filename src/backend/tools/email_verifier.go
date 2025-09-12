@@ -8,6 +8,7 @@ import (
 	u "github.com/ocelot-cloud/shared/utils"
 )
 
+// TODO !! make this persisting to database; i can store hashed registration codes and passwords salted-hash in database; so that this survives reboots
 type EmailVerifierImpl struct {
 	WaitingList sync.Map
 }

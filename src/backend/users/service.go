@@ -11,7 +11,7 @@ import (
 )
 
 type UserServiceImpl struct {
-	Repo          UserRepository
+	UserRepo      UserRepository
 	Config        *tools.Config
 	EmailVerifier *tools.EmailVerifierImpl
 }
@@ -33,4 +33,18 @@ func (r *UserServiceImpl) CreateUserAndReturnRegistrationCode(form *store.Regist
 	u.Logger.Info("adding user to validation list", tools.UserField, form.User)
 	r.EmailVerifier.Store(key, form)
 	return key, nil
+}
+
+func (r *UserServiceImpl) ValidateUserViaRegistrationCode(code string) error {
+	form, err := r.EmailVerifier.Load(code)
+	if err != nil {
+		return err
+	}
+
+	err = r.UserRepo.CreateUser(form)
+	if err != nil {
+		return err
+	}
+	r.EmailVerifier.Delete(code)
+	return nil
 }

@@ -201,7 +201,7 @@ func (h *UserHandler) ValidationCodeHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = h.UserRepo.ValidateUserViaRegistrationCode(code)
+	err = h.UserService.ValidateUserViaRegistrationCode(code)
 	if err != nil {
 		u.Logger.Error("validation process of user failed", deepstack.ErrorField, err)
 		http.Error(w, "validation process failed", http.StatusBadRequest)

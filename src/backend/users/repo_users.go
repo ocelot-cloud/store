@@ -171,11 +171,13 @@ func (r *UserRepositoryImpl) IsCookieExpired(cookie string) bool {
 	return time.Now().UTC().After(expirationDate)
 }
 
-func (r *UserRepositoryImpl) GetUserViaCookie(hashedCookieValue string) (*tools.User, error) {
-	if hashedCookieValue == "" {
+func (r *UserRepositoryImpl) GetUserViaCookie(cookie string) (*tools.User, error) {
+	if cookie == "" {
 		u.Logger.Error("Cookie not set in request")
 		return nil, fmt.Errorf("cookie not set in request")
 	}
+
+	hashedCookieValue := u.GetSHA256Hash(cookie)
 
 	var user tools.User
 	err := r.DatabaseProvider.GetDb().QueryRow(

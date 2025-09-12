@@ -1,5 +1,7 @@
 TODO
 
+* introduce deepstack error wrapping in repos
+* remove "log/respond" duplication in handlers
 * replace repo tests by component tests to not leave out important use cases in test suite
 * get rid of "data" folders (using same logger approach as in cloud)
 * two deployments:

@@ -134,7 +134,6 @@ func (r *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 		query += " AND u.user_name = 'ocelotcloud'"
 	}
 	query += " LIMIT 100"
-	// TODO !! maybe inject the limit from outside to easier integration testing later
 
 	rows, err := r.DatabaseProvider.GetDb().Query(query, "%"+request.SearchTerm+"%", "%"+request.SearchTerm+"%")
 	if err != nil {

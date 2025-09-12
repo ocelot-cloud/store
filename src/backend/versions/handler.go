@@ -45,7 +45,7 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 		// TODO !! space use case to be covered by component tests I guess? also NotOwningThisVersionError
 		// TODO !! expected error: "zip: not a valid zip file" -> make this a an error in "shared" for reuse?
 
-		expectedErros := u.MapOf("invalid input", users.NotEnoughSpacePrefix, NotOwningThisVersionError, "zip: not a valid zip file", VersionAlreadyExist, "app does not exist")
+		expectedErros := u.MapOf("invalid input", users.NotEnoughSpacePrefix, NotOwningThisVersionError, "zip: not a valid zip file", VersionAlreadyExist, AppDoesNotExist)
 		u.WriteResponseError(w, expectedErros, err)
 		return
 	}
@@ -71,7 +71,7 @@ func (v *VersionsHandler) GetVersionsHandler(w http.ResponseWriter, r *http.Requ
 
 	if !v.AppRepo.DoesAppIdExist(appId) {
 		u.Logger.Info("someone tried to list versions but app does not exist", tools.AppIdField, appId)
-		http.Error(w, "app does not exist", http.StatusBadRequest)
+		http.Error(w, AppDoesNotExist, http.StatusBadRequest)
 		return
 	}
 

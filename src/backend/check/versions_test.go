@@ -42,7 +42,7 @@ func TestUploadVersion(t *testing.T) {
 	notExistingVersionId := "0"
 	_, err := hub.UploadVersion(notExistingVersionId, tools.SampleVersion, SampleVersionFileContent)
 	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, "app does not exist")
+	u.AssertDeepStackErrorFromRequest(t, err, versions.AppDoesNotExist)
 
 	appId, err := hub.CreateApp(tools.SampleApp)
 	assert.Nil(t, err)

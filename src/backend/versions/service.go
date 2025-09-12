@@ -14,6 +14,7 @@ var (
 	NotOwningThisVersionError = "you do not own this version"
 	VersionDoesNotExistError  = "version does not exist"
 	VersionAlreadyExist       = "version already exists"
+	AppDoesNotExist           = "app does not exist"
 )
 
 type VersionService struct {
@@ -60,9 +61,8 @@ func (s *VersionService) UploadVersion(userId int, versionUpload *store.VersionU
 		return u.Logger.NewError("could not convert to number")
 	}
 
-	// TODO !! I think this existence check is not necessary; if not present, it will simply fail; can function be removed then from interface? maybe check other existence tests?
 	if !s.AppRepo.DoesAppIdExist(appId) {
-		return u.Logger.NewError("app does not exist") // TODO rather "app id does not exist"?
+		return u.Logger.NewError(AppDoesNotExist)
 	}
 
 	isOwner, err := s.AppService.DoesUserOwnApp(userId, appId)

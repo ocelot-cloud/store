@@ -84,7 +84,7 @@ func (r *AppRepositoryImpl) DeleteApp(appId int) error {
 		return fmt.Errorf("failed to delete app")
 	}
 
-	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET used_space = used_space - $1 WHERE user_id = $2", totalDataSize, userId)
+	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET used_space_in_bytes = used_space_in_bytes - $1 WHERE user_id = $2", totalDataSize, userId)
 	if err != nil {
 		return fmt.Errorf("failed to update user space: %w", err)
 	}

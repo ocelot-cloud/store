@@ -70,7 +70,7 @@ func (r *VersionRepositoryImpl) CreateVersion(appId int, version string, data []
 	}
 
 	dataSize := len(data)
-	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET used_space = used_space + $1 WHERE user_id = $2", dataSize, userId)
+	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET used_space_in_bytes = used_space_in_bytes + $1 WHERE user_id = $2", dataSize, userId)
 	if err != nil {
 		return fmt.Errorf("failed to update user space: %w", err)
 	}
@@ -97,7 +97,7 @@ func (r *VersionRepositoryImpl) DeleteVersion(versionId int) error {
 		return fmt.Errorf("failed to delete version: %w", err)
 	}
 
-	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET used_space = used_space - $1 WHERE user_id = $2", dataSize, userId)
+	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET used_space_in_bytes = used_space_in_bytes - $1 WHERE user_id = $2", dataSize, userId)
 	if err != nil {
 		return fmt.Errorf("failed to update user space: %w", err)
 	}

@@ -48,7 +48,7 @@ func (r *UserRepositoryImpl) GetUserById(userId int) (*tools.User, error) {
 			hashed_password, 
 			hashed_cookie_value,
 			expiration_date, 
-			used_space
+			used_space_in_bytes
 		 FROM users 
 		 WHERE user_id = $1`,
 		userId,
@@ -75,7 +75,7 @@ func (r *UserRepositoryImpl) UpdateUser(user *tools.User) error {
 		     hashed_password = $3,
 		     hashed_cookie_value = $4,
 		     expiration_date = $5,
-		     used_space = $6
+		     used_space_in_bytes = $6
 		 WHERE user_id = $7`,
 		user.Name,
 		user.Email,
@@ -101,7 +101,7 @@ func (r *UserRepositoryImpl) GetUserByName(userName string) (*tools.User, error)
 			hashed_password, 
 			hashed_cookie_value,
 			expiration_date, 
-			used_space
+			used_space_in_bytes
 		 FROM users 
 		 WHERE user_name = $1`,
 		userName,
@@ -137,7 +137,7 @@ func (r *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) error {
 		u.Logger.Error("Failed to hash password", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to hash password")
 	}
-	_, err = r.DatabaseProvider.GetDb().Exec("INSERT INTO users (user_name, email, hashed_password, used_space) VALUES ($1, $2, $3, $4)", form.User, form.Email, hashedPassword, 0)
+	_, err = r.DatabaseProvider.GetDb().Exec("INSERT INTO users (user_name, email, hashed_password, used_space_in_bytes) VALUES ($1, $2, $3, $4)", form.User, form.Email, hashedPassword, 0)
 	if err != nil {
 		u.Logger.Error("Failed to create user", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to create user")
@@ -163,7 +163,7 @@ func (r *UserRepositoryImpl) DeleteUser(user string) error {
 func (r *UserRepositoryImpl) GetUserViaCookie(hashedCookieValue string) (*tools.User, error) {
 	var user tools.User
 	err := r.DatabaseProvider.GetDb().QueryRow(
-		`SELECT user_id, user_name, email, hashed_password, hashed_cookie_value, expiration_date, used_space 
+		`SELECT user_id, user_name, email, hashed_password, hashed_cookie_value, expiration_date, used_space_in_bytes 
 		 FROM users WHERE hashed_cookie_value = $1`,
 		hashedCookieValue,
 	).Scan(

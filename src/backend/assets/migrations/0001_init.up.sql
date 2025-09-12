@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     hashed_password TEXT NOT NULL UNIQUE,
     hashed_cookie_value TEXT UNIQUE,
     expiration_date TEXT,
-    used_space BIGINT NOT NULL
+    used_space_in_bytes BIGINT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS apps (

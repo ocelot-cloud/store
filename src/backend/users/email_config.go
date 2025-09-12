@@ -44,8 +44,8 @@ type EmailConfigStoreImpl struct {
 	DatabaseProvider *tools.DatabaseProviderImpl
 }
 
-func (s *EmailConfigStoreImpl) GetEmailConfig() (EmailConfig, error) {
-	cfg := EmailConfig{
+func (s *EmailConfigStoreImpl) GetEmailConfig() (*EmailConfig, error) {
+	cfg := &EmailConfig{
 		AppStoreHost:         DefaultAppStoreHost,
 		SMTPHost:             defaultSMTPHost,
 		SMTPPort:             defaultSMTPPort,
@@ -60,7 +60,7 @@ func (s *EmailConfigStoreImpl) GetEmailConfig() (EmailConfig, error) {
 		WHERE key IN ($1,$2,$3,$4,$5,$6)
 	`, appStoreHost, smtpHostKey, smtpPortKey, emailKey, emailUserKey, emailPasswordKey)
 	if err != nil {
-		return cfg, err
+		return nil, err
 	}
 	defer u.Close(row)
 
@@ -68,10 +68,14 @@ func (s *EmailConfigStoreImpl) GetEmailConfig() (EmailConfig, error) {
 	for row.Next() {
 		var k, v string
 		if err := row.Scan(&k, &v); err != nil {
-			return cfg, err
+			return nil, err
 		}
 		m[k] = v
 	}
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
 	if v, ok := m[appStoreHost]; ok {
 		cfg.AppStoreHost = v
 	}
@@ -93,7 +97,7 @@ func (s *EmailConfigStoreImpl) GetEmailConfig() (EmailConfig, error) {
 		cfg.EmailAccountPassword = v
 	}
 
-	return cfg, row.Err()
+	return cfg, nil
 }
 
 func (s *EmailConfigStoreImpl) SetEmailConfig(cfg EmailConfig) error {

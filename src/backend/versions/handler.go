@@ -80,26 +80,10 @@ func (v *VersionsHandler) VersionDownloadHandler(w http.ResponseWriter, r *http.
 	if err != nil {
 		return
 	}
-
-	// TODO !! shift check to service
-	doesExist, err := v.VersionRepo.DoesVersionIdExist(versionId)
+	versionInfo, err := v.VersionService.GetVersionForDownload(versionId)
 	if err != nil {
-		u.Logger.Error("error when checking if version exists", deepstack.ErrorField, err)
-		http.Error(w, "error when checking if version exists", http.StatusBadRequest)
+		u.WriteResponseError(w, u.MapOf(VersionDoesNotExistError), err)
 		return
 	}
-	if !doesExist {
-		u.Logger.Info("version does not exist", tools.VersionIdField, versionId)
-		http.Error(w, "version does not exist", http.StatusBadRequest)
-		return
-	}
-
-	versionInfo, err := v.VersionRepo.GetVersion(versionId)
-	if err != nil {
-		u.Logger.Error("error when accessing version info", deepstack.ErrorField, err)
-		http.Error(w, "error when accessing version info", http.StatusBadRequest)
-		return
-	}
-
 	u.SendJsonResponse(w, versionInfo)
 }

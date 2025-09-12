@@ -109,3 +109,18 @@ func (s *VersionService) ListVersions(appId int) ([]store.LeanVersionDto, error)
 	}
 	return versionsList, nil
 }
+
+func (s *VersionService) GetVersionForDownload(versionId int) (*store.Version, error) {
+	doesExist, err := s.VersionRepo.DoesVersionIdExist(versionId)
+	if err != nil {
+		return nil, err
+	}
+	if !doesExist {
+		return nil, u.Logger.NewError(VersionDoesNotExistError)
+	}
+	versionInfo, err := s.VersionRepo.GetVersion(versionId)
+	if err != nil {
+		return nil, err
+	}
+	return versionInfo, nil
+}

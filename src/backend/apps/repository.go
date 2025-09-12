@@ -20,7 +20,7 @@ type AppRepository interface {
 	GetAppList(userId int) ([]store.AppDto, error)
 	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error) // TODO !! not sure whether it makes sense to maybe improve my search function, like explicitly say have a field for maintainer and app you can search for; if empty, its ignored
 	GetAppById(appId int) (store.AppDto, error)
-	DoesAppExist(userID int, app string) (int, error) // TODO !! should return bool
+	DoesAppExist(userID int, app string) (bool, error) // TODO !! should return bool
 
 	DoesUserOwnApp(userId, appId int) bool // TODO !! can be removed, is already covered by function below -> get owner, check if it correct
 	GetUserIdOfApp(appId int) (int, error)
@@ -212,11 +212,13 @@ func (r *AppRepositoryImpl) GetAppList(userId int) ([]store.AppDto, error) {
 	return apps, nil
 }
 
-func (r *AppRepositoryImpl) DoesAppExist(userID int, app string) (int, error) {
-	var appID int
-	err := r.DatabaseProvider.GetDb().QueryRow("SELECT app_id FROM apps WHERE user_id = $1 AND app_name = $2", userID, app).Scan(&appID)
+func (r *AppRepositoryImpl) DoesAppExist(userID int, appName string) (bool, error) {
+	var exists bool
+	err := r.DatabaseProvider.GetDb().
+		QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE user_id = $1 AND app_name = $2)", userID, appName).
+		Scan(&exists)
 	if err != nil {
-		return 0, fmt.Errorf("app not found: %v", err)
+		return false, fmt.Errorf("failed to check app existence: %v", err)
 	}
-	return appID, nil
+	return exists, nil
 }

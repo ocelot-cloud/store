@@ -37,8 +37,13 @@ func (a *AppsHandler) AppCreationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = a.AppRepo.DoesAppExist(user.Id, appString.Value)
-	if err == nil {
+	doesExist, err := a.AppRepo.DoesAppExist(user.Id, appString.Value)
+	if err != nil {
+		u.Logger.Error("error when checking if app exists", deepstack.ErrorField, err)
+		http.Error(w, "error when checking if app exists", http.StatusBadRequest)
+		return
+	}
+	if doesExist {
 		u.Logger.Info("user tried to create app but it already exists", tools.UserField, user, tools.AppField, appString)
 		http.Error(w, "app already exists", http.StatusBadRequest)
 		return

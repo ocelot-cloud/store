@@ -1,9 +1,35 @@
+//go:build component
+
 package check
+
+import (
+	"testing"
+)
 
 // TODO !! check whether other file already test ownership, and centralize it here
 // TODO !! test cases from this: you can not operate on apps or versions you dont own -> deletion/creation(or upload) etc. make research which operations are affected
 
-// TODO !! use case: delete app you do not own
+// TODO !! use case: delete app you do not own; delete version you dont own; upload version to app you dont own
+
+func TestDeleteAppYouDoNotOwn(t *testing.T) {
+	/* TODO !!
+	client1 := GetHub()
+	defer client1.WipeData()
+	err := client1.RegisterAndValidateUser("user1", "password", "user1@sample.com")
+	assert.Nil(t, err)
+	assert.Nil(t, client1.Login("user1", "password"))
+
+	client2 := GetHub()
+	err = client2.RegisterAndValidateUser("user2", "password", "user2@sample.com")
+	assert.Nil(t, err)
+	assert.Nil(t, client2.Login("user2", "password"))
+
+	appId, err := client1.CreateApp("sampleapp")
+	assert.Nil(t, err)
+	err = client2.DeleteApp(appId)
+	u.AssertDeepStackErrorFromRequest(t, err, apps.YouDoNotOwnThisAppError)
+	*/
+}
 
 /* material
 

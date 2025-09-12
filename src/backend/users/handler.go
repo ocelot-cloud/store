@@ -25,7 +25,7 @@ type UserHandler struct {
 }
 
 func (h *UserHandler) WipeData(w http.ResponseWriter, r *http.Request) {
-	h.UserRepo.WipeDatabase()
+	h.UserService.WipeDatabase()
 	u.Logger.Warn("database wipe completed")
 	w.WriteHeader(http.StatusOK)
 }

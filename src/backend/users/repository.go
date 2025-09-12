@@ -11,6 +11,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var NotEnoughSpacePrefix = "not enough space"
+
 type UserRepository interface {
 	CreateUser(form *store.RegistrationForm) error
 	DoesUserExist(user string) bool
@@ -22,17 +24,12 @@ type UserRepository interface {
 	GetUserByName(user string) (*tools.User, error)
 	UpdateUser(*tools.User) error
 	GetUserById(userId int) (*tools.User, error)
-
-	// TODO !! replace functions
-	WipeDatabase()
+	WipeUsers()
 }
 
 type UserRepositoryImpl struct {
 	DatabaseProvider *tools.DatabaseProviderImpl
-	EmailVerifier    *tools.EmailVerifierImpl // TODO !! get rid of dependency, not realted to persistence
 }
-
-var NotEnoughSpacePrefix = "not enough space"
 
 func (r *UserRepositoryImpl) GetUserById(userId int) (*tools.User, error) {
 	var user tools.User
@@ -199,12 +196,11 @@ func (r *UserRepositoryImpl) ChangePassword(userId int, newPassword string) erro
 	return nil
 }
 
-func (r *UserRepositoryImpl) WipeDatabase() {
+func (r *UserRepositoryImpl) WipeUsers() {
 	_, err := r.DatabaseProvider.GetDb().Exec("DELETE FROM users")
 	if err != nil {
 		u.Logger.Error("Failed to wipe database", deepstack.ErrorField, err)
 	}
-	r.EmailVerifier.Clear()
 }
 
 func (r *UserRepositoryImpl) Logout(user string) error {

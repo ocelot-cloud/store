@@ -105,3 +105,8 @@ func (r *UserServiceImpl) IsThereEnoughSpaceToAddVersion(userId, bytesToAdd int)
 	}
 	return nil
 }
+
+func (r *UserServiceImpl) WipeDatabase() {
+	r.UserRepo.WipeUsers()
+	r.EmailVerifier.Clear()
+}

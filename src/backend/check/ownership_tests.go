@@ -6,7 +6,7 @@ package check
 /* material
 
 func TestIsAppOwner(t *testing.T) {
-	defer users.UserRepo.WipeDatabase()
+	defer users.UserRepo.WipeUsers()
 	assert.Nil(t, users.CreateAndValidateUser(tools.SampleForm))
 	assert.False(t, apps.AppRepo.DoesUserOwnApp(tools.SampleUser, 1))
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
@@ -65,7 +65,7 @@ func TestOwnershipOfDeleteVersion(t *testing.T) {
 }
 
 func TestIsVersionOwner(t *testing.T) {
-	defer users.UserRepo.WipeDatabase()
+	defer users.UserRepo.WipeUsers()
 	assert.Nil(t, users.CreateAndValidateUser(tools.SampleForm))
 	assert.False(t, versions.VersionRepo.DoesUserOwnVersion(tools.SampleUser, 1))
 

@@ -75,21 +75,22 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// TODO !! Should we send more info of user object? e.g. cookie expiration time (for testing)?
 func (h *UserHandler) AuthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-	u.SendJsonResponse(w, store.UserNameString{Value: user})
+	u.SendJsonResponse(w, store.UserNameString{Value: user.UserName})
 }
 
 func (h *UserHandler) UserDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
 
-	if !h.UserRepo.DoesUserExist(user) {
+	if !h.UserRepo.DoesUserExist(user.UserName) {
 		u.Logger.Error("user wanted to delete his account but seems not to exist although authenticated", tools.UserField, user)
 		http.Error(w, "user does not exist", http.StatusBadRequest)
 		return
 	}
 
-	err := h.UserRepo.DeleteUser(user)
+	err := h.UserRepo.DeleteUser(user.UserName)
 	if err != nil {
 		u.Logger.Error("user deletion failed", tools.UserField, err)
 		http.Error(w, "user deletion failed", http.StatusBadRequest)
@@ -108,19 +109,19 @@ func (h *UserHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if !h.UserRepo.DoesUserExist(user) {
+	if !h.UserRepo.DoesUserExist(user.UserName) {
 		u.Logger.Warn("somebody tried to change password but user does not exist", tools.UserField, user)
 		http.Error(w, "user does not exist", http.StatusBadRequest)
 		return
 	}
 
-	if !h.UserRepo.IsPasswordCorrect(user, form.OldPassword) {
+	if !h.UserRepo.IsPasswordCorrect(user.UserName, form.OldPassword) {
 		u.Logger.Info("incorrect credentials for user when trying to change password", tools.UserField, user)
 		http.Error(w, "incorrect username or password", http.StatusBadRequest)
 		return
 	}
 
-	err = h.UserRepo.ChangePassword(user, form.NewPassword)
+	err = h.UserRepo.ChangePassword(user.UserName, form.NewPassword)
 	if err != nil {
 		u.Logger.Error("changing password for user failed", tools.UserField, user, deepstack.ErrorField, err)
 		http.Error(w, "error when trying to change password", http.StatusBadRequest)
@@ -133,8 +134,7 @@ func (h *UserHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Reque
 
 func (h *UserHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-
-	err := h.UserRepo.Logout(user)
+	err := h.UserRepo.Logout(user.UserName)
 	if err != nil {
 		u.Logger.Error("logout of user failed", tools.UserField, user, deepstack.ErrorField, err)
 		http.Error(w, "logout failed", http.StatusBadRequest)
@@ -211,39 +211,40 @@ func (h *UserHandler) ValidationCodeHandler(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *UserHandler) CheckAuthentication(w http.ResponseWriter, r *http.Request) (string, error) {
+// TODO !! fmt.Errorf("") looks as if it should be refctored away?
+func (h *UserHandler) CheckAuthentication(w http.ResponseWriter, r *http.Request) (*tools.User, error) {
 	u.Logger.Debug("checking authentication", tools.UrlPathField, r.URL.Path)
 	cookie, err := r.Cookie(tools.CookieName)
 	if err != nil {
 		u.Logger.Info("cookie not set in request", deepstack.ErrorField, err)
 		http.Error(w, "cookie not set in request", http.StatusBadRequest)
-		return "", fmt.Errorf("")
+		return nil, fmt.Errorf("")
 	}
 
 	if err = validation.ValidateSecret(cookie.Value); err != nil {
 		http.Error(w, "invalid cookie", http.StatusBadRequest)
-		return "", fmt.Errorf("")
+		return nil, fmt.Errorf("")
 	}
 
 	user, err := h.UserRepo.GetUserViaCookie(cookie.Value)
 	if err != nil {
 		u.Logger.Info("error when getting cookie of user", deepstack.ErrorField, err)
 		http.Error(w, "cookie not found", http.StatusBadRequest)
-		return "", fmt.Errorf("")
+		return nil, fmt.Errorf("")
 	}
 
 	if h.UserRepo.IsCookieExpired(cookie.Value) {
 		u.Logger.Warn("user used an expired cookie", tools.UserField, user)
 		http.Error(w, "cookie expired", http.StatusBadRequest)
-		return "", fmt.Errorf("")
+		return nil, fmt.Errorf("")
 	}
 
 	newExpirationTime := u.GetTimeInSevenDays()
-	err = h.UserRepo.HashAndSaveCookie(user, cookie.Value, newExpirationTime)
+	err = h.UserRepo.HashAndSaveCookie(user.UserName, cookie.Value, newExpirationTime)
 	if err != nil {
 		u.Logger.Error("setting new cookie failed", deepstack.ErrorField, err)
 		http.Error(w, "setting new cookie failed", http.StatusBadRequest)
-		return "", fmt.Errorf("")
+		return nil, fmt.Errorf("")
 	}
 	cookie.Expires = newExpirationTime
 	// Note: If no path is given, browsers set the default path one level higher than the

@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
 )
@@ -16,7 +15,7 @@ import (
 type VersionRepository interface {
 	DoesVersionIdExist(versionId int) (bool, error)
 	DoesVersionNameExist(appId int, version string) (bool, error)
-	DoesUserOwnVersion(user string, versionId int) bool // TODO !! pass ID not name
+	DoesUserOwnVersion(userId, versionId int) (bool, error)
 	CreateVersion(appId int, version string, data []byte) error
 	DeleteVersion(versionId int) error
 	ListVersionsOfApp(appId int) ([]store.Version, error)
@@ -45,25 +44,18 @@ func (r *VersionRepositoryImpl) GetFullVersionInfo(versionId int) (*store.FullVe
 	return &fullVersionInfo, nil
 }
 
-func (r *VersionRepositoryImpl) DoesUserOwnVersion(user string, versionId int) bool {
-	userId, err := r.UserRepo.GetUserId(user)
-	if err != nil {
-		u.Logger.Info("Failed to get user ID", tools.UserField, deepstack.ErrorField, err)
-		return false
-	}
-
+func (r *VersionRepositoryImpl) DoesUserOwnVersion(userId, versionId int) (bool, error) {
 	var ownerId int
-	err = r.DatabaseProvider.GetDb().QueryRow(`
+	err := r.DatabaseProvider.GetDb().QueryRow(`
 		SELECT apps.user_id 
 		FROM versions
 		JOIN apps ON versions.app_id = apps.app_id
 		WHERE versions.version_id = $1`, versionId).Scan(&ownerId)
 	if err != nil {
-		u.Logger.Error("Failed to get version owner ID", deepstack.ErrorField, err)
-		return false
+		return false, u.Logger.NewError(err.Error())
 	}
 
-	return userId == ownerId
+	return userId == ownerId, nil
 }
 func (r *VersionRepositoryImpl) CreateVersion(appId int, version string, data []byte) error {
 	userId, err := r.AppRepo.GetUserIdOfApp(appId)

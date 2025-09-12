@@ -49,7 +49,7 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	err = v.UserRepo.IsThereEnoughSpaceToAddVersion(user, len(versionUpload.Content))
+	err = v.UserRepo.IsThereEnoughSpaceToAddVersion(user.UserName, len(versionUpload.Content))
 	if err != nil {
 		if strings.HasPrefix(err.Error(), users.NotEnoughSpacePrefix) {
 			u.Logger.Info("version upload of user failed: not enough space", tools.UserField, user)
@@ -74,7 +74,7 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if !v.AppRepo.DoesUserOwnApp(user, appId) {
+	if !v.AppRepo.DoesUserOwnApp(user.UserName, appId) {
 		u.Logger.Warn("user tried to delete app but does not own it", tools.UserField, user, tools.AppIdField, versionUpload.AppId)
 		http.Error(w, "you do not own this app", http.StatusBadRequest)
 		return
@@ -132,7 +132,7 @@ func (v *VersionsHandler) VersionDeleteHandler(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return
 	}
-	err = v.VersionService.DeleteVersionWithChecks(user, versionId)
+	err = v.VersionService.DeleteVersionWithChecks(user.UserId, versionId)
 	if err != nil {
 		u.WriteResponseError(w, u.MapOf(NotOwningThisVersionError, VersionDoesNotExistError), err, tools.UserField, user, tools.VersionIdField, versionId)
 	}

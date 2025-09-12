@@ -79,7 +79,7 @@ func (h *HandlerInitializer) authMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			return
 		}
-		ctx := context.WithValue(r.Context(), tools.UserCtxKey, user)
+		ctx := context.WithValue(r.Context(), tools.UserCtxKey, *user)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})

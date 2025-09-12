@@ -24,7 +24,7 @@ type UserRepository interface {
 	DoesUserExist(user string) bool
 	DoesEmailExist(email string) bool
 	DeleteUser(user string) error
-	GetUserViaCookie(cookie string) (string, error)       // TODO should return user object; and gt hashed Cookie as argument
+	GetUserViaCookie(cookie string) (*tools.User, error)  // TODO !! use hashed Cookie as argument
 	ChangePassword(user string, newPassword string) error // TODO !! pass userID, not name
 	Logout(user string) error
 
@@ -171,27 +171,36 @@ func (r *UserRepositoryImpl) IsCookieExpired(cookie string) bool {
 	return time.Now().UTC().After(expirationDate)
 }
 
-func (r *UserRepositoryImpl) GetUserViaCookie(cookie string) (string, error) {
-	if cookie == "" {
+func (r *UserRepositoryImpl) GetUserViaCookie(hashedCookieValue string) (*tools.User, error) {
+	if hashedCookieValue == "" {
 		u.Logger.Error("Cookie not set in request")
-		return "", fmt.Errorf("cookie not set in request")
+		return nil, fmt.Errorf("cookie not set in request")
 	}
 
-	hashedCookieValue := u.GetSHA256Hash(cookie)
-
-	var user string
-	err := r.DatabaseProvider.GetDb().QueryRow("SELECT user_name FROM users WHERE hashed_cookie_value = $1", hashedCookieValue).Scan(&user)
+	var user tools.User
+	err := r.DatabaseProvider.GetDb().QueryRow(
+		`SELECT user_id, user_name, email, hashed_password, hashed_cookie_value, expiration_date, used_space 
+		 FROM users WHERE hashed_cookie_value = $1`,
+		hashedCookieValue,
+	).Scan(
+		&user.UserId,
+		&user.UserName,
+		&user.Email,
+		&user.HashedPassword,
+		&user.HashedCookieValue,
+		&user.ExpirationDate,
+		&user.UsedSpace,
+	)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			u.Logger.Info("Cookie not found")
-			return "", fmt.Errorf("cookie not found")
-		} else {
-			u.Logger.Error("Failed to fetch user", deepstack.ErrorField, err)
-			return "", fmt.Errorf("failed to fetch user")
+			return nil, fmt.Errorf("cookie not found")
 		}
+		u.Logger.Error("Failed to fetch user", deepstack.ErrorField, err)
+		return nil, fmt.Errorf("failed to fetch user")
 	}
 
-	return user, nil
+	return &user, nil
 }
 
 func (r *UserRepositoryImpl) ChangePassword(user string, newPassword string) error {

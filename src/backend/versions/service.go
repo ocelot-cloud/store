@@ -13,8 +13,7 @@ type VersionService struct {
 	VersionRepo VersionRepository
 }
 
-// TODO !! should be user ID
-func (s VersionService) DeleteVersionWithChecks(user string, versionId int) error {
+func (s VersionService) DeleteVersionWithChecks(userId, versionId int) error {
 	doesExist, errs := s.VersionRepo.DoesVersionIdExist(versionId)
 	if errs != nil {
 		return errs
@@ -23,11 +22,14 @@ func (s VersionService) DeleteVersionWithChecks(user string, versionId int) erro
 		return u.Logger.NewError(VersionDoesNotExistError)
 	}
 
-	// TODO !! should return error
-	if !s.VersionRepo.DoesUserOwnVersion(user, versionId) {
+	doesUserOwnVersion, err := s.VersionRepo.DoesUserOwnVersion(userId, versionId)
+	if err != nil {
+		return err
+	}
+	if !doesUserOwnVersion {
 		return u.Logger.NewError(NotOwningThisVersionError)
 	}
 
-	err := s.VersionRepo.DeleteVersion(versionId)
+	err = s.VersionRepo.DeleteVersion(versionId)
 	return err
 }

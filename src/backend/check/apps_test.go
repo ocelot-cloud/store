@@ -3,6 +3,7 @@
 package check
 
 import (
+	"ocelot/store/apps"
 	"ocelot/store/tools"
 	"testing"
 
@@ -24,7 +25,7 @@ func TestCreateAndDeleteApp(t *testing.T) {
 
 	_, err = hub.CreateApp(tools.SampleApp)
 	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, "app already exists")
+	u.AssertDeepStackErrorFromRequest(t, err, apps.AppAlreadyExistsError)
 
 	assert.Nil(t, hub.DeleteApp(appId))
 	foundApps, err = hub.ListOwnApps()
@@ -51,7 +52,7 @@ func TestCreationOfOcelotCloudAppIsForbidden(t *testing.T) {
 	defer hub.WipeData()
 	_, err := hub.CreateApp("ocelotcloud")
 	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, "app name is reserved")
+	u.AssertDeepStackErrorFromRequest(t, err, apps.AppNameReservedError)
 }
 
 // TODO !! all search cases covered?

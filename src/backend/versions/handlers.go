@@ -75,7 +75,7 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if !v.AppRepo.DoesUserOwnApp(user.Name, appId) {
+	if !v.AppRepo.DoesUserOwnApp(user.Id, appId) {
 		u.Logger.Warn("user tried to delete app but does not own it", tools.UserField, user, tools.AppIdField, versionUpload.AppId)
 		http.Error(w, "you do not own this app", http.StatusBadRequest)
 		return

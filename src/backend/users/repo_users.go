@@ -29,7 +29,6 @@ type UserRepository interface {
 
 	// TODO !! replace functions
 	WipeDatabase()
-	GetUserId(user string) (int, error)
 }
 
 type UserRepositoryImpl struct {
@@ -229,13 +228,4 @@ func (r *UserRepositoryImpl) DoesEmailExist(email string) bool {
 		return false
 	}
 	return exists
-}
-
-func (r *UserRepositoryImpl) GetUserId(user string) (int, error) {
-	var userID int
-	err := r.DatabaseProvider.GetDb().QueryRow("SELECT user_id FROM users WHERE user_name = $1", user).Scan(&userID)
-	if err != nil {
-		return 0, fmt.Errorf("user not found: %w", err)
-	}
-	return userID, nil
 }

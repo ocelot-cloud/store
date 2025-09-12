@@ -10,7 +10,7 @@ func TestIsAppOwner(t *testing.T) {
 	assert.Nil(t, users.CreateAndValidateUser(tools.SampleForm))
 	assert.False(t, apps.AppRepo.DoesUserOwnApp(tools.SampleUser, 1))
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
-	appId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
+	appId, err := apps.AppRepo.GetAppId(tools.SampleUser, tools.SampleApp)
 	assert.Nil(t, err)
 	assert.True(t, apps.AppRepo.DoesUserOwnApp(tools.SampleUser, appId))
 
@@ -70,7 +70,7 @@ func TestIsVersionOwner(t *testing.T) {
 	assert.False(t, versions.VersionRepo.DoesUserOwnVersion(tools.SampleUser, 1))
 
 	assert.Nil(t, apps.AppRepo.CreateApp(tools.SampleUser, tools.SampleApp))
-	appId, err := apps.AppRepo.GetAppId2(tools.SampleUser, tools.SampleApp)
+	appId, err := apps.AppRepo.GetAppId(tools.SampleUser, tools.SampleApp)
 	assert.Nil(t, err)
 	assert.False(t, versions.VersionRepo.DoesUserOwnVersion(tools.SampleUser, 1))
 

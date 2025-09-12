@@ -14,11 +14,11 @@ import (
 // TODO !! never pass username if you could pass user ID instead
 type AppRepository interface {
 	// TODO !! keep functions
-	DoesUserOwnApp(user string, appId int) bool // TODO !! should pass userID
+	DoesUserOwnApp(userId, appId int) bool
 	DoesAppExist(appId int) bool
-	CreateApp(user, app string) error // TODO !! should pass userID
+	CreateApp(userId int, app string) error
 	DeleteApp(appId int) error
-	GetAppList(user string) ([]store.App, error)
+	GetAppList(userId int) ([]store.App, error)
 	// TODO !! add : GetAppById(appId int) (store.App, error)
 
 	// TODO !! remove functions
@@ -26,10 +26,8 @@ type AppRepository interface {
 	GetAppName(appId int) (string, error)
 	GetMaintainerName(appId int) (string, error)
 	// TODO !! duplication, only give ID? or maybe pass the user struct
-	GetAppId(user, app string) (int, error)
 	GetUserIdOfApp(appId int) (int, error)
-
-	GetAppId2(userID int, app string) (int, error) // TODO !! looks like sth I dont need?
+	GetAppId(userID int, app string) (int, error) // TODO !! looks like sth I dont need?
 }
 
 type AppRepositoryImpl struct {
@@ -39,15 +37,9 @@ type AppRepositoryImpl struct {
 
 // TODO !! rename repo_apps, repo_users and repo_versions simply to repository each
 
-func (r *AppRepositoryImpl) DoesUserOwnApp(user string, appId int) bool {
-	userId, err := r.UserRepo.GetUserId(user)
-	if err != nil {
-		u.Logger.Info("Failed to get user ID", deepstack.ErrorField, err)
-		return false
-	}
-
+func (r *AppRepositoryImpl) DoesUserOwnApp(userId, appId int) bool {
 	var ownerId int
-	err = r.DatabaseProvider.GetDb().QueryRow("SELECT user_id FROM apps WHERE app_id = $1", appId).Scan(&ownerId)
+	err := r.DatabaseProvider.GetDb().QueryRow("SELECT user_id FROM apps WHERE app_id = $1", appId).Scan(&ownerId)
 	if err != nil {
 		u.Logger.Error("Failed to get app owner ID", deepstack.ErrorField, err)
 		return false
@@ -56,17 +48,8 @@ func (r *AppRepositoryImpl) DoesUserOwnApp(user string, appId int) bool {
 	return userId == ownerId
 }
 
-func (r *AppRepositoryImpl) CreateApp(user string, app string) error {
-	if !r.UserRepo.DoesUserExist(user) {
-		u.Logger.Info("User does not exist", tools.UserField, user)
-		return fmt.Errorf("user does not exist")
-	}
-
-	userID, err := r.UserRepo.GetUserId(user)
-	if err != nil {
-		return err
-	}
-	_, err = r.DatabaseProvider.GetDb().Exec(`INSERT INTO apps (user_id, app_name) VALUES ($1, $2)`, userID, app)
+func (r *AppRepositoryImpl) CreateApp(userId int, app string) error {
+	_, err := r.DatabaseProvider.GetDb().Exec(`INSERT INTO apps (user_id, app_name) VALUES ($1, $2)`, userId, app)
 	if err != nil {
 		u.Logger.Error("Failed to create app", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to create app")
@@ -186,26 +169,13 @@ func (r *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 	return apps, nil
 }
 
-func (r *AppRepositoryImpl) GetAppId(user, app string) (int, error) {
-	userID, err := r.UserRepo.GetUserId(user)
+func (r *AppRepositoryImpl) GetAppList(userId int) ([]store.App, error) {
+	user, err := r.UserRepo.GetUserById(userId)
 	if err != nil {
-		return -1, err
+		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	appID, err := r.GetAppId2(userID, app)
-	if err != nil {
-		return -1, err
-	}
-	return appID, nil
-}
-
-func (r *AppRepositoryImpl) GetAppList(user string) ([]store.App, error) {
-	userID, err := r.UserRepo.GetUserId(user)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := r.DatabaseProvider.GetDb().Query("SELECT app_name, app_id FROM apps WHERE user_id = $1", userID)
+	rows, err := r.DatabaseProvider.GetDb().Query("SELECT app_name, app_id FROM apps WHERE user_id = $1", userId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get apps: %w", err)
 	}
@@ -218,7 +188,8 @@ func (r *AppRepositoryImpl) GetAppList(user string) ([]store.App, error) {
 		if err = rows.Scan(&app, &appId); err != nil {
 			return nil, fmt.Errorf("failed to scan app: %w", err)
 		}
-		apps = append(apps, store.App{Maintainer: user, Name: app, Id: strconv.Itoa(appId)})
+		// TODO !! I think the username is not necessary here, since the use case here is that a user sees his own apps of which he is the maintainer
+		apps = append(apps, store.App{Maintainer: user.Name, Name: app, Id: strconv.Itoa(appId)})
 	}
 
 	if err = rows.Err(); err != nil {
@@ -251,7 +222,7 @@ func (r *AppRepositoryImpl) GetMaintainerName(appId int) (string, error) {
 	return maintainer, nil
 }
 
-func (r *AppRepositoryImpl) GetAppId2(userID int, app string) (int, error) {
+func (r *AppRepositoryImpl) GetAppId(userID int, app string) (int, error) {
 	var appID int
 	err := r.DatabaseProvider.GetDb().QueryRow("SELECT app_id FROM apps WHERE user_id = $1 AND app_name = $2", userID, app).Scan(&appID)
 	if err != nil {

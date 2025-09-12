@@ -37,14 +37,14 @@ func (a *AppsHandler) AppCreationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = a.AppRepo.GetAppId(user.Name, appString.Value)
+	_, err = a.AppRepo.GetAppId(user.Id, appString.Value)
 	if err == nil {
 		u.Logger.Info("user tried to create app but it already exists", tools.UserField, user, tools.AppField, appString)
 		http.Error(w, "app already exists", http.StatusBadRequest)
 		return
 	}
 
-	err = a.AppRepo.CreateApp(user.Name, appString.Value)
+	err = a.AppRepo.CreateApp(user.Id, appString.Value)
 	if err != nil {
 		u.Logger.Error("user tried to create app but it failed", tools.UserField, user, tools.AppField, appString, deepstack.ErrorField, err)
 		http.Error(w, "app creation failed", http.StatusBadRequest)
@@ -62,7 +62,7 @@ func (a *AppsHandler) AppDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !a.AppRepo.DoesUserOwnApp(user.Name, appId) {
+	if !a.AppRepo.DoesUserOwnApp(user.Id, appId) {
 		u.Logger.Warn("user tried to delete app with ID but does not own it", tools.UserField, user, tools.AppIdField, appId)
 		http.Error(w, "you do not own this app", http.StatusBadRequest)
 		return
@@ -96,7 +96,7 @@ func ReadBodyAsStringNumber(w http.ResponseWriter, r *http.Request) (int, error)
 func (a *AppsHandler) AppGetListHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
 
-	list, err := a.AppRepo.GetAppList(user.Name)
+	list, err := a.AppRepo.GetAppList(user.Id)
 	if err != nil {
 		u.Logger.Warn("error getting app list", deepstack.ErrorField, err)
 		http.Error(w, "error getting app list", http.StatusBadRequest)

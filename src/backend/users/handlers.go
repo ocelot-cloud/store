@@ -42,7 +42,13 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.UserRepo.IsPasswordCorrect(creds.User, creds.Password) {
+	isCorrect, err := h.UserService.IsPasswordCorrect(creds.User, creds.Password)
+	if err != nil {
+		u.Logger.Error("checking password of user failed", deepstack.ErrorField, err)
+		http.Error(w, "error when checking password", http.StatusBadRequest)
+		return
+	}
+	if !isCorrect {
 		u.Logger.Info("Password of user was not correct", tools.UserField, creds.User)
 		http.Error(w, "incorrect username or password", http.StatusBadRequest)
 		return
@@ -116,7 +122,13 @@ func (h *UserHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if !h.UserRepo.IsPasswordCorrect(user.UserName, form.OldPassword) {
+	isCorrect, err := h.UserService.IsPasswordCorrect(user.UserName, form.OldPassword)
+	if err != nil {
+		u.Logger.Error("checking password of user failed", deepstack.ErrorField, err)
+		http.Error(w, "error when checking password", http.StatusBadRequest)
+		return
+	}
+	if !isCorrect {
 		u.Logger.Info("incorrect credentials for user when trying to change password", tools.UserField, user)
 		http.Error(w, "incorrect username or password", http.StatusBadRequest)
 		return

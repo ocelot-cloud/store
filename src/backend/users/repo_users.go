@@ -24,9 +24,9 @@ type UserRepository interface {
 	GetUserViaCookie(hashedCookieValue string) (*tools.User, error)
 	ChangePassword(userId int, newPassword string) error
 	Logout(user string) error
+	GetUserByName(user string) (*tools.User, error)
 
 	// TODO !! replace functions
-	IsPasswordCorrect(user string, password string) bool
 	HashAndSaveCookie(user string, cookie string, expirationDate time.Time) error
 	IsCookieExpired(cookie string) bool
 	IsThereEnoughSpaceToAddVersion(user string, bytesToAdd int) error
@@ -42,6 +42,35 @@ type UserRepositoryImpl struct {
 
 var NotEnoughSpacePrefix = "not enough space"
 
+func (r *UserRepositoryImpl) GetUserByName(userName string) (*tools.User, error) {
+	var user tools.User
+	err := r.DatabaseProvider.GetDb().QueryRow(
+		`SELECT 
+			user_id, 
+			user_name, 
+			email, 
+			hashed_password, 
+			COALESCE(hashed_cookie_value, ''), 
+			COALESCE(expiration_date, ''), 
+			used_space
+		 FROM users 
+		 WHERE user_name = $1`,
+		userName,
+	).Scan(
+		&user.UserId,
+		&user.UserName,
+		&user.Email,
+		&user.HashedPassword,
+		&user.HashedCookieValue,
+		&user.ExpirationDate,
+		&user.UsedSpace,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (r *UserRepositoryImpl) IsThereEnoughSpaceToAddVersion(user string, bytesToAdd int) error {
 	bytesUsed, err := r.GetUsedSpaceInBytes(user)
 	if err != nil {
@@ -55,18 +84,6 @@ func (r *UserRepositoryImpl) IsThereEnoughSpaceToAddVersion(user string, bytesTo
 		return errors.New(msg)
 	}
 	return nil
-}
-
-func (r *UserRepositoryImpl) IsPasswordCorrect(user string, password string) bool {
-	var hashedPassword string
-	err := r.DatabaseProvider.GetDb().QueryRow("SELECT hashed_password FROM users WHERE user_name = $1", user).Scan(&hashedPassword)
-	if err != nil {
-		u.Logger.Error("Failed to fetch hashed password", deepstack.ErrorField, err)
-		return false
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-	return err == nil
 }
 
 func (r *UserRepositoryImpl) DoesUserExist(user string) bool {

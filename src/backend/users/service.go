@@ -8,6 +8,7 @@ import (
 	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserServiceImpl struct {
@@ -47,4 +48,14 @@ func (r *UserServiceImpl) ValidateUserViaRegistrationCode(code string) error {
 	}
 	r.EmailVerifier.Delete(code)
 	return nil
+}
+
+func (r *UserServiceImpl) IsPasswordCorrect(userName string, password string) (bool, error) {
+	user, err := r.UserRepo.GetUserByName(userName)
+	if err != nil {
+		return false, err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password))
+	return err == nil, nil
 }

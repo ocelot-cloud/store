@@ -69,7 +69,7 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if !v.AppRepo.DoesAppExist(appId) {
+	if !v.AppRepo.DoesAppIdExist(appId) {
 		u.Logger.Info("user tried to upload version to app, but app does not exist", tools.UserField, user, tools.VersionField, versionUpload.Version, tools.AppIdField, versionUpload.AppId)
 		http.Error(w, "app does not exist", http.StatusBadRequest)
 		return
@@ -138,7 +138,7 @@ func (v *VersionsHandler) GetVersionsHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if !v.AppRepo.DoesAppExist(appId) {
+	if !v.AppRepo.DoesAppIdExist(appId) {
 		u.Logger.Info("someone tried to list versions but app does not exist", tools.AppIdField, appId)
 		http.Error(w, "app does not exist", http.StatusBadRequest)
 		return

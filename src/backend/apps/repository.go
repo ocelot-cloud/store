@@ -14,18 +14,16 @@ import (
 // TODO !! never pass username if you could pass user ID instead
 type AppRepository interface {
 	// TODO !! keep functions
-	DoesUserOwnApp(userId, appId int) bool
-	DoesAppExist(appId int) bool
+	DoesAppIdExist(appId int) bool
 	CreateApp(userId int, app string) error
 	DeleteApp(appId int) error
 	GetAppList(userId int) ([]store.AppDto, error)
 	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error) // TODO !! not sure whether it makes sense to maybe improve my search function, like explicitly say have a field for maintainer and app you can search for; if empty, its ignored
 	GetAppById(appId int) (store.AppDto, error)
+	DoesAppExist(userID int, app string) (int, error) // TODO !! should return bool
 
-	// TODO !! remove functions
-	// TODO !! duplication, only give ID? or maybe pass the user struct
+	DoesUserOwnApp(userId, appId int) bool // TODO !! can be removed, is already covered by function below -> get owner, check if it correct
 	GetUserIdOfApp(appId int) (int, error)
-	GetAppId(userID int, app string) (int, error) // TODO !! looks like sth I dont need?
 }
 
 type AppRepositoryImpl struct {
@@ -71,7 +69,7 @@ func (r *AppRepositoryImpl) CreateApp(userId int, app string) error {
 	return nil
 }
 
-func (r *AppRepositoryImpl) DoesAppExist(appId int) bool {
+func (r *AppRepositoryImpl) DoesAppIdExist(appId int) bool {
 	var exists bool
 	err := r.DatabaseProvider.GetDb().QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE app_id = $1)", appId).Scan(&exists)
 	if err != nil {
@@ -214,7 +212,7 @@ func (r *AppRepositoryImpl) GetAppList(userId int) ([]store.AppDto, error) {
 	return apps, nil
 }
 
-func (r *AppRepositoryImpl) GetAppId(userID int, app string) (int, error) {
+func (r *AppRepositoryImpl) DoesAppExist(userID int, app string) (int, error) {
 	var appID int
 	err := r.DatabaseProvider.GetDb().QueryRow("SELECT app_id FROM apps WHERE user_id = $1 AND app_name = $2", userID, app).Scan(&appID)
 	if err != nil {

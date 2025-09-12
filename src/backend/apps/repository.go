@@ -23,7 +23,6 @@ type AppRepository interface {
 	GetAppById(appId int) (store.AppDto, error)
 
 	// TODO !! remove functions
-	GetAppName(appId int) (string, error)
 	GetMaintainerName(appId int) (string, error)
 	// TODO !! duplication, only give ID? or maybe pass the user struct
 	GetUserIdOfApp(appId int) (int, error)
@@ -214,15 +213,6 @@ func (r *AppRepositoryImpl) GetAppList(userId int) ([]store.AppDto, error) {
 	}
 
 	return apps, nil
-}
-
-func (r *AppRepositoryImpl) GetAppName(appId int) (string, error) {
-	var appName string
-	err := r.DatabaseProvider.GetDb().QueryRow("SELECT app_name FROM apps WHERE app_id = $1", appId).Scan(&appName)
-	if err != nil {
-		return "", fmt.Errorf("failed to get app name: %w", err)
-	}
-	return appName, nil
 }
 
 func (r *AppRepositoryImpl) GetMaintainerName(appId int) (string, error) {

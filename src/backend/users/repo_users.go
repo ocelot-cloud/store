@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"ocelot/store/tools"
-	"time"
 
 	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/store"
@@ -29,7 +28,6 @@ type UserRepository interface {
 	GetUserById(userId int) (*tools.User, error)
 
 	// TODO !! replace functions
-	IsCookieExpired(cookie string) bool
 	IsThereEnoughSpaceToAddVersion(user string, bytesToAdd int) error
 	GetUsedSpaceInBytes(user string) (int, error)
 	WipeDatabase()
@@ -178,27 +176,6 @@ func (r *UserRepositoryImpl) DeleteUser(user string) error {
 	}
 
 	return nil
-}
-
-func (r *UserRepositoryImpl) IsCookieExpired(cookie string) bool {
-	hashedCookieValue := u.GetSHA256Hash(cookie)
-
-	var expirationDateStr string
-	err := r.DatabaseProvider.GetDb().QueryRow("SELECT expiration_date FROM users WHERE hashed_cookie_value = $1", hashedCookieValue).Scan(&expirationDateStr)
-	if err != nil {
-		u.Logger.Error("Failed to fetch expiration date", deepstack.ErrorField, err)
-		return true
-	} else if expirationDateStr == "" {
-		return true
-	}
-
-	expirationDate, err := time.Parse(time.RFC3339, expirationDateStr)
-	if err != nil {
-		u.Logger.Error("Failed to parse expiration date", deepstack.ErrorField, err)
-		return true
-	}
-
-	return time.Now().UTC().After(expirationDate)
 }
 
 func (r *UserRepositoryImpl) GetUserViaCookie(hashedCookieValue string) (*tools.User, error) {

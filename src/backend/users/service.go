@@ -74,3 +74,17 @@ func (r *UserServiceImpl) SaveCookie(userName, cookie string, expirationDate tim
 	user.ExpirationDate = &expirationDateString
 	return r.UserRepo.UpdateUser(user)
 }
+
+func (r *UserServiceImpl) IsCookieExpired(cookie string) (bool, error) {
+	hashedCookieValue := u.GetSHA256Hash(cookie)
+	user, err := r.UserRepo.GetUserViaCookie(hashedCookieValue)
+	if err != nil {
+		return true, err
+	}
+
+	expirationDate, err := time.Parse(time.RFC3339, *user.ExpirationDate)
+	if err != nil {
+		return true, u.Logger.NewError(err.Error())
+	}
+	return time.Now().UTC().After(expirationDate), nil
+}

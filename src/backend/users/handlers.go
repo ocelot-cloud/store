@@ -247,7 +247,13 @@ func (h *UserHandler) CheckAuthentication(w http.ResponseWriter, r *http.Request
 		return nil, fmt.Errorf("")
 	}
 
-	if h.UserRepo.IsCookieExpired(cookie.Value) {
+	isExpired, err := h.UserService.IsCookieExpired(cookie.Value)
+	if err != nil {
+		u.Logger.Error("checking if cookie is expired failed", deepstack.ErrorField, err)
+		http.Error(w, "error when checking if cookie is expired", http.StatusBadRequest)
+		return nil, fmt.Errorf("")
+	}
+	if isExpired {
 		u.Logger.Warn("user used an expired cookie", tools.UserField, user)
 		http.Error(w, "cookie expired", http.StatusBadRequest)
 		return nil, fmt.Errorf("")

@@ -25,7 +25,7 @@ type UserRepository interface {
 	DoesEmailExist(email string) bool
 	DeleteUser(user string) error
 	GetUserViaCookie(hashedCookieValue string) (*tools.User, error)
-	ChangePassword(user string, newPassword string) error // TODO !! pass userID, not name
+	ChangePassword(userId int, newPassword string) error
 	Logout(user string) error
 
 	// TODO !! replace functions
@@ -198,14 +198,14 @@ func (r *UserRepositoryImpl) GetUserViaCookie(hashedCookieValue string) (*tools.
 	return &user, nil
 }
 
-func (r *UserRepositoryImpl) ChangePassword(user string, newPassword string) error {
+func (r *UserRepositoryImpl) ChangePassword(userId int, newPassword string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
 		u.Logger.Error("Failed to hash password", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to hash password")
 	}
 
-	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET hashed_password = $1 WHERE user_name = $2", hashedPassword, user)
+	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET hashed_password = $1 WHERE user_id = $2", hashedPassword, userId)
 	if err != nil {
 		u.Logger.Error("Failed to change password", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to change password")

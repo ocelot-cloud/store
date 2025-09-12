@@ -121,7 +121,7 @@ func (h *UserHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = h.UserRepo.ChangePassword(user.UserName, form.NewPassword)
+	err = h.UserRepo.ChangePassword(user.UserId, form.NewPassword)
 	if err != nil {
 		u.Logger.Error("changing password for user failed", tools.UserField, user, deepstack.ErrorField, err)
 		http.Error(w, "error when trying to change password", http.StatusBadRequest)

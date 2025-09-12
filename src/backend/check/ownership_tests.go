@@ -3,7 +3,7 @@ package check
 // TODO !! check whether other file already test ownership, and centralize it here
 // TODO !! test cases from this: you can not operate on apps or versions you dont own -> deletion/creation(or upload) etc. make research which operations are affected
 
-// TODO !! delete app you do not own
+// TODO !! use case: delete app you do not own
 
 /* material
 

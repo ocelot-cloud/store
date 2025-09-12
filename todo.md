@@ -1,5 +1,6 @@
 TODO
 
+* maybe make an implementation for user registration/validation like: if test mode -> return static sample registration code, otherwise create a random one
 * introduce deepstack error wrapping in repos
 * remove "log/respond" duplication in handlers
 * replace repo tests by component tests to not leave out important use cases in test suite

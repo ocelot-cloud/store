@@ -19,7 +19,7 @@ type VersionRepository interface {
 	CreateVersion(appId int, version string, data []byte) error
 	DeleteVersion(versionId int) error
 	ListVersionsOfApp(appId int) ([]store.Version, error)
-	GetFullVersionInfo(versionId int) (*store.FullVersionInfo, error)
+	GetVersion(versionId int) (*store.FullVersionInfo, error)
 }
 
 type VersionRepositoryImpl struct {
@@ -28,7 +28,7 @@ type VersionRepositoryImpl struct {
 	AppRepo          apps.AppRepository
 }
 
-func (r *VersionRepositoryImpl) GetFullVersionInfo(versionId int) (*store.FullVersionInfo, error) {
+func (r *VersionRepositoryImpl) GetVersion(versionId int) (*store.FullVersionInfo, error) {
 
 	var fullVersionInfo store.FullVersionInfo
 	err := r.DatabaseProvider.GetDb().QueryRow(`

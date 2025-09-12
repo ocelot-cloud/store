@@ -180,7 +180,7 @@ func (v *VersionsHandler) VersionDownloadHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	versionInfo, err := v.VersionRepo.GetFullVersionInfo(versionId)
+	versionInfo, err := v.VersionRepo.GetVersion(versionId)
 	if err != nil {
 		u.Logger.Error("error when accessing version info", deepstack.ErrorField, err)
 		http.Error(w, "error when accessing version info", http.StatusBadRequest)

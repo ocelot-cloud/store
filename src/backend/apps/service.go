@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	AppNameReservedError  = "app name is reserved"
-	AppAlreadyExistsError = "app already exists"
+	AppNameReservedError    = "app name is reserved"
+	AppAlreadyExistsError   = "app already exists"
+	YouDoNotOwnThisAppError = "you do not own this app"
 )
 
 type AppServiceImpl struct {
@@ -16,12 +17,13 @@ type AppServiceImpl struct {
 	UserRepo users.UserRepository
 }
 
-func (a *AppServiceImpl) DoesUserOwnApp(userId, appId int) (bool, error) {
+// TODO !! can be made hidden?
+func (a *AppServiceImpl) DoesUserOwnApp(requestingUsersId, appId int) (bool, error) {
 	actualUserId, err := a.AppRepo.GetUserIdOfApp(appId)
 	if err != nil {
 		return false, err
 	}
-	return actualUserId == userId, nil
+	return actualUserId == requestingUsersId, nil
 }
 
 func (a *AppServiceImpl) CreateAppWithChecks(userId int, appName string) error {
@@ -42,4 +44,15 @@ func (a *AppServiceImpl) CreateAppWithChecks(userId int, appName string) error {
 		return err
 	}
 	return nil
+}
+
+func (a *AppServiceImpl) DeleteAppWithChecks(requestingUsersId, appId int) error {
+	isOwner, err := a.DoesUserOwnApp(requestingUsersId, appId)
+	if err != nil {
+		return err
+	}
+	if !isOwner {
+		return u.Logger.NewError(YouDoNotOwnThisAppError)
+	}
+	return a.AppRepo.DeleteApp(appId)
 }

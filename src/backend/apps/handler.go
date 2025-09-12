@@ -37,28 +37,10 @@ func (a *AppsHandler) AppDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-
-	isOwner, err := a.AppService.DoesUserOwnApp(user.Id, appId)
+	err = a.AppService.DeleteAppWithChecks(user.Id, appId)
 	if err != nil {
-		u.Logger.Error("error when checking if user owns app", deepstack.ErrorField, err, tools.UserField, user, tools.AppIdField, appId)
-		http.Error(w, "error when checking app ownership", http.StatusBadRequest)
-		return
+		u.WriteResponseError(w, u.MapOf(YouDoNotOwnThisAppError), err)
 	}
-	if !isOwner {
-		u.Logger.Warn("user tried to delete app with ID but does not own it", tools.UserField, user, tools.AppIdField, appId)
-		http.Error(w, "you do not own this app", http.StatusBadRequest)
-		return
-	}
-
-	err = a.AppRepo.DeleteApp(appId)
-	if err != nil {
-		u.Logger.Error("user tried to delete app with ID but it failed", tools.UserField, user, tools.AppIdField, appId)
-		http.Error(w, "app deletion failed", http.StatusBadRequest)
-		return
-	}
-
-	u.Logger.Info("user deleted app with ID", tools.UserField, user, tools.AppIdField, appId)
-	w.WriteHeader(http.StatusOK)
 }
 
 func ReadBodyAsStringNumber(w http.ResponseWriter, r *http.Request) (int, error) {

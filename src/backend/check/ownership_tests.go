@@ -43,7 +43,7 @@ func testVersionOwnership(t *testing.T, hub *store.AppStoreClient, operation fun
 	assert.Nil(t, hub.Login())
 	err := operation()
 	assert.NotNil(t, err)
-	assert.Equal(t, u.GetErrMsg(400, "you do not own this app"), err.Error())
+	assert.Equal(t, u.GetErrMsg(400, apps.YouDoNotOwnThisAppError), err.Error())
 }
 
 func TestOwnershipOfDeleteVersion(t *testing.T) {

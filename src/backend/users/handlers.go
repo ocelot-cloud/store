@@ -226,7 +226,8 @@ func (h *UserHandler) CheckAuthentication(w http.ResponseWriter, r *http.Request
 		return nil, fmt.Errorf("")
 	}
 
-	user, err := h.UserRepo.GetUserViaCookie(cookie.Value)
+	hashedCookieValue := u.GetSHA256Hash(cookie.Value)
+	user, err := h.UserRepo.GetUserViaCookie(hashedCookieValue)
 	if err != nil {
 		u.Logger.Info("error when getting cookie of user", deepstack.ErrorField, err)
 		http.Error(w, "cookie not found", http.StatusBadRequest)

@@ -88,15 +88,8 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	maintainerName, err := v.AppRepo.GetMaintainerName(appId)
-	if err != nil {
-		u.Logger.Error("getting maintainer name failed", deepstack.ErrorField, err)
-		http.Error(w, "internal error", http.StatusBadRequest)
-		return
-	}
-
 	// TODO !! add deepstack errors
-	err = validation.ValidateVersion(versionUpload.Content, maintainerName, app.Name)
+	err = validation.ValidateVersion(versionUpload.Content, app.Maintainer, app.Name)
 	if err != nil {
 		// TODO !! expected error: "zip: not a valid zip file" -> make this a an error in "shared" for reuse?
 		u.WriteResponseError(w, u.MapOf("zip: not a valid zip file"), err, tools.UserField, user)

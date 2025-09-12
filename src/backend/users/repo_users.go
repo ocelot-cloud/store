@@ -25,9 +25,10 @@ type UserRepository interface {
 	ChangePassword(userId int, newPassword string) error
 	Logout(user string) error
 	GetUserByName(user string) (*tools.User, error)
+	UpdateUser(*tools.User) error
+	GetUserById(userId int) (*tools.User, error)
 
 	// TODO !! replace functions
-	HashAndSaveCookie(user string, cookie string, expirationDate time.Time) error
 	IsCookieExpired(cookie string) bool
 	IsThereEnoughSpaceToAddVersion(user string, bytesToAdd int) error
 	GetUsedSpaceInBytes(user string) (int, error)
@@ -41,6 +42,59 @@ type UserRepositoryImpl struct {
 }
 
 var NotEnoughSpacePrefix = "not enough space"
+
+func (r *UserRepositoryImpl) GetUserById(userId int) (*tools.User, error) {
+	var user tools.User
+	err := r.DatabaseProvider.GetDb().QueryRow(
+		`SELECT 
+			user_id, 
+			user_name, 
+			email, 
+			hashed_password, 
+			hashed_cookie_value,
+			expiration_date, 
+			used_space
+		 FROM users 
+		 WHERE user_id = $1`,
+		userId,
+	).Scan(
+		&user.UserId,
+		&user.UserName,
+		&user.Email,
+		&user.HashedPassword,
+		&user.HashedCookieValue,
+		&user.ExpirationDate,
+		&user.UsedSpace,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *UserRepositoryImpl) UpdateUser(user *tools.User) error {
+	_, err := r.DatabaseProvider.GetDb().Exec(
+		`UPDATE users 
+		 SET user_name = $1,
+		     email = $2,
+		     hashed_password = $3,
+		     hashed_cookie_value = $4,
+		     expiration_date = $5,
+		     used_space = $6
+		 WHERE user_id = $7`,
+		user.UserName,
+		user.Email,
+		user.HashedPassword,
+		user.HashedCookieValue,
+		user.ExpirationDate,
+		user.UsedSpace,
+		user.UserId,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
+	}
+	return nil
+}
 
 func (r *UserRepositoryImpl) GetUserByName(userName string) (*tools.User, error) {
 	var user tools.User
@@ -123,17 +177,6 @@ func (r *UserRepositoryImpl) DeleteUser(user string) error {
 		return fmt.Errorf("failed to delete user")
 	}
 
-	return nil
-}
-
-func (r *UserRepositoryImpl) HashAndSaveCookie(user string, cookie string, expirationDate time.Time) error {
-	hashedCookieValue := u.GetSHA256Hash(cookie)
-
-	_, err := r.DatabaseProvider.GetDb().Exec("UPDATE users SET hashed_cookie_value = $1, expiration_date = $2 WHERE user_name = $3", hashedCookieValue, expirationDate.Format(time.RFC3339), user)
-	if err != nil {
-		u.Logger.Error("Failed to hash and save cookie", deepstack.ErrorField, err)
-		return fmt.Errorf("failed to hash and save cookie")
-	}
 	return nil
 }
 

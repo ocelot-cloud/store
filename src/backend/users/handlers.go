@@ -70,7 +70,7 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = h.UserRepo.HashAndSaveCookie(creds.User, cookie.Value, cookie.Expires)
+	err = h.UserService.SaveCookie(creds.User, cookie.Value, cookie.Expires)
 	if err != nil {
 		u.Logger.Error("setting cookie failed", deepstack.ErrorField, err)
 		http.Error(w, "setting cookie failed", http.StatusBadRequest)
@@ -254,7 +254,7 @@ func (h *UserHandler) CheckAuthentication(w http.ResponseWriter, r *http.Request
 	}
 
 	newExpirationTime := u.GetTimeInSevenDays()
-	err = h.UserRepo.HashAndSaveCookie(user.UserName, cookie.Value, newExpirationTime)
+	err = h.UserService.SaveCookie(user.UserName, cookie.Value, newExpirationTime)
 	if err != nil {
 		u.Logger.Error("setting new cookie failed", deepstack.ErrorField, err)
 		http.Error(w, "setting new cookie failed", http.StatusBadRequest)

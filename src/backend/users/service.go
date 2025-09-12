@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"ocelot/store/tools"
+	"time"
 
 	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/store"
@@ -58,4 +59,18 @@ func (r *UserServiceImpl) IsPasswordCorrect(userName string, password string) (b
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password))
 	return err == nil, nil
+}
+
+// TODO !! cookie expiration time should be real postgres timestamp type
+func (r *UserServiceImpl) SaveCookie(userName, cookie string, expirationDate time.Time) error {
+	user, err := r.UserRepo.GetUserByName(userName)
+	if err != nil {
+		return err
+	}
+
+	hashedCookieValue := u.GetSHA256Hash(cookie)
+	user.HashedCookieValue = &hashedCookieValue
+	expirationDateString := expirationDate.Format(time.RFC3339)
+	user.ExpirationDate = &expirationDateString
+	return r.UserRepo.UpdateUser(user)
 }

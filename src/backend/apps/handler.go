@@ -14,8 +14,9 @@ import (
 )
 
 type AppsHandler struct {
-	AppRepo  AppRepository
-	UserRepo users.UserRepository
+	AppRepo    AppRepository
+	UserRepo   users.UserRepository
+	AppService *AppServiceImpl
 }
 
 func (a *AppsHandler) AppCreationHandler(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +68,13 @@ func (a *AppsHandler) AppDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !a.AppRepo.DoesUserOwnApp(user.Id, appId) {
+	isOwner, err := a.AppService.DoesUserOwnApp(user.Id, appId)
+	if err != nil {
+		u.Logger.Error("error when checking if user owns app", deepstack.ErrorField, err, tools.UserField, user, tools.AppIdField, appId)
+		http.Error(w, "error when checking app ownership", http.StatusBadRequest)
+		return
+	}
+	if !isOwner {
 		u.Logger.Warn("user tried to delete app with ID but does not own it", tools.UserField, user, tools.AppIdField, appId)
 		http.Error(w, "you do not own this app", http.StatusBadRequest)
 		return

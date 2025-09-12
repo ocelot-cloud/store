@@ -21,6 +21,7 @@ type VersionsHandler struct {
 	UserRepo       users.UserRepository
 	VersionService *VersionService
 	UserService    *users.UserServiceImpl
+	AppService     *apps.AppServiceImpl
 }
 
 // TODO !! too long, shift to service, maybe simplify?
@@ -75,7 +76,13 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if !v.AppRepo.DoesUserOwnApp(user.Id, appId) {
+	isOwner, err := v.AppService.DoesUserOwnApp(user.Id, appId)
+	if err != nil {
+		u.Logger.Error("error when checking if user owns app", deepstack.ErrorField, err, tools.UserField, user, tools.AppIdField, versionUpload.AppId)
+		http.Error(w, "error when checking app ownership", http.StatusBadRequest)
+		return
+	}
+	if !isOwner {
 		u.Logger.Warn("user tried to delete app but does not own it", tools.UserField, user, tools.AppIdField, versionUpload.AppId)
 		http.Error(w, "you do not own this app", http.StatusBadRequest)
 		return

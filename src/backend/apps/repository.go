@@ -21,8 +21,6 @@ type AppRepository interface {
 	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error) // TODO !! not sure whether it makes sense to maybe improve my search function, like explicitly say have a field for maintainer and app you can search for; if empty, its ignored
 	GetAppById(appId int) (store.AppDto, error)
 	DoesAppExist(userID int, app string) (bool, error) // TODO !! should return bool
-
-	DoesUserOwnApp(userId, appId int) bool // TODO !! can be removed, is already covered by function below -> get owner, check if it correct
 	GetUserIdOfApp(appId int) (int, error)
 }
 
@@ -47,17 +45,6 @@ func (r *AppRepositoryImpl) GetAppById(appId int) (store.AppDto, error) {
 	}
 	app.Id = strconv.Itoa(appId) // TODO !! remove this, should be an integer
 	return app, nil
-}
-
-func (r *AppRepositoryImpl) DoesUserOwnApp(userId, appId int) bool {
-	var ownerId int
-	err := r.DatabaseProvider.GetDb().QueryRow("SELECT user_id FROM apps WHERE app_id = $1", appId).Scan(&ownerId)
-	if err != nil {
-		u.Logger.Error("Failed to get app owner ID", deepstack.ErrorField, err)
-		return false
-	}
-
-	return userId == ownerId
 }
 
 func (r *AppRepositoryImpl) CreateApp(userId int, app string) error {

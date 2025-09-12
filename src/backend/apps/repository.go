@@ -11,16 +11,14 @@ import (
 	"strconv"
 )
 
-// TODO !! never pass username if you could pass user ID instead
 type AppRepository interface {
-	// TODO !! keep functions
 	DoesAppIdExist(appId int) bool
 	CreateApp(userId int, app string) error
 	DeleteApp(appId int) error
 	GetAppList(userId int) ([]store.AppDto, error)
 	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error) // TODO !! not sure whether it makes sense to maybe improve my search function, like explicitly say have a field for maintainer and app you can search for; if empty, its ignored
 	GetAppById(appId int) (store.AppDto, error)
-	DoesAppExist(userID int, app string) (bool, error) // TODO !! should return bool
+	DoesAppExist(userID int, app string) (bool, error)
 	GetUserIdOfApp(appId int) (int, error)
 }
 
@@ -136,6 +134,7 @@ func (r *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 		query += " AND u.user_name = 'ocelotcloud'"
 	}
 	query += " LIMIT 100"
+	// TODO !! maybe inject the limit from outside to easier integration testing later
 
 	rows, err := r.DatabaseProvider.GetDb().Query(query, "%"+request.SearchTerm+"%", "%"+request.SearchTerm+"%")
 	if err != nil {

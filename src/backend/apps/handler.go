@@ -27,6 +27,7 @@ func (a *AppsHandler) AppCreationHandler(w http.ResponseWriter, r *http.Request)
 	err = a.AppService.CreateAppWithChecks(user.Id, appString.Value)
 	if err != nil {
 		u.WriteResponseError(w, u.MapOf(AppNameReservedError, AppAlreadyExistsError), err)
+		return
 	}
 }
 
@@ -39,6 +40,7 @@ func (a *AppsHandler) AppDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	err = a.AppService.DeleteAppWithChecks(user.Id, appId)
 	if err != nil {
 		u.WriteResponseError(w, u.MapOf(YouDoNotOwnThisAppError), err)
+		return
 	}
 }
 
@@ -61,6 +63,7 @@ func (a *AppsHandler) AppGetListHandler(w http.ResponseWriter, r *http.Request) 
 	list, err := a.AppRepo.GetAppList(user.Id)
 	if err != nil {
 		u.WriteResponseError(w, nil, err)
+		return
 	}
 	u.SendJsonResponse(w, list)
 }
@@ -74,6 +77,7 @@ func (a *AppsHandler) SearchForAppsHandler(w http.ResponseWriter, r *http.Reques
 	apps, err := a.AppRepo.SearchForApps(*appSearchRequest)
 	if err != nil {
 		u.WriteResponseError(w, nil, err)
+		return
 	}
 	u.SendJsonResponse(w, apps)
 }

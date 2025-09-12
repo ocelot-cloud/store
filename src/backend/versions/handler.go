@@ -6,13 +6,10 @@ import (
 	"ocelot/store/apps"
 	"ocelot/store/tools"
 	"ocelot/store/users"
-	"strconv"
-	"strings"
 
 	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
-	"github.com/ocelot-cloud/shared/validation"
 )
 
 type VersionsHandler struct {
@@ -29,7 +26,6 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 	user := tools.GetUserFromContext(r)
 	r.Body = http.MaxBytesReader(w, r.Body, tools.MaxPayloadSize)
 	defer u.Close(r.Body)
-
 	var versionUpload store.VersionUploadDto
 	err := json.NewDecoder(r.Body).Decode(&versionUpload)
 	if err != nil {
@@ -43,88 +39,16 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 			return
 		}
 	}
-
-	err = validation.ValidateStruct(versionUpload)
+	err = v.VersionService.UploadVersion(user.Id, &versionUpload)
 	if err != nil {
-		u.Logger.Info("version upload of user failed", tools.UserField, user, deepstack.ErrorField, err)
-		http.Error(w, "invalid input", http.StatusBadRequest)
-		return
-	}
-
-	err = v.UserService.IsThereEnoughSpaceToAddVersion(user.Id, len(versionUpload.Content))
-	if err != nil {
-		if strings.HasPrefix(err.Error(), users.NotEnoughSpacePrefix) {
-			u.Logger.Info("version upload of user failed: not enough space", tools.UserField, user)
-			http.Error(w, err.Error(), http.StatusInsufficientStorage)
-			return
-		} else {
-			http.Error(w, "internal error", http.StatusBadRequest)
-			return
-		}
-	}
-
-	appId, err := strconv.Atoi(versionUpload.AppId)
-	if err != nil {
-		u.Logger.Info("user tried to upload version to app, but app ID is not a number", tools.UserField, user, tools.VersionField, versionUpload.Version, tools.AppIdField, versionUpload.AppId)
-		http.Error(w, "could not convert to number", http.StatusBadRequest)
-		return
-	}
-
-	if !v.AppRepo.DoesAppIdExist(appId) {
-		u.Logger.Info("user tried to upload version to app, but app does not exist", tools.UserField, user, tools.VersionField, versionUpload.Version, tools.AppIdField, versionUpload.AppId)
-		http.Error(w, "app does not exist", http.StatusBadRequest)
-		return
-	}
-
-	isOwner, err := v.AppService.DoesUserOwnApp(user.Id, appId)
-	if err != nil {
-		u.Logger.Error("error when checking if user owns app", deepstack.ErrorField, err, tools.UserField, user, tools.AppIdField, versionUpload.AppId)
-		http.Error(w, "error when checking app ownership", http.StatusBadRequest)
-		return
-	}
-	if !isOwner {
-		u.Logger.Warn("user tried to delete app but does not own it", tools.UserField, user, tools.AppIdField, versionUpload.AppId)
-		http.Error(w, "you do not own this app", http.StatusBadRequest)
-		return
-	}
-
-	app, err := v.AppRepo.GetAppById(appId)
-	if err != nil {
-		u.Logger.Error("getting app name failed", deepstack.ErrorField, err)
-		http.Error(w, "internal error", http.StatusBadRequest)
-		return
-	}
-
-	// TODO !! add deepstack errors
-	err = validation.ValidateVersion(versionUpload.Content, app.Maintainer, app.Name)
-	if err != nil {
+		// TODO !! should be put in "shared"
+		// TODO !! space use case to be covered by component tests I guess? also NotOwningThisVersionError
 		// TODO !! expected error: "zip: not a valid zip file" -> make this a an error in "shared" for reuse?
-		u.WriteResponseError(w, u.MapOf("zip: not a valid zip file"), err, tools.UserField, user)
+
+		expectedErros := u.MapOf("invalid input", users.NotEnoughSpacePrefix, NotOwningThisVersionError, "zip: not a valid zip file", VersionAlreadyExist, "app does not exist")
+		u.WriteResponseError(w, expectedErros, err)
 		return
 	}
-
-	doesVersionExist, err := v.VersionRepo.DoesVersionNameExist(appId, versionUpload.Version)
-	if err != nil {
-		u.Logger.Error("checking if version exists failed", deepstack.ErrorField, err)
-		http.Error(w, "internal error", http.StatusBadRequest)
-		return
-	}
-
-	if doesVersionExist {
-		u.Logger.Info("user tried to upload version to app, but version already exists", tools.UserField, user, tools.VersionField, versionUpload.Version, tools.AppIdField, versionUpload.AppId)
-		http.Error(w, "version already exists", http.StatusBadRequest)
-		return
-	}
-
-	err = v.VersionRepo.CreateVersion(appId, versionUpload.Version, versionUpload.Content)
-	if err != nil {
-		u.Logger.Error("creating version failed", deepstack.ErrorField, err)
-		http.Error(w, "invalid input", http.StatusBadRequest)
-		return
-	}
-
-	u.Logger.Info("version was uploaded to app by user", tools.VersionField, versionUpload.Version, tools.AppIdField, versionUpload.AppId, tools.UserField, user)
-	w.WriteHeader(http.StatusOK)
 }
 
 func (v *VersionsHandler) VersionDeleteHandler(w http.ResponseWriter, r *http.Request) {

@@ -7,7 +7,6 @@ import (
 	"ocelot/store/users"
 	"strconv"
 
-	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
 	"github.com/ocelot-cloud/shared/validation"
@@ -59,14 +58,10 @@ func ReadBodyAsStringNumber(w http.ResponseWriter, r *http.Request) (int, error)
 
 func (a *AppsHandler) AppGetListHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-
 	list, err := a.AppRepo.GetAppList(user.Id)
 	if err != nil {
-		u.Logger.Warn("error getting app list", deepstack.ErrorField, err)
-		http.Error(w, "error getting app list", http.StatusBadRequest)
+		u.WriteResponseError(w, nil, err)
 	}
-
-	u.Logger.Info("got apps of user", tools.UserField, user)
 	u.SendJsonResponse(w, list)
 }
 
@@ -78,10 +73,7 @@ func (a *AppsHandler) SearchForAppsHandler(w http.ResponseWriter, r *http.Reques
 
 	apps, err := a.AppRepo.SearchForApps(*appSearchRequest)
 	if err != nil {
-		u.Logger.Warn("error finding apps", deepstack.ErrorField, err)
-		http.Error(w, "error finding apps", http.StatusBadRequest)
-		return
+		u.WriteResponseError(w, nil, err)
 	}
-
 	u.SendJsonResponse(w, apps)
 }

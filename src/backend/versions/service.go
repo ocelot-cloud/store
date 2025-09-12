@@ -98,3 +98,14 @@ func (s *VersionService) UploadVersion(userId int, versionUpload *store.VersionU
 	}
 	return nil
 }
+
+func (s *VersionService) ListVersions(appId int) ([]store.LeanVersionDto, error) {
+	if !s.AppRepo.DoesAppIdExist(appId) {
+		return nil, u.Logger.NewError(AppDoesNotExist)
+	}
+	versionsList, err := s.VersionRepo.ListVersionsOfApp(appId)
+	if err != nil {
+		return nil, err
+	}
+	return versionsList, nil
+}

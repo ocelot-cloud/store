@@ -51,7 +51,7 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 }
 
 func (v *VersionsHandler) VersionDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	user := tools.GetUserFromContext(r) // TODO !! should be a user, not only a string
+	user := tools.GetUserFromContext(r)
 	versionId, err := apps.ReadBodyAsStringNumber(w, r)
 	if err != nil {
 		return
@@ -67,20 +67,11 @@ func (v *VersionsHandler) GetVersionsHandler(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		return
 	}
-
-	if !v.AppRepo.DoesAppIdExist(appId) {
-		u.Logger.Info("someone tried to list versions but app does not exist", tools.AppIdField, appId)
-		http.Error(w, AppDoesNotExist, http.StatusBadRequest)
-		return
-	}
-
-	versionsList, err := v.VersionRepo.ListVersionsOfApp(appId)
+	versionsList, err := v.VersionService.ListVersions(appId)
 	if err != nil {
-		u.Logger.Error("getting version list failed for app", tools.AppIdField, appId)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		u.WriteResponseError(w, u.MapOf(AppDoesNotExist), err)
 		return
 	}
-
 	u.SendJsonResponse(w, versionsList)
 }
 

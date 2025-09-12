@@ -28,7 +28,6 @@ type UserRepository interface {
 	GetUserById(userId int) (*tools.User, error)
 
 	// TODO !! replace functions
-	IsThereEnoughSpaceToAddVersion(user string, bytesToAdd int) error
 	GetUsedSpaceInBytes(user string) (int, error)
 	WipeDatabase()
 	GetUserId(user string) (int, error)
@@ -56,8 +55,8 @@ func (r *UserRepositoryImpl) GetUserById(userId int) (*tools.User, error) {
 		 WHERE user_id = $1`,
 		userId,
 	).Scan(
-		&user.UserId,
-		&user.UserName,
+		&user.Id,
+		&user.Name,
 		&user.Email,
 		&user.HashedPassword,
 		&user.HashedCookieValue,
@@ -80,13 +79,13 @@ func (r *UserRepositoryImpl) UpdateUser(user *tools.User) error {
 		     expiration_date = $5,
 		     used_space = $6
 		 WHERE user_id = $7`,
-		user.UserName,
+		user.Name,
 		user.Email,
 		user.HashedPassword,
 		user.HashedCookieValue,
 		user.ExpirationDate,
 		user.UsedSpaceInBytes,
-		user.UserId,
+		user.Id,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update user: %w", err)
@@ -109,8 +108,8 @@ func (r *UserRepositoryImpl) GetUserByName(userName string) (*tools.User, error)
 		 WHERE user_name = $1`,
 		userName,
 	).Scan(
-		&user.UserId,
-		&user.UserName,
+		&user.Id,
+		&user.Name,
 		&user.Email,
 		&user.HashedPassword,
 		&user.HashedCookieValue,
@@ -170,8 +169,8 @@ func (r *UserRepositoryImpl) GetUserViaCookie(hashedCookieValue string) (*tools.
 		 FROM users WHERE hashed_cookie_value = $1`,
 		hashedCookieValue,
 	).Scan(
-		&user.UserId,
-		&user.UserName,
+		&user.Id,
+		&user.Name,
 		&user.Email,
 		&user.HashedPassword,
 		&user.HashedCookieValue,

@@ -25,7 +25,7 @@ func (a *AppsHandler) AppCreationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if !a.UserRepo.DoesUserExist(user.UserName) {
+	if !a.UserRepo.DoesUserExist(user.Name) {
 		u.Logger.Info("user tried to create app but it does not exist", tools.UserField, user, tools.AppField, appString)
 		http.Error(w, "user does not exists", http.StatusBadRequest)
 		return
@@ -37,14 +37,14 @@ func (a *AppsHandler) AppCreationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = a.AppRepo.GetAppId(user.UserName, appString.Value)
+	_, err = a.AppRepo.GetAppId(user.Name, appString.Value)
 	if err == nil {
 		u.Logger.Info("user tried to create app but it already exists", tools.UserField, user, tools.AppField, appString)
 		http.Error(w, "app already exists", http.StatusBadRequest)
 		return
 	}
 
-	err = a.AppRepo.CreateApp(user.UserName, appString.Value)
+	err = a.AppRepo.CreateApp(user.Name, appString.Value)
 	if err != nil {
 		u.Logger.Error("user tried to create app but it failed", tools.UserField, user, tools.AppField, appString, deepstack.ErrorField, err)
 		http.Error(w, "app creation failed", http.StatusBadRequest)
@@ -62,7 +62,7 @@ func (a *AppsHandler) AppDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !a.AppRepo.DoesUserOwnApp(user.UserName, appId) {
+	if !a.AppRepo.DoesUserOwnApp(user.Name, appId) {
 		u.Logger.Warn("user tried to delete app with ID but does not own it", tools.UserField, user, tools.AppIdField, appId)
 		http.Error(w, "you do not own this app", http.StatusBadRequest)
 		return
@@ -96,7 +96,7 @@ func ReadBodyAsStringNumber(w http.ResponseWriter, r *http.Request) (int, error)
 func (a *AppsHandler) AppGetListHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
 
-	list, err := a.AppRepo.GetAppList(user.UserName)
+	list, err := a.AppRepo.GetAppList(user.Name)
 	if err != nil {
 		u.Logger.Warn("error getting app list", deepstack.ErrorField, err)
 		http.Error(w, "error getting app list", http.StatusBadRequest)

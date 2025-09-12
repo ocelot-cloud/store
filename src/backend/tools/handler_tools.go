@@ -14,8 +14,8 @@ func GetUserFromContext(r *http.Request) User {
 }
 
 type User struct {
-	UserId            int
-	UserName          string
+	Id                int
+	Name              string
 	Email             string
 	HashedPassword    string
 	HashedCookieValue *string

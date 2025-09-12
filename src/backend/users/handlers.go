@@ -85,19 +85,19 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 // TODO !! Should we send more info of user object? e.g. cookie expiration time (for testing)?
 func (h *UserHandler) AuthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-	u.SendJsonResponse(w, store.UserNameString{Value: user.UserName})
+	u.SendJsonResponse(w, store.UserNameString{Value: user.Name})
 }
 
 func (h *UserHandler) UserDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
 
-	if !h.UserRepo.DoesUserExist(user.UserName) {
+	if !h.UserRepo.DoesUserExist(user.Name) {
 		u.Logger.Error("user wanted to delete his account but seems not to exist although authenticated", tools.UserField, user)
 		http.Error(w, "user does not exist", http.StatusBadRequest)
 		return
 	}
 
-	err := h.UserRepo.DeleteUser(user.UserName)
+	err := h.UserRepo.DeleteUser(user.Name)
 	if err != nil {
 		u.Logger.Error("user deletion failed", tools.UserField, err)
 		http.Error(w, "user deletion failed", http.StatusBadRequest)
@@ -116,13 +116,13 @@ func (h *UserHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if !h.UserRepo.DoesUserExist(user.UserName) {
+	if !h.UserRepo.DoesUserExist(user.Name) {
 		u.Logger.Warn("somebody tried to change password but user does not exist", tools.UserField, user)
 		http.Error(w, "user does not exist", http.StatusBadRequest)
 		return
 	}
 
-	isCorrect, err := h.UserService.IsPasswordCorrect(user.UserName, form.OldPassword)
+	isCorrect, err := h.UserService.IsPasswordCorrect(user.Name, form.OldPassword)
 	if err != nil {
 		u.Logger.Error("checking password of user failed", deepstack.ErrorField, err)
 		http.Error(w, "error when checking password", http.StatusBadRequest)
@@ -134,7 +134,7 @@ func (h *UserHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = h.UserRepo.ChangePassword(user.UserId, form.NewPassword)
+	err = h.UserRepo.ChangePassword(user.Id, form.NewPassword)
 	if err != nil {
 		u.Logger.Error("changing password for user failed", tools.UserField, user, deepstack.ErrorField, err)
 		http.Error(w, "error when trying to change password", http.StatusBadRequest)
@@ -147,7 +147,7 @@ func (h *UserHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Reque
 
 func (h *UserHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-	err := h.UserRepo.Logout(user.UserName)
+	err := h.UserRepo.Logout(user.Name)
 	if err != nil {
 		u.Logger.Error("logout of user failed", tools.UserField, user, deepstack.ErrorField, err)
 		http.Error(w, "logout failed", http.StatusBadRequest)
@@ -260,7 +260,7 @@ func (h *UserHandler) CheckAuthentication(w http.ResponseWriter, r *http.Request
 	}
 
 	newExpirationTime := u.GetTimeInSevenDays()
-	err = h.UserService.SaveCookie(user.UserName, cookie.Value, newExpirationTime)
+	err = h.UserService.SaveCookie(user.Name, cookie.Value, newExpirationTime)
 	if err != nil {
 		u.Logger.Error("setting new cookie failed", deepstack.ErrorField, err)
 		http.Error(w, "setting new cookie failed", http.StatusBadRequest)

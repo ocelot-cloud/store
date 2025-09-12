@@ -19,10 +19,10 @@ type AppRepository interface {
 	CreateApp(userId int, app string) error
 	DeleteApp(appId int) error
 	GetAppList(userId int) ([]store.App, error)
-	// TODO !! add : GetAppById(appId int) (store.App, error)
+	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error) // TODO !! not sure whether it makes sense to maybe improve my search function, like explicitly say have a field for maintainer and app you can search for; if empty, its ignored
+	GetAppById(appId int) (store.App, error)
 
 	// TODO !! remove functions
-	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error) // TODO !! not sure whether it makes sense to maybe improve my search function, like explicitly say have a field for maintainer and app you can search for; if empty, its ignored
 	GetAppName(appId int) (string, error)
 	GetMaintainerName(appId int) (string, error)
 	// TODO !! duplication, only give ID? or maybe pass the user struct
@@ -35,7 +35,22 @@ type AppRepositoryImpl struct {
 	UserRepo         users.UserRepository
 }
 
-// TODO !! rename repo_apps, repo_users and repo_versions simply to repository each
+// TODO !! this is an AppDto. Within my application the ID should remain an integer, so I need store.App and AppDto
+func (r *AppRepositoryImpl) GetAppById(appId int) (store.App, error) {
+	var app store.App
+	err := r.DatabaseProvider.GetDb().QueryRow(
+		`SELECT u.user_name, a.app_name, a.app_id
+		 FROM apps a
+		 JOIN users u ON a.user_id = u.user_id
+		 WHERE a.app_id = $1`,
+		appId,
+	).Scan(&app.Maintainer, &app.Name, &app.Id)
+	if err != nil {
+		return store.App{}, fmt.Errorf("failed to get app by id: %w", err)
+	}
+	app.Id = strconv.Itoa(appId) // TODO !! remove this, should be an integer
+	return app, nil
+}
 
 func (r *AppRepositoryImpl) DoesUserOwnApp(userId, appId int) bool {
 	var ownerId int

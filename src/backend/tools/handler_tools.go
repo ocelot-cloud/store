@@ -13,6 +13,7 @@ func GetUserFromContext(r *http.Request) User {
 	return r.Context().Value(UserCtxKey).(User)
 }
 
+// TODO !! I think we can add `db:` fields here, simplyfing sql queries. If so, also apply that to cloud
 type User struct {
 	Id                int
 	Name              string

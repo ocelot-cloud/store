@@ -102,8 +102,14 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	_, err = v.VersionRepo.GetVersionId(appId, versionUpload.Version)
-	if err == nil {
+	doesVersionExist, err := v.VersionRepo.DoesVersionExist(appId, versionUpload.Version)
+	if err != nil {
+		u.Logger.Error("checking if version exists failed", deepstack.ErrorField, err)
+		http.Error(w, "internal error", http.StatusBadRequest)
+		return
+	}
+
+	if doesVersionExist {
 		u.Logger.Info("user tried to upload version to app, but version already exists", tools.UserField, user, tools.VersionField, versionUpload.Version, tools.AppIdField, versionUpload.AppId)
 		http.Error(w, "version already exists", http.StatusBadRequest)
 		return
@@ -161,7 +167,7 @@ func (v *VersionsHandler) VersionDownloadHandler(w http.ResponseWriter, r *http.
 	}
 
 	// TODO !! shift check to service
-	doesExist, err := v.VersionRepo.DoesVersionExist(versionId)
+	doesExist, err := v.VersionRepo.DoesVersionExistTemp(versionId)
 	if err != nil {
 		u.Logger.Error("error when checking if version exists", deepstack.ErrorField, err)
 		http.Error(w, "error when checking if version exists", http.StatusBadRequest)

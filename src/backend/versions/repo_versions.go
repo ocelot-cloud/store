@@ -16,7 +16,7 @@ import (
 // TODO !! simplify
 type VersionRepository interface {
 	// TODO !! keep functions
-	DoesVersionExist(versionId int) (bool, error)
+	DoesVersionExist(appId int, version string) (bool, error)
 	DoesUserOwnVersion(user string, versionId int) bool // TODO !! pass ID not name
 	CreateVersion(appId int, version string, data []byte) error
 	// TODO !! add: GetVersion(versionId int) (store.Version, error)
@@ -24,7 +24,7 @@ type VersionRepository interface {
 	ListVersionsOfApp(appId int) ([]store.Version, error) // TODO !! instead should return []FullVersionInfo
 
 	// TODO !! remove functions
-	GetVersionId(appId int, version string) (int, error)
+	DoesVersionExistTemp(versionId int) (bool, error)
 	GetVersionContent(versionId int) ([]byte, error)
 	GetAppIdByVersionId(versionId int) (int, error)
 	GetFullVersionInfo(versionId int) (*store.FullVersionInfo, error)
@@ -197,7 +197,7 @@ func (r *VersionRepositoryImpl) ListVersionsOfApp(appId int) ([]store.Version, e
 	return versions, nil
 }
 
-func (r *VersionRepositoryImpl) DoesVersionExist(versionId int) (bool, error) {
+func (r *VersionRepositoryImpl) DoesVersionExistTemp(versionId int) (bool, error) {
 	var exists bool
 	err := r.DatabaseProvider.GetDb().QueryRow(`SELECT EXISTS(SELECT 1 FROM versions WHERE version_id = $1)`, versionId).Scan(&exists)
 	if err != nil {
@@ -206,11 +206,14 @@ func (r *VersionRepositoryImpl) DoesVersionExist(versionId int) (bool, error) {
 	return exists, nil
 }
 
-func (r *VersionRepositoryImpl) GetVersionId(appId int, version string) (int, error) {
-	var versionId int
-	err := r.DatabaseProvider.GetDb().QueryRow("SELECT version_id FROM versions WHERE app_id = $1 AND version_name = $2", appId, version).Scan(&versionId)
+func (r *VersionRepositoryImpl) DoesVersionExist(appId int, version string) (bool, error) {
+	var exists bool
+	err := r.DatabaseProvider.GetDb().QueryRow(
+		`SELECT EXISTS(SELECT 1 FROM versions WHERE app_id = $1 AND version_name = $2)`,
+		appId, version,
+	).Scan(&exists)
 	if err != nil {
-		return -1, fmt.Errorf("version not found: %w", err)
+		return false, err
 	}
-	return versionId, nil
+	return exists, nil
 }

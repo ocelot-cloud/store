@@ -75,7 +75,7 @@ func TestIsVersionOwner(t *testing.T) {
 	assert.False(t, versions.VersionRepo.DoesUserOwnVersion(tools.SampleUser, 1))
 
 	assert.Nil(t, versions.VersionRepo.CreateVersion(appId, tools.SampleVersion, []byte("asdf")))
-	versionId, err := versions.VersionRepo.DoesVersionExist(appId, tools.SampleVersion)
+	versionId, err := versions.VersionRepo.DoesVersionNameExist(appId, tools.SampleVersion)
 	assert.Nil(t, err)
 	assert.True(t, versions.VersionRepo.DoesUserOwnVersion(tools.SampleUser, versionId))
 

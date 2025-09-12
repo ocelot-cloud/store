@@ -15,7 +15,7 @@ type VersionService struct {
 
 // TODO !! should be user ID
 func (s VersionService) DeleteVersionWithChecks(user string, versionId int) error {
-	doesExist, errs := s.VersionRepo.DoesVersionExistTemp(versionId)
+	doesExist, errs := s.VersionRepo.DoesVersionIdExist(versionId)
 	if errs != nil {
 		return errs
 	}

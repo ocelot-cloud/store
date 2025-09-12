@@ -2,12 +2,20 @@
 
 package check
 
+import (
+	"ocelot/store/apps"
+	"ocelot/store/tools"
+	"testing"
+
+	"github.com/ocelot-cloud/shared/assert"
+	u "github.com/ocelot-cloud/shared/utils"
+)
+
 // TODO !! check whether other file already test ownership, and centralize it here
 // TODO !! test cases from this: you can not operate on apps or versions you dont own -> deletion/creation(or upload) etc. make research which operations are affected
 
 // TODO !! use case: delete app you do not own; delete version you dont own; upload version to app you dont own
 
-/* TODO !! weirdly not working at the moment
 func TestDeleteAppYouDoNotOwn(t *testing.T) {
 	client1 := GetHub()
 	defer client1.WipeData()
@@ -26,7 +34,6 @@ func TestDeleteAppYouDoNotOwn(t *testing.T) {
 	err = client2.DeleteApp(appId)
 	u.AssertDeepStackErrorFromRequest(t, err, apps.YouDoNotOwnThisAppError)
 }
-*/
 
 /* material
 

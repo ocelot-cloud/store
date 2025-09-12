@@ -18,6 +18,7 @@ var DaysToCookieExpiration = 7
 
 func TestFindAppsSecurity(t *testing.T) {
 	hub := GetHubAndLogin(t)
+	defer hub.WipeData()
 	hub.Parent.SetCookieHeader = false
 
 	_, err := hub.SearchForApps("notexistingapp", true)

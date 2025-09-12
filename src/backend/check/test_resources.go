@@ -41,7 +41,6 @@ func GetHubAndLogin(t *testing.T) *store.AppStoreClientImpl {
 
 func GetHub() *store.AppStoreClientImpl {
 	hub := createHubClient()
-	hub.WipeData()
 	return hub
 }
 

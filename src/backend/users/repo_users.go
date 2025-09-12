@@ -24,7 +24,7 @@ type UserRepository interface {
 	DoesUserExist(user string) bool
 	DoesEmailExist(email string) bool
 	DeleteUser(user string) error
-	GetUserViaCookie(cookie string) (*tools.User, error)  // TODO !! use hashed Cookie as argument
+	GetUserViaCookie(hashedCookieValue string) (*tools.User, error)
 	ChangePassword(user string, newPassword string) error // TODO !! pass userID, not name
 	Logout(user string) error
 

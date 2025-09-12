@@ -28,7 +28,6 @@ type UserRepository interface {
 	GetUserById(userId int) (*tools.User, error)
 
 	// TODO !! replace functions
-	GetUsedSpaceInBytes(user string) (int, error)
 	WipeDatabase()
 	GetUserId(user string) (int, error)
 }
@@ -211,16 +210,6 @@ func (r *UserRepositoryImpl) WipeDatabase() {
 		u.Logger.Error("Failed to wipe database", deepstack.ErrorField, err)
 	}
 	r.EmailVerifier.Clear()
-}
-
-func (r *UserRepositoryImpl) GetUsedSpaceInBytes(user string) (int, error) {
-	var usedSpace int
-	err := r.DatabaseProvider.GetDb().QueryRow(`SELECT used_space FROM users WHERE user_name = $1`, user).Scan(&usedSpace)
-	if err != nil {
-		u.Logger.Error("Failed to get used space", deepstack.ErrorField, err)
-		return 0, fmt.Errorf("failed to get used space")
-	}
-	return usedSpace, nil
 }
 
 func (r *UserRepositoryImpl) Logout(user string) error {

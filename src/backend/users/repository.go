@@ -16,8 +16,8 @@ var NotEnoughSpacePrefix = "not enough space"
 
 type UserRepository interface {
 	CreateUser(form *store.RegistrationForm) error
-	DoesUserExist(user string) bool
-	DoesEmailExist(email string) bool
+	DoesUserExist(user string) (bool, error)
+	DoesEmailExist(email string) bool // TODO !! add error
 	DeleteUser(user string) error
 	GetUserViaCookie(hashedCookieValue string) (*tools.User, error)
 	ChangePassword(userId int, newPassword string) error
@@ -108,20 +108,22 @@ func (r *UserRepositoryImpl) GetUserByName(userName string) (*tools.User, error)
 		&user.ExpirationDate,
 		&user.UsedSpaceInBytes,
 	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, errors.New(UserDoesNotExistError)
+	}
 	if err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
-func (r *UserRepositoryImpl) DoesUserExist(user string) bool {
+func (r *UserRepositoryImpl) DoesUserExist(user string) (bool, error) {
 	var exists bool
 	err := r.DatabaseProvider.GetDb().QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE user_name = $1)", user).Scan(&exists)
 	if err != nil {
-		u.Logger.Error("Failed to check user existence", deepstack.ErrorField, err)
-		return false
+		return false, u.Logger.NewError(err.Error())
 	}
-	return exists
+	return exists, nil
 }
 
 func (r *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) error {
@@ -140,17 +142,11 @@ func (r *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) error {
 }
 
 func (r *UserRepositoryImpl) DeleteUser(user string) error {
-	if !r.DoesUserExist(user) {
-		u.Logger.Info("User does not exist", deepstack.ErrorField, user)
-		return fmt.Errorf("user does not exist")
-	}
-
 	_, err := r.DatabaseProvider.GetDb().Exec("DELETE FROM users WHERE user_name = $1", user)
 	if err != nil {
 		u.Logger.Error("Failed to delete user", deepstack.ErrorField, err)
 		return fmt.Errorf("failed to delete user")
 	}
-
 	return nil
 }
 

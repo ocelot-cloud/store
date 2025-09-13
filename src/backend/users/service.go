@@ -121,10 +121,6 @@ func (r *UserServiceImpl) WipeDatabase() {
 }
 
 func (r *UserServiceImpl) Login(creds *store.LoginCredentials) (*http.Cookie, error) {
-	if !r.UserRepo.DoesUserExist(creds.User) {
-		return nil, u.Logger.NewError(UserDoesNotExistError)
-	}
-
 	isCorrect, err := r.IsPasswordCorrect(creds.User, creds.Password)
 	if err != nil {
 		return nil, err

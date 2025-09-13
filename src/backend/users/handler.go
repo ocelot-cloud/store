@@ -45,13 +45,6 @@ func (h *UserHandler) AuthCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) UserDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-
-	if !h.UserRepo.DoesUserExist(user.Name) {
-		u.Logger.Error("user wanted to delete his account but seems not to exist although authenticated", tools.UserField, user)
-		http.Error(w, "user does not exist", http.StatusBadRequest)
-		return
-	}
-
 	err := h.UserRepo.DeleteUser(user.Name)
 	if err != nil {
 		u.Logger.Error("user deletion failed", tools.UserField, err)
@@ -65,15 +58,8 @@ func (h *UserHandler) UserDeleteHandler(w http.ResponseWriter, r *http.Request) 
 
 func (h *UserHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-
 	form, err := validation.ReadBody[store.ChangePasswordForm](w, r)
 	if err != nil {
-		return
-	}
-
-	if !h.UserRepo.DoesUserExist(user.Name) {
-		u.Logger.Warn("somebody tried to change password but user does not exist", tools.UserField, user)
-		http.Error(w, "user does not exist", http.StatusBadRequest)
 		return
 	}
 
@@ -119,7 +105,14 @@ func (h *UserHandler) RegistrationHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if h.UserRepo.DoesUserExist(form.User) {
+	doesUserExist, err := h.UserRepo.DoesUserExist(form.User)
+	if err != nil {
+		u.Logger.Error("checking if user exists failed", deepstack.ErrorField, err)
+		http.Error(w, "error when checking if user exists", http.StatusBadRequest)
+		return
+	}
+
+	if doesUserExist {
 		u.Logger.Info("user tried to register but he already exists", tools.UserField, form.User)
 		http.Error(w, "user already exists", http.StatusBadRequest)
 		return

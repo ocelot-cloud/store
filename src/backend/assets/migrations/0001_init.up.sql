@@ -30,3 +30,20 @@ CREATE TABLE IF NOT EXISTS configs (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
+
+-- Enable trigram support for fast %...% pattern matching
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Trigram GIN indexes speed up ILIKE/LIKE '%term%' on names
+CREATE INDEX IF NOT EXISTS users_user_name_trgm ON users USING gin (user_name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS apps_app_name_trgm   ON apps  USING gin (app_name  gin_trgm_ops);
+
+-- Supports JOIN apps a ON a.user_id = u.user_id
+CREATE INDEX IF NOT EXISTS apps_user_id_idx ON apps(user_id);
+
+-- Lets Postgres get the newest version per app via index order
+CREATE INDEX IF NOT EXISTS versions_app_id_created_desc ON versions (app_id, creation_timestamp DESC);
+
+-- Optional: supports LOWER(col) predicates if used; trigram remains best for %...%
+CREATE INDEX IF NOT EXISTS users_user_name_lower_idx ON users (LOWER(user_name));
+CREATE INDEX IF NOT EXISTS apps_app_name_lower_idx   ON apps  (LOWER(app_name));

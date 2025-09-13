@@ -101,26 +101,28 @@ func (r *AppRepositoryImpl) SearchForApps(request store.SearchRequest) ([]store.
 		SELECT u.user_name, a.app_id, a.app_name, v.version_id, v.version_name
 		FROM users u
 		JOIN apps a ON u.user_id = a.user_id
-		JOIN LATERAL (
-			SELECT version_id, version_name
-			FROM versions
-			WHERE app_id = a.app_id
-			ORDER BY creation_timestamp DESC
-			LIMIT 1
-		) v ON true
-		WHERE (u.user_name LIKE $1 AND a.app_name LIKE $2)
-	`
+		-- Preselect newest version per app once, using DISTINCT ON + index (app_id, creation_timestamp DESC)
+		JOIN (
+		  SELECT DISTINCT ON (app_id) app_id, version_id, version_name, creation_timestamp
+		  FROM versions
+		  ORDER BY app_id, creation_timestamp DESC
+		) v ON v.app_id = a.app_id
+		-- Trigram indexes on user_name/app_name accelerate these ILIKE filters
+		WHERE u.user_name ILIKE $1 AND a.app_name ILIKE $2
+`
 	if !request.ShowUnofficialApps {
+		// Cheap equality filter; avoids string concat in the main SQL text
 		query += queryFilterForOfficialMaintainer
 	}
 	query += `
 		ORDER BY
-			-- this prioritizes exact maintainer/app matches before partial matched
-			(LOWER(u.user_name) = LOWER($3)) DESC,
-			(LOWER(a.app_name) = LOWER($4)) DESC,
-			u.user_name, a.app_name
+		  -- Rank exact (case-insensitive) maintainer/app matches first before LIMIT
+		  (LOWER(u.user_name) = LOWER($3)) DESC,
+		  (LOWER(a.app_name)  = LOWER($4)) DESC,
+		  -- Cheap deterministic tie-breaker
+		  a.app_id
 		LIMIT 100
-	`
+`
 
 	rows, err := r.DatabaseProvider.GetDb().Query(
 		query,

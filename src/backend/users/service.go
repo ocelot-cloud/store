@@ -18,15 +18,18 @@ import (
 var (
 	UserDoesNotExistError             = "user does not exist"
 	IncorrectUsernameAndPasswordError = "incorrect username or password"
+	UserAlreadyExistsError            = "user already exists"
+	EmailAlreadyExistsError           = "email already exists"
 )
 
 type UserServiceImpl struct {
 	UserRepo      UserRepository
 	Config        *tools.Config
 	EmailVerifier *tools.EmailVerifierImpl
+	EmailClient   *EmailClientImpl
 }
 
-func (r *UserServiceImpl) CreateUserAndReturnRegistrationCode(form *store.RegistrationForm) (string, error) {
+func (r *UserServiceImpl) createUserAndReturnRegistrationCode(form *store.RegistrationForm) (string, error) {
 	var key string
 	// TODO !! quite implicit logic. Maybe a better option to say in test mode, when we create a user, his account needs no code for validation
 	if r.Config.UseSampleDataForTesting {
@@ -142,6 +145,38 @@ func (r *UserServiceImpl) Login(creds *store.LoginCredentials) (*http.Cookie, er
 		return nil, err
 	}
 	return cookie, nil
+}
+
+func (r *UserServiceImpl) RegisterUser(form *store.RegistrationForm) error {
+	doesUserExist, err := r.UserRepo.DoesUserExist(form.User)
+	if err != nil {
+		return err
+	}
+
+	if doesUserExist {
+		return u.Logger.NewError(UserAlreadyExistsError)
+	}
+
+	// TODO !! I also need to check presence in r.EmailVerifier
+	doesEmailExist, err := r.UserRepo.DoesEmailExist(form.Email)
+	if err != nil {
+		return err
+	}
+
+	if doesEmailExist {
+		return u.Logger.NewError(EmailAlreadyExistsError)
+	}
+
+	code, err := r.createUserAndReturnRegistrationCode(form)
+	if err != nil {
+		return err
+	}
+
+	err = r.EmailClient.SendVerificationEmail(form.Email, code)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // TODO !! does deleting an app free up all space of the versions?

@@ -8,12 +8,12 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-type EmailClient struct {
+type EmailClientImpl struct {
 	Config           *tools.Config
 	EmailConfigStore *EmailConfigStoreImpl
 }
 
-func (e *EmailClient) SendVerificationEmail(to, code string) error {
+func (e *EmailClientImpl) SendVerificationEmail(to, code string) error {
 	if e.Config.UseMailMockClient {
 		u.Logger.Debug("Mock email client used, not sending email")
 		return nil

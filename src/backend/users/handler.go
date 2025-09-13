@@ -13,7 +13,7 @@ import (
 
 type UserHandler struct {
 	UserRepo    UserRepository
-	EmailClient *EmailClient
+	EmailClient *EmailClientImpl
 	Config      *tools.Config
 	UserService *UserServiceImpl
 }
@@ -104,49 +104,11 @@ func (h *UserHandler) RegistrationHandler(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		return
 	}
-
-	doesUserExist, err := h.UserRepo.DoesUserExist(form.User)
+	err = h.UserService.RegisterUser(form)
 	if err != nil {
-		u.Logger.Error("checking if user exists failed", deepstack.ErrorField, err)
-		http.Error(w, "error when checking if user exists", http.StatusBadRequest)
+		u.WriteResponseError(w, u.MapOf(UserAlreadyExistsError, EmailAlreadyExistsError), err)
 		return
 	}
-
-	if doesUserExist {
-		u.Logger.Info("user tried to register but he already exists", tools.UserField, form.User)
-		http.Error(w, "user already exists", http.StatusBadRequest)
-		return
-	}
-
-	doesEmailExist, err := h.UserRepo.DoesEmailExist(form.Email)
-	if err != nil {
-		u.Logger.Error("checking if email exists failed", deepstack.ErrorField, err)
-		http.Error(w, "error when checking if email exists", http.StatusBadRequest)
-		return
-	}
-
-	if doesEmailExist {
-		u.Logger.Info("user tried to register but email already exists", tools.UserField, form.User, tools.EmailField, form.Email)
-		http.Error(w, "email already exists", http.StatusBadRequest)
-		return
-	}
-
-	code, err := h.UserService.CreateUserAndReturnRegistrationCode(form)
-	if err != nil {
-		u.Logger.Error("user registration failed", tools.UserField, form.User, deepstack.ErrorField, err)
-		http.Error(w, "user registration failed", http.StatusBadRequest)
-		return
-	}
-
-	err = h.EmailClient.SendVerificationEmail(form.Email, code)
-	if err != nil {
-		u.Logger.Error("sending verification email failed", deepstack.ErrorField, err)
-		http.Error(w, "sending verification email failed", http.StatusBadRequest)
-		return
-	}
-
-	u.Logger.Info("user wants to register, validation still necessary", tools.UserField, form.User)
-	w.WriteHeader(http.StatusOK)
 }
 
 type healthInfo struct {

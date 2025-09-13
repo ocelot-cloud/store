@@ -35,8 +35,7 @@ func (h *HandlerInitializer) InitializeHandlers() {
 		{store.GetVersionsPath, h.VersionsHandler.GetVersionsHandler},
 		{store.SearchAppsPath, h.AppsHandler.SearchForAppsHandler},
 
-		// TODO !! abstract
-		{"/api/healthcheck", users.HealthCheckHandler},
+		{"/api/healthcheck", HealthCheckHandler},
 	}
 
 	protectedRoutes := []Route{
@@ -83,4 +82,12 @@ func (h *HandlerInitializer) authMiddleware(next http.Handler) http.Handler {
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
+}
+
+type healthInfo struct {
+	Status string `json:"status"`
+}
+
+func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	u.SendJsonResponse(w, healthInfo{Status: "ok"})
 }

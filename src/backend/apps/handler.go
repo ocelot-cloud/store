@@ -64,14 +64,11 @@ func (a *AppsHandler) AppGetListHandler(w http.ResponseWriter, r *http.Request) 
 		u.WriteResponseError(w, nil, err)
 		return
 	}
-	appDtoList, err := convertToAppDtos(appList)
-	if err != nil {
-		u.WriteResponseError(w, nil, err)
-	}
+	appDtoList := convertToAppDtos(appList)
 	u.SendJsonResponse(w, appDtoList)
 }
 
-func convertToAppDtos(list []AppItem) ([]store.AppItemDto, error) {
+func convertToAppDtos(list []AppItem) []store.AppItemDto {
 	var appDtoList []store.AppItemDto
 	for _, appItem := range list {
 		appDtoList = append(appDtoList, store.AppItemDto{
@@ -79,7 +76,7 @@ func convertToAppDtos(list []AppItem) ([]store.AppItemDto, error) {
 			Name: appItem.Name,
 		})
 	}
-	return appDtoList, nil
+	return appDtoList
 }
 
 func (a *AppsHandler) SearchForAppsHandler(w http.ResponseWriter, r *http.Request) {

@@ -122,7 +122,6 @@ func (r *VersionRepositoryImpl) getBlobSize(versionId int) (int64, error) {
 	return dataSize, nil
 }
 
-// TODO !! should not return DTO?
 func (r *VersionRepositoryImpl) ListVersionsOfApp(appId int) ([]store.LeanVersionDto, error) {
 	var exists bool
 	err := r.DatabaseProvider.GetDb().QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE app_id = $1)", appId).Scan(&exists)

@@ -147,13 +147,11 @@ func (r *AppRepositoryImpl) GetAppList(userId int) ([]tools.AppItem, error) {
 
 	var apps []tools.AppItem
 	for rows.Next() {
-		// TODO !! simplify
-		var name string
-		var id int
-		if err = rows.Scan(&name, &id); err != nil {
+		appItem := tools.AppItem{}
+		if err = rows.Scan(&appItem.Name, &appItem.Id); err != nil {
 			return nil, u.Logger.NewError(err.Error())
 		}
-		apps = append(apps, tools.AppItem{Name: name, Id: id})
+		apps = append(apps, appItem)
 	}
 
 	if err = rows.Err(); err != nil {

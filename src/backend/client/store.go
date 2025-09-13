@@ -1,9 +1,7 @@
 package store
 
 import (
-	"fmt"
-
-	"github.com/ocelot-cloud/shared/utils"
+	u "github.com/ocelot-cloud/shared/utils"
 	"github.com/ocelot-cloud/shared/validation"
 )
 
@@ -56,7 +54,7 @@ type AppStoreClient interface {
 }
 
 type AppStoreClientImpl struct {
-	Parent utils.ComponentClient
+	Parent u.ComponentClient
 }
 
 func (h *AppStoreClientImpl) RegisterAndValidateUser(user, password, email string) error {
@@ -95,7 +93,7 @@ func (h *AppStoreClientImpl) Login(username, password string) error {
 
 	cookies := resp.Cookies()
 	if len(cookies) != 1 {
-		return fmt.Errorf("Expected 1 cookie, got %d", len(cookies))
+		return u.Logger.NewError("Expected 1 cookie, got %d", len(cookies))
 	}
 	h.Parent.Cookie = cookies[0]
 	return nil
@@ -120,7 +118,7 @@ func (h *AppStoreClientImpl) CreateApp(appName string) (string, error) {
 			return appInStore.Id, nil
 		}
 	}
-	return "", fmt.Errorf("app not found on server")
+	return "", u.Logger.NewError("app not found on server")
 }
 
 func (h *AppStoreClientImpl) SearchForApps(searchTerm string, showUnofficialApps bool) ([]AppWithLatestVersion, error) {
@@ -133,7 +131,7 @@ func (h *AppStoreClientImpl) SearchForApps(searchTerm string, showUnofficialApps
 		return nil, err
 	}
 
-	apps, err := utils.UnpackResponse[[]AppWithLatestVersion](result)
+	apps, err := u.UnpackResponse[[]AppWithLatestVersion](result)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +145,7 @@ func (h *AppStoreClientImpl) ListOwnApps() ([]App, error) {
 		return nil, err
 	}
 
-	apps, err := utils.UnpackResponse[[]App](result)
+	apps, err := u.UnpackResponse[[]App](result)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +173,7 @@ func (h *AppStoreClientImpl) UploadVersion(appId, versionName string, content []
 			return versionInStore.Id, nil
 		}
 	}
-	return "", fmt.Errorf("version not found on server")
+	return "", u.Logger.NewError("version not found on server")
 }
 
 func (h *AppStoreClientImpl) DownloadVersion(versionId string) (*FullVersionInfo, error) {
@@ -184,14 +182,14 @@ func (h *AppStoreClientImpl) DownloadVersion(versionId string) (*FullVersionInfo
 		return nil, err
 	}
 
-	fullVersionInfo, err := utils.UnpackResponse[FullVersionInfo](result)
+	fullVersionInfo, err := u.UnpackResponse[FullVersionInfo](result)
 	if err != nil {
 		return nil, err
 	}
 
 	err = validation.ValidateVersion(fullVersionInfo.Content, fullVersionInfo.Maintainer, fullVersionInfo.AppName)
 	if err != nil {
-		return nil, fmt.Errorf("version validation failed: %w", err)
+		return nil, u.Logger.NewError(err.Error())
 	}
 
 	return fullVersionInfo, nil
@@ -203,7 +201,7 @@ func (h *AppStoreClientImpl) GetVersions(appId string) ([]Version, error) {
 		return nil, err
 	}
 
-	versions, err := utils.UnpackResponse[[]Version](result)
+	versions, err := u.UnpackResponse[[]Version](result)
 	if err != nil {
 		return nil, err
 	}

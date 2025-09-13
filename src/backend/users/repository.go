@@ -3,7 +3,6 @@ package users
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"ocelot/store/tools"
 
 	"github.com/ocelot-cloud/deepstack"
@@ -80,7 +79,7 @@ func (r *UserRepositoryImpl) UpdateUser(user *tools.User) error {
 		user.Id,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to update user: %w", err)
+		return u.Logger.NewError(err.Error())
 	}
 	return nil
 }
@@ -130,13 +129,11 @@ func (r *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) error {
 	// TODO !! can this operation ever fail? if not, remove the error returned
 	hashedPassword, err := u.SaltAndHash(form.Password)
 	if err != nil {
-		u.Logger.Error("Failed to hash password", deepstack.ErrorField, err)
-		return fmt.Errorf("failed to hash password")
+		return u.Logger.NewError(err.Error())
 	}
 	_, err = r.DatabaseProvider.GetDb().Exec("INSERT INTO users (user_name, email, hashed_password, used_space_in_bytes) VALUES ($1, $2, $3, $4)", form.User, form.Email, hashedPassword, 0)
 	if err != nil {
-		u.Logger.Error("Failed to create user", deepstack.ErrorField, err)
-		return fmt.Errorf("failed to create user")
+		return u.Logger.NewError(err.Error())
 	}
 	return nil
 }
@@ -144,8 +141,7 @@ func (r *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) error {
 func (r *UserRepositoryImpl) DeleteUser(user string) error {
 	_, err := r.DatabaseProvider.GetDb().Exec("DELETE FROM users WHERE user_name = $1", user)
 	if err != nil {
-		u.Logger.Error("Failed to delete user", deepstack.ErrorField, err)
-		return fmt.Errorf("failed to delete user")
+		return u.Logger.NewError(err.Error())
 	}
 	return nil
 }
@@ -177,14 +173,12 @@ func (r *UserRepositoryImpl) GetUserViaCookie(hashedCookieValue string) (*tools.
 func (r *UserRepositoryImpl) ChangePassword(userId int, newPassword string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
-		u.Logger.Error("Failed to hash password", deepstack.ErrorField, err)
-		return fmt.Errorf("failed to hash password")
+		return u.Logger.NewError(err.Error())
 	}
 
 	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET hashed_password = $1 WHERE user_id = $2", hashedPassword, userId)
 	if err != nil {
-		u.Logger.Error("Failed to change password", deepstack.ErrorField, err)
-		return fmt.Errorf("failed to change password")
+		return u.Logger.NewError(err.Error())
 	}
 
 	return nil

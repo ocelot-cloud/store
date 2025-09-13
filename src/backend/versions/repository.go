@@ -1,7 +1,6 @@
 package versions
 
 import (
-	"fmt"
 	"ocelot/store/apps"
 	"ocelot/store/tools"
 	"ocelot/store/users"
@@ -65,13 +64,13 @@ func (r *VersionRepositoryImpl) CreateVersion(appId int, version string, data []
 	now := time.Now().UTC()
 	_, err = r.DatabaseProvider.GetDb().Exec("INSERT INTO versions (app_id, version_name, creation_timestamp, data) VALUES ($1, $2, $3, $4)", appId, version, now, data)
 	if err != nil {
-		return fmt.Errorf("failed to create version: %w", err)
+		return u.Logger.NewError(err.Error())
 	}
 
 	dataSize := len(data)
 	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET used_space_in_bytes = used_space_in_bytes + $1 WHERE user_id = $2", dataSize, userId)
 	if err != nil {
-		return fmt.Errorf("failed to update user space: %w", err)
+		return u.Logger.NewError(err.Error())
 	}
 
 	return nil
@@ -93,12 +92,12 @@ func (r *VersionRepositoryImpl) DeleteVersion(versionId int) error {
 
 	_, err = r.DatabaseProvider.GetDb().Exec("DELETE FROM versions WHERE version_id = $1", versionId)
 	if err != nil {
-		return fmt.Errorf("failed to delete version: %w", err)
+		return u.Logger.NewError(err.Error())
 	}
 
 	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET used_space_in_bytes = used_space_in_bytes - $1 WHERE user_id = $2", dataSize, userId)
 	if err != nil {
-		return fmt.Errorf("failed to update user space: %w", err)
+		return u.Logger.NewError(err.Error())
 	}
 
 	return nil
@@ -108,7 +107,7 @@ func (r *VersionRepositoryImpl) getAppIdOfVersion(versionId int) (int, error) {
 	var appId int
 	err := r.DatabaseProvider.GetDb().QueryRow("SELECT app_id FROM versions WHERE version_id = $1", versionId).Scan(&appId)
 	if err != nil {
-		return -1, fmt.Errorf("failed to get app ID: %w", err)
+		return -1, u.Logger.NewError(err.Error())
 	}
 	return appId, nil
 }
@@ -117,24 +116,25 @@ func (r *VersionRepositoryImpl) getBlobSize(versionId int) (int64, error) {
 	var dataSize int64
 	err := r.DatabaseProvider.GetDb().QueryRow("SELECT LENGTH(data) FROM versions WHERE version_id = $1", versionId).Scan(&dataSize)
 	if err != nil {
-		return 0, fmt.Errorf("failed to get BLOB size: %w", err)
+		return 0, u.Logger.NewError(err.Error())
 	}
 	return dataSize, nil
 }
 
 func (r *VersionRepositoryImpl) ListVersionsOfApp(appId int) ([]store.LeanVersionDto, error) {
+	// TODO !! this kind of check is business logic
 	var exists bool
 	err := r.DatabaseProvider.GetDb().QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE app_id = $1)", appId).Scan(&exists)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check app existence: %w", err)
+		return nil, u.Logger.NewError(err.Error())
 	}
 	if !exists {
-		return nil, fmt.Errorf("app with id %d does not exist", appId)
+		return nil, u.Logger.NewError(AppDoesNotExist)
 	}
 
 	rows, err := r.DatabaseProvider.GetDb().Query("SELECT version_name, version_id, creation_timestamp FROM versions WHERE app_id = $1", appId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get versions: %w", err)
+		return nil, u.Logger.NewError(err.Error())
 	}
 	defer u.Close(rows)
 
@@ -143,8 +143,8 @@ func (r *VersionRepositoryImpl) ListVersionsOfApp(appId int) ([]store.LeanVersio
 		var version string
 		var id int
 		var creationTimestamp time.Time
-		if err := rows.Scan(&version, &id, &creationTimestamp); err != nil {
-			return nil, fmt.Errorf("failed to scan version: %w", err)
+		if err = rows.Scan(&version, &id, &creationTimestamp); err != nil {
+			return nil, u.Logger.NewError(err.Error())
 		}
 		creationTimestamp = creationTimestamp.UTC()
 		versions = append(versions, store.LeanVersionDto{
@@ -154,8 +154,8 @@ func (r *VersionRepositoryImpl) ListVersionsOfApp(appId int) ([]store.LeanVersio
 		})
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("rows iteration error: %w", err)
+	if err = rows.Err(); err != nil {
+		return nil, u.Logger.NewError(err.Error())
 	}
 
 	return versions, nil

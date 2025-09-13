@@ -6,7 +6,7 @@ require (
 	github.com/google/wire v0.7.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/ocelot-cloud/deepstack v0.0.10
-	github.com/ocelot-cloud/shared v0.0.135
+	github.com/ocelot-cloud/shared v0.0.136
 	golang.org/x/crypto v0.42.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )

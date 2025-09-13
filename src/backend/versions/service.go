@@ -22,6 +22,7 @@ type VersionService struct {
 	UserService *users.UserServiceImpl
 	AppRepo     apps.AppRepository // TODO !! not sure if needed
 	AppService  *apps.AppServiceImpl
+	UserRepo    users.UserRepository
 }
 
 func (s *VersionService) DeleteVersionWithChecks(userId, versionId int) error {
@@ -82,8 +83,13 @@ func (s *VersionService) UploadVersion(userId int, versionUpload *store.VersionU
 	if err != nil {
 		return err
 	}
+	// TODO !! rather directly pass the user object, so that this step is not needed
+	user, err := s.UserRepo.GetUserById(userId)
+	if err != nil {
+		return err
+	}
 
-	err = validation.ValidateVersion(versionUpload.Content, app.Maintainer, app.Name)
+	err = validation.ValidateVersion(versionUpload.Content, user.Name, app.Name)
 	if err != nil {
 		return err
 	}

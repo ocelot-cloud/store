@@ -59,12 +59,27 @@ func ReadBodyAsStringNumber(w http.ResponseWriter, r *http.Request) (int, bool) 
 
 func (a *AppsHandler) AppGetListHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-	list, err := a.AppRepo.GetAppList(user.Id)
+	appList, err := a.AppRepo.GetAppList(user.Id)
 	if err != nil {
 		u.WriteResponseError(w, nil, err)
 		return
 	}
-	u.SendJsonResponse(w, list)
+	appDtoList, err := convertToAppDtos(appList)
+	if err != nil {
+		u.WriteResponseError(w, nil, err)
+	}
+	u.SendJsonResponse(w, appDtoList)
+}
+
+func convertToAppDtos(list []AppItem) ([]store.AppItemDto, error) {
+	var appDtoList []store.AppItemDto
+	for _, appItem := range list {
+		appDtoList = append(appDtoList, store.AppItemDto{
+			Id:   strconv.Itoa(appItem.Id),
+			Name: appItem.Name,
+		})
+	}
+	return appDtoList, nil
 }
 
 func (a *AppsHandler) SearchForAppsHandler(w http.ResponseWriter, r *http.Request) {

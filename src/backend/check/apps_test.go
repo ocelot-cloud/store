@@ -20,7 +20,6 @@ func TestCreateAndDeleteApp(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(foundApps))
 	foundApp := foundApps[0]
-	assert.Equal(t, tools.SampleUser, foundApp.Maintainer)
 	assert.Equal(t, tools.SampleApp, foundApp.Name)
 
 	_, err = hub.CreateApp(tools.SampleApp)

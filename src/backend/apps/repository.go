@@ -14,9 +14,9 @@ type AppRepository interface {
 	DoesAppIdExist(appId int) (bool, error)
 	CreateApp(userId int, app string) error
 	DeleteApp(appId int) error
-	GetAppList(userId int) ([]store.AppDto, error)
+	GetAppList(userId int) ([]AppItem, error)
 	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error) // TODO !! not sure whether it makes sense to maybe improve my search function, like explicitly say have a field for maintainer and app you can search for; if empty, its ignored
-	GetAppById(appId int) (*store.AppDto, error)                                              // TODO !! dont use DTO, ID should be integer
+	GetAppById(appId int) (*tools.App, error)                                                 // TODO !! dont use DTO, ID should be integer
 	DoesAppExist(userID int, app string) (bool, error)
 	GetUserIdOfApp(appId int) (int, error)
 }
@@ -26,20 +26,17 @@ type AppRepositoryImpl struct {
 	UserRepo         users.UserRepository
 }
 
-// TODO !! this is an AppDto. Within my application the ID should remain an integer, so I need store.App and AppDto
-func (r *AppRepositoryImpl) GetAppById(appId int) (*store.AppDto, error) {
-	var app store.AppDto
+func (r *AppRepositoryImpl) GetAppById(appId int) (*tools.App, error) {
+	var app tools.App
 	err := r.DatabaseProvider.GetDb().QueryRow(
-		`SELECT u.user_name, a.app_name, a.app_id
-		 FROM apps a
-		 JOIN users u ON a.user_id = u.user_id
-		 WHERE a.app_id = $1`,
+		`SELECT app_id, user_id, app_name
+		 FROM apps
+		WHERE app_id = $1`,
 		appId,
-	).Scan(&app.Maintainer, &app.Name, &app.Id)
+	).Scan(&app.Id, &app.OwnerId, &app.Name)
 	if err != nil {
 		return nil, u.Logger.NewError(err.Error())
 	}
-	app.Id = strconv.Itoa(appId)
 	return &app, nil
 }
 
@@ -158,28 +155,27 @@ func (r *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 	return apps, nil
 }
 
-// TODO !! dont use DTO
-func (r *AppRepositoryImpl) GetAppList(userId int) ([]store.AppDto, error) {
-	user, err := r.UserRepo.GetUserById(userId)
-	if err != nil {
-		return nil, u.Logger.NewError(err.Error())
-	}
+type AppItem struct {
+	Id   int
+	Name string
+}
 
+func (r *AppRepositoryImpl) GetAppList(userId int) ([]AppItem, error) {
 	rows, err := r.DatabaseProvider.GetDb().Query("SELECT app_name, app_id FROM apps WHERE user_id = $1", userId)
 	if err != nil {
 		return nil, u.Logger.NewError(err.Error())
 	}
 	defer u.Close(rows)
 
-	var apps []store.AppDto
+	var apps []AppItem
 	for rows.Next() {
-		var app string
-		var appId int
-		if err = rows.Scan(&app, &appId); err != nil {
+		// TODO !! simplify
+		var name string
+		var id int
+		if err = rows.Scan(&name, &id); err != nil {
 			return nil, u.Logger.NewError(err.Error())
 		}
-		// TODO !! I think the username is not necessary here, since the use case here is that a user sees his own apps of which he is the maintainer
-		apps = append(apps, store.AppDto{Maintainer: user.Name, Name: app, Id: strconv.Itoa(appId)})
+		apps = append(apps, AppItem{Name: name, Id: id})
 	}
 
 	if err = rows.Err(); err != nil {

@@ -8,6 +8,7 @@ import (
 	"ocelot/store/users"
 	"ocelot/store/versions"
 
+	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
 )
@@ -74,10 +75,19 @@ func (h *HandlerInitializer) registerProtectedRoutes(routes []Route) {
 
 func (h *HandlerInitializer) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, err := h.UserHandler.CheckAuthentication(w, r)
+		cookie, err := r.Cookie(tools.CookieName)
 		if err != nil {
+			u.Logger.Info("cookie not set in request", deepstack.ErrorField, err)
+			http.Error(w, "cookie not set in request", http.StatusBadRequest)
 			return
 		}
+		user, updatedCookie, err := h.UserHandler.CheckAuthentication(cookie)
+		if err != nil {
+			// TODO !! abstract
+			u.WriteResponseError(w, u.MapOf("invalid cookie", "cookie expired", "cookie not found"), err)
+			return
+		}
+		http.SetCookie(w, updatedCookie)
 		ctx := context.WithValue(r.Context(), tools.UserCtxKey, *user)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)

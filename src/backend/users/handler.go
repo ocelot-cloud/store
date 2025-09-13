@@ -1,7 +1,6 @@
 package users
 
 import (
-	"fmt"
 	"net/http"
 	"ocelot/store/tools"
 
@@ -122,47 +121,30 @@ func (h *UserHandler) ValidationCodeHandler(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-// TODO !! fmt.Errorf("") looks as if it should be refctored away?
-func (h *UserHandler) CheckAuthentication(w http.ResponseWriter, r *http.Request) (*tools.User, error) {
-	u.Logger.Debug("checking authentication", tools.UrlPathField, r.URL.Path)
-	cookie, err := r.Cookie(tools.CookieName)
-	if err != nil {
-		u.Logger.Info("cookie not set in request", deepstack.ErrorField, err)
-		http.Error(w, "cookie not set in request", http.StatusBadRequest)
-		return nil, fmt.Errorf("")
-	}
-
-	if err = validation.ValidateSecret(cookie.Value); err != nil {
-		http.Error(w, "invalid cookie", http.StatusBadRequest)
-		return nil, fmt.Errorf("")
+func (h *UserHandler) CheckAuthentication(cookie *http.Cookie) (*tools.User, *http.Cookie, error) {
+	if err := validation.ValidateSecret(cookie.Value); err != nil {
+		return nil, nil, u.Logger.NewError("invalid cookie")
 	}
 
 	hashedCookieValue := u.GetSHA256Hash(cookie.Value)
 	user, err := h.UserRepo.GetUserViaCookie(hashedCookieValue)
 	if err != nil {
-		u.Logger.Info("error when getting cookie of user", deepstack.ErrorField, err)
-		http.Error(w, "cookie not found", http.StatusBadRequest)
-		return nil, fmt.Errorf("")
+		// TODO !! this should be thrown by the repo
+		return nil, nil, u.Logger.NewError("cookie not found")
 	}
 
 	isExpired, err := h.UserService.IsCookieExpired(cookie.Value)
 	if err != nil {
-		u.Logger.Error("checking if cookie is expired failed", deepstack.ErrorField, err)
-		http.Error(w, "error when checking if cookie is expired", http.StatusBadRequest)
-		return nil, fmt.Errorf("")
+		return nil, nil, err
 	}
 	if isExpired {
-		u.Logger.Warn("user used an expired cookie", tools.UserField, user)
-		http.Error(w, "cookie expired", http.StatusBadRequest)
-		return nil, fmt.Errorf("")
+		return nil, nil, u.Logger.NewError("cookie expired")
 	}
 
 	newExpirationTime := u.GetTimeInSevenDays()
 	err = h.UserService.SaveCookie(user.Name, cookie.Value, newExpirationTime)
 	if err != nil {
-		u.Logger.Error("setting new cookie failed", deepstack.ErrorField, err)
-		http.Error(w, "setting new cookie failed", http.StatusBadRequest)
-		return nil, fmt.Errorf("")
+		return nil, nil, err
 	}
 	cookie.Expires = newExpirationTime
 	// Note: If no path is given, browsers set the default path one level higher than the
@@ -172,7 +154,6 @@ func (h *UserHandler) CheckAuthentication(w http.ResponseWriter, r *http.Request
 	// requests to fail with "cookie not found".
 	cookie.Path = "/"
 	cookie.SameSite = http.SameSiteStrictMode
-	http.SetCookie(w, cookie)
 
-	return user, nil
+	return user, cookie, nil
 }

@@ -5,6 +5,8 @@ import (
 	"github.com/ocelot-cloud/shared/validation"
 )
 
+// TODO !! why am I using this? I thought there is already a client library in "shared"? Rather I should move this client to "shared"
+
 var (
 	ApiPrefix    = "/api"
 	WipeDataPath = ApiPrefix + "/wipe-data"

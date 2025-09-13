@@ -13,7 +13,8 @@ import (
 )
 
 var (
-	queryFilterForOfficialMaintainer = fmt.Sprintf(" AND u.user_name = 'ocelotcloud'")
+	officialMaintainerName           = "ocelotcloud"
+	queryFilterForOfficialMaintainer = fmt.Sprintf(" AND u.user_name = '%s'", officialMaintainerName)
 )
 
 type AppRepository interface {

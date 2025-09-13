@@ -10,7 +10,7 @@ services:
 
   postgres:
     image: postgres:17.2
-    container_name: ocelotcloud_store_postgres
+    container_name: ocelotcloud_store_database
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_HOST_AUTH_METHOD=trust

@@ -7,6 +7,11 @@ import (
 	u "github.com/ocelot-cloud/shared/utils"
 )
 
+const (
+	host               = "ocelotcloud_store_database"
+	customPostgresPort = "5432"
+)
+
 type DatabaseProviderImpl struct {
 	Db           *sql.DB
 	PathProvider *PathProviderImpl
@@ -18,15 +23,10 @@ func (d *DatabaseProviderImpl) GetDb() *sql.DB {
 
 func (d *DatabaseProviderImpl) InitializeDatabase() error {
 	var err error
-	var host, customPostgresPort string
-	host = "ocelotcloud_store_postgres"
-	customPostgresPort = "5432"
-
 	d.Db, err = u.WaitForPostgresDb(host, customPostgresPort)
 	if err != nil {
 		return err
 	}
-
 	err = u.RunMigrations(d.PathProvider.GetMigrationsDir(), host, customPostgresPort)
 	if err != nil {
 		return err

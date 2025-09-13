@@ -3,7 +3,7 @@ TODO
 * test case: two users register with same email address, first user validated is accepted, second one is denied (email already exists)
 * when creating account, mention that other users using the store cant see the email address
   * or rather get rid of email?
-* replace used_space by used_space_in_bytes
+  * when an admin uploads a new configuration of email settings, an automatic connection should be made to check whether it works; if not, email config is denied
 * maybe make an implementation for user registration/validation like: if test mode -> return static sample registration code, otherwise create a random one
 * introduce deepstack error wrapping in repos
 * remove "log/respond" duplication in handlers

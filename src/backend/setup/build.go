@@ -35,6 +35,7 @@ func WireDependencies() *InitializerDependencies {
 		wire.Struct(new(Server), "*"),
 		wire.Struct(new(users.UserServiceImpl), "*"),
 		wire.Struct(new(apps.AppServiceImpl), "*"),
+		wire.Struct(new(users.RegistrationCodeProvider), "*"),
 
 		wire.Bind(new(apps.AppRepository), new(*apps.AppRepositoryImpl)),
 		wire.Bind(new(versions.VersionRepository), new(*versions.VersionRepositoryImpl)),

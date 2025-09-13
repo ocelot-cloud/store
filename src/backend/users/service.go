@@ -134,18 +134,11 @@ func (r *UserServiceImpl) Login(creds *store.LoginCredentials) (*http.Cookie, er
 		return nil, u.Logger.NewError(IncorrectUsernameAndPasswordError)
 	}
 
+	// TODO !! test that cookies have expiration date of 7 days; test that cookie is renewed on every authenticated request
+	// TODO !! add a unit test in authentication handler that a request with cookie older than 7 days fails
 	cookie, err := u.GenerateCookie()
 	if err != nil {
 		return nil, err
-	}
-
-	if r.Config.UseSpecialExpiration {
-		// TODO !! I find this approach very ugly, should be refactored somehow -> when logging in, return user including his expiration data of cookie and assert this instead
-		if creds.User == TestUserWithExpiredCookie {
-			cookie.Expires = time.Now().UTC().Add(-1 * time.Second)
-		} else if creds.User == TestUserWithOldButNotExpiredCookie {
-			cookie.Expires = time.Now().UTC().Add(24 * time.Hour)
-		}
 	}
 
 	err = r.SaveCookie(creds.User, cookie.Value, cookie.Expires)

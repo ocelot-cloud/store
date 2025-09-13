@@ -11,11 +11,6 @@ import (
 	"github.com/ocelot-cloud/shared/validation"
 )
 
-const (
-	TestUserWithExpiredCookie          = "expcookietestuser"
-	TestUserWithOldButNotExpiredCookie = "oldcookietestuser"
-)
-
 type UserHandler struct {
 	UserRepo    UserRepository
 	EmailClient *EmailClient

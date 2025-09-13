@@ -98,30 +98,6 @@ func checkCookie(t *testing.T, hub *store.AppStoreClientImpl) {
 	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration+1).After(hub.Parent.Cookie.Expires))
 }
 
-func TestCookieExpirationAndRenewal(t *testing.T) {
-	hub := GetHubAndLogin(t)
-	defer hub.WipeData()
-	// TODO !! too complex? to be simplified?
-	// There is some specific logic for this user in the production code when handling cookie.
-	assert.Nil(t, hub.RegisterAndValidateUser(users.TestUserWithExpiredCookie, tools.SamplePassword, tools.SampleEmail+"x"))
-	assert.Nil(t, hub.Login(users.TestUserWithExpiredCookie, tools.SamplePassword))
-	assert.True(t, time.Now().UTC().After(hub.Parent.Cookie.Expires))
-	_, err := hub.CreateApp(tools.SampleApp)
-	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, "cookie expired")
-
-	// TODO !! too complex? to be simplified?
-	// There is some specific logic for this user in the production code when handling cookie.
-	assert.Nil(t, hub.RegisterAndValidateUser(users.TestUserWithOldButNotExpiredCookie, tools.SamplePassword, tools.SampleEmail+"y"))
-	assert.Nil(t, hub.Login(users.TestUserWithOldButNotExpiredCookie, tools.SamplePassword))
-	assert.True(t, time.Now().UTC().Before(hub.Parent.Cookie.Expires))
-	assert.True(t, time.Now().UTC().Add(48*time.Hour).After(hub.Parent.Cookie.Expires))
-	_, err = hub.CreateApp(tools.SampleApp)
-	assert.Nil(t, err)
-	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration-1).Before(hub.Parent.Cookie.Expires))
-	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration+1).After(hub.Parent.Cookie.Expires))
-}
-
 func TestUploadOfInvalidZipContent(t *testing.T) {
 	hub := GetHubAndLogin(t)
 	defer hub.WipeData()

@@ -23,7 +23,7 @@ type VersionsHandler struct {
 
 func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-	r.Body = http.MaxBytesReader(w, r.Body, tools.MaxPayloadSize)
+	r.Body = http.MaxBytesReader(w, r.Body, tools.MaxPayloadSizeInBytes)
 	defer u.Close(r.Body)
 	var versionUpload store.VersionUploadDto
 	err := json.NewDecoder(r.Body).Decode(&versionUpload)

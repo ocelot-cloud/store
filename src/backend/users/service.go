@@ -76,10 +76,10 @@ func (r *UserServiceImpl) IsThereEnoughSpaceToAddVersion(userId, bytesToAdd int)
 	if err != nil {
 		return err
 	}
-	if user.UsedSpaceInBytes+bytesToAdd > tools.MaxStorageSize {
-		usedStorageInPercent := user.UsedSpaceInBytes * 100 / tools.MaxStorageSize
+	if user.UsedSpaceInBytes+bytesToAdd > tools.MaxStorageSizeInBytes {
+		usedStorageInPercent := user.UsedSpaceInBytes * 100 / tools.MaxStorageSizeInBytes
 		// TODO !! the "10" should come from a global constant
-		msg := fmt.Sprintf(NotEnoughSpacePrefix+", you can't store more then 10MiB of version content, currently used storage in bytes: %d/%d (%d percent)", user.UsedSpaceInBytes, tools.MaxStorageSize, usedStorageInPercent)
+		msg := fmt.Sprintf(NotEnoughSpacePrefix+", you can't store more then 10MiB of version content, currently used storage in bytes: %d/%d (%d percent)", user.UsedSpaceInBytes, tools.MaxStorageSizeInBytes, usedStorageInPercent)
 		// TODO !! this is some information I want to see as user. Maybe keep this a generic message like "data space limit exceeded, see 'status'", introduce a "status" command, showing your account details, including space used absolutely and in percent
 		return u.Logger.NewError(msg)
 	}

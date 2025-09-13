@@ -9,10 +9,15 @@ import (
 )
 
 const (
-	MaxPayloadSize = 1024 * 1024 // = 1 MiB
-	MaxStorageSize = 10 * MaxPayloadSize
-	Port           = "8080"
-	CookieName     = "auth"
+	OneMegaByteInBytes                        = 1024 * 1024
+	MaximumNumberOfMegaBytesAllowedInPayload  = 1
+	MaximumNumberOfMegaBytesAllowedForStorage = 10
+
+	MaxPayloadSizeInBytes = MaximumNumberOfMegaBytesAllowedInPayload * OneMegaByteInBytes
+	MaxStorageSizeInBytes = MaximumNumberOfMegaBytesAllowedForStorage * OneMegaByteInBytes
+
+	Port       = "8080"
+	CookieName = "auth"
 )
 
 type Config struct {

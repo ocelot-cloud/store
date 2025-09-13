@@ -4,6 +4,7 @@ package check
 
 import (
 	"ocelot/store/tools"
+	"ocelot/store/users"
 	"testing"
 
 	"github.com/ocelot-cloud/shared/assert"
@@ -25,7 +26,7 @@ func TestChangePassword(t *testing.T) {
 	assert.Nil(t, hub.ChangePassword(tools.SamplePassword, newPassword))
 	err := hub.Login(tools.SampleUser, tools.SamplePassword)
 	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, "incorrect username or password")
+	u.AssertDeepStackErrorFromRequest(t, err, users.IncorrectUsernameAndPasswordError)
 
 	hub.Parent.Cookie = nil
 	err = hub.Login(tools.SampleUser, newPassword)

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"net/http"
 	"ocelot/store/tools"
 	"time"
 
@@ -12,6 +13,11 @@ import (
 	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
 	"golang.org/x/crypto/bcrypt"
+)
+
+var (
+	UserDoesNotExistError             = "user does not exist"
+	IncorrectUsernameAndPasswordError = "incorrect username or password"
 )
 
 type UserServiceImpl struct {
@@ -53,6 +59,7 @@ func (r *UserServiceImpl) ValidateUserViaRegistrationCode(code string) error {
 	return nil
 }
 
+// TODO !! can be made lower case I guess?
 func (r *UserServiceImpl) IsPasswordCorrect(userName string, password string) (bool, error) {
 	user, err := r.UserRepo.GetUserByName(userName)
 	if err != nil {
@@ -64,6 +71,7 @@ func (r *UserServiceImpl) IsPasswordCorrect(userName string, password string) (b
 }
 
 // TODO !! cookie expiration time should be real postgres timestamp type
+// TODO !! can be made lower case?
 func (r *UserServiceImpl) SaveCookie(userName, cookie string, expirationDate time.Time) error {
 	user, err := r.UserRepo.GetUserByName(userName)
 	if err != nil {
@@ -100,6 +108,7 @@ func (r *UserServiceImpl) IsThereEnoughSpaceToAddVersion(userId, bytesToAdd int)
 	if user.UsedSpaceInBytes+bytesToAdd > tools.MaxStorageSize {
 		u.Logger.Info("user tried to upload version, but storage limit would be exceeded")
 		usedStorageInPercent := user.UsedSpaceInBytes * 100 / tools.MaxStorageSize
+		// TODO !! the "10" should come from a global constant
 		msg := fmt.Sprintf(NotEnoughSpacePrefix+", you can't store more then 10MiB of version content, currently used storage in bytes: %d/%d (%d percent)", user.UsedSpaceInBytes, tools.MaxStorageSize, usedStorageInPercent)
 		return errors.New(msg)
 	}
@@ -110,3 +119,41 @@ func (r *UserServiceImpl) WipeDatabase() {
 	r.UserRepo.WipeUsers()
 	r.EmailVerifier.Clear()
 }
+
+func (r *UserServiceImpl) Login(creds *store.LoginCredentials) (*http.Cookie, error) {
+	if !r.UserRepo.DoesUserExist(creds.User) {
+		return nil, u.Logger.NewError(UserDoesNotExistError)
+	}
+
+	isCorrect, err := r.IsPasswordCorrect(creds.User, creds.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	if !isCorrect {
+		return nil, u.Logger.NewError(IncorrectUsernameAndPasswordError)
+	}
+
+	cookie, err := u.GenerateCookie()
+	if err != nil {
+		return nil, err
+	}
+
+	if r.Config.UseSpecialExpiration {
+		// TODO !! I find this approach very ugly, should be refactored somehow -> when logging in, return user including his expiration data of cookie and assert this instead
+		if creds.User == TestUserWithExpiredCookie {
+			cookie.Expires = time.Now().UTC().Add(-1 * time.Second)
+		} else if creds.User == TestUserWithOldButNotExpiredCookie {
+			cookie.Expires = time.Now().UTC().Add(24 * time.Hour)
+		}
+	}
+
+	err = r.SaveCookie(creds.User, cookie.Value, cookie.Expires)
+	if err != nil {
+		return nil, err
+	}
+	return cookie, nil
+}
+
+// TODO !! does deleting an app free up all space of the versions?
+// TODO feature idea: install an app via direct upload via ocelotcloud web interface -> e.g. for local testing?

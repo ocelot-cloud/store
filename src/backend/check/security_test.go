@@ -63,7 +63,7 @@ func TestChangePasswordSecurity(t *testing.T) {
 
 	err := hub.ChangePassword(correctlyFormattedButNotMatchingPassword, newPassword)
 	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, "incorrect username or password")
+	u.AssertDeepStackErrorFromRequest(t, err, users.IncorrectUsernameAndPasswordError)
 }
 
 // TODO test input validation through u.ReadJsonFromRequest
@@ -88,7 +88,7 @@ func TestLoginSecurity(t *testing.T) {
 	correctlyFormattedButNotMatchingPassword := tools.SamplePassword + "x"
 	err = hub.Login(tools.SampleUser, correctlyFormattedButNotMatchingPassword)
 	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, "incorrect username or password")
+	u.AssertDeepStackErrorFromRequest(t, err, users.IncorrectUsernameAndPasswordError)
 }
 
 func checkCookie(t *testing.T, hub *store.AppStoreClientImpl) {

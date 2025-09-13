@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"ocelot/store/tools"
-	"time"
 
 	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/store"
@@ -35,51 +34,12 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-
-	if !h.UserRepo.DoesUserExist(creds.User) {
-		u.Logger.Info("user does not exist", tools.UserField, creds.User)
-		http.Error(w, "user does not exist", http.StatusBadRequest)
-		return
-	}
-
-	isCorrect, err := h.UserService.IsPasswordCorrect(creds.User, creds.Password)
+	cookie, err := h.UserService.Login(creds)
 	if err != nil {
-		u.Logger.Error("checking password of user failed", deepstack.ErrorField, err)
-		http.Error(w, "error when checking password", http.StatusBadRequest)
+		u.WriteResponseError(w, u.MapOf(UserDoesNotExistError, IncorrectUsernameAndPasswordError), err)
 		return
 	}
-	if !isCorrect {
-		u.Logger.Info("Password of user was not correct", tools.UserField, creds.User)
-		http.Error(w, "incorrect username or password", http.StatusBadRequest)
-		return
-	}
-
-	cookie, err := u.GenerateCookie()
-	if err != nil {
-		u.Logger.Error("cookie generation failed", deepstack.ErrorField, err)
-		http.Error(w, "cookie generation failed", http.StatusBadRequest)
-		return
-	}
-
-	if h.Config.UseSpecialExpiration {
-		// TODO !! I find this approach very ugly, should be refactored somehow -> when logging in, return user including his expiration data of cookie and assert this instead
-		if creds.User == TestUserWithExpiredCookie {
-			cookie.Expires = time.Now().UTC().Add(-1 * time.Second)
-		} else if creds.User == TestUserWithOldButNotExpiredCookie {
-			cookie.Expires = time.Now().UTC().Add(24 * time.Hour)
-		}
-	}
-
-	err = h.UserService.SaveCookie(creds.User, cookie.Value, cookie.Expires)
-	if err != nil {
-		u.Logger.Error("setting cookie failed", deepstack.ErrorField, err)
-		http.Error(w, "setting cookie failed", http.StatusBadRequest)
-		return
-	}
-
 	http.SetCookie(w, cookie)
-	u.Logger.Info("user logged in successfully", tools.UserField, creds.User)
-	w.WriteHeader(http.StatusOK)
 }
 
 // TODO !! Should we send more info of user object? e.g. cookie expiration time (for testing)?
@@ -130,7 +90,7 @@ func (h *UserHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Reque
 	}
 	if !isCorrect {
 		u.Logger.Info("incorrect credentials for user when trying to change password", tools.UserField, user)
-		http.Error(w, "incorrect username or password", http.StatusBadRequest)
+		http.Error(w, IncorrectUsernameAndPasswordError, http.StatusBadRequest)
 		return
 	}
 

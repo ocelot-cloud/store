@@ -17,7 +17,7 @@ const (
 
 type Config struct {
 	UseMailMockClient       bool
-	UseSpecialExpiration    bool
+	UseSpecialExpiration    bool // TODO !! to be removed
 	UseSampleDataForTesting bool
 	OpenWipeEndpoint        bool
 }

@@ -14,7 +14,6 @@ TODO
   * prod, same + watchtotwer + traefik
 * deployment: build image locally and test it; if passing, push image to dockerhub and download to hetzner server for deployment
 * get rid of all panics and exit(1)
-* replace "http.Error(w," with new logging+response system
 * ged rid of native mode, only run in docker containers, have a test and prod profile config
 * introduce unit tests, mocks, wire etc; shift business logic to units
 * application should not fail on first boot when .env file is not there; in such case, simply generate a template -> make a warning log, that this still needs configuration

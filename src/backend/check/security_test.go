@@ -4,6 +4,7 @@ package check
 
 import (
 	"net/http"
+	"ocelot/store/setup"
 	"ocelot/store/tools"
 	"ocelot/store/users"
 	"testing"
@@ -66,8 +67,6 @@ func TestChangePasswordSecurity(t *testing.T) {
 	u.AssertDeepStackErrorFromRequest(t, err, users.IncorrectUsernameOrPasswordError)
 }
 
-// TODO test input validation through u.ReadJsonFromRequest
-
 func TestLoginSecurity(t *testing.T) {
 	hub := GetHub()
 	defer hub.WipeData()
@@ -77,12 +76,17 @@ func TestLoginSecurity(t *testing.T) {
 	assert.Nil(t, hub.Parent.Cookie)
 	assert.Nil(t, hub.Login(tools.SampleUser, tools.SamplePassword))
 	assert.NotNil(t, hub.Parent.Cookie)
+	// cookie1ExpirationTime := hub.Parent.Cookie.Expires
 	checkCookie(t, hub)
 
-	// cookies are renewed after each successful operation
 	_, err = hub.CreateApp(tools.SampleApp)
 	assert.Nil(t, err)
+	// cookie2ExpirationTime := hub.Parent.Cookie.Expires
 	checkCookie(t, hub)
+
+	// TODO !! implement cookie renewal
+	// cookie shall renew its expiration date after authenticated call
+	// assert.True(t, cookie1ExpirationTime.Before(cookie2ExpirationTime))
 
 	hub.Parent.Cookie = nil
 	correctlyFormattedButNotMatchingPassword := tools.SamplePassword + "x"
@@ -115,8 +119,7 @@ func TestCookieAndHostProtection(t *testing.T) {
 
 	client.Parent.SetCookieHeader = false
 	_, err := client.ListOwnApps()
-	// TODO !! abstract error
-	u.AssertDeepStackErrorFromRequest(t, err, "cookie not set in request")
+	u.AssertDeepStackErrorFromRequest(t, err, setup.CookieNotSetInRequest)
 
 	client.Parent.SetCookieHeader = true
 	client.Parent.Cookie.Value = "some-invalid-cookie-value"
@@ -146,5 +149,3 @@ func TestCookie(t *testing.T) {
 	assert.NotNil(t, cookie2)
 	assert.NotEqual(t, cookie1.Value, cookie2.Value)
 }
-
-// TODO !! test cookie renewal on authenticated endpoint calls

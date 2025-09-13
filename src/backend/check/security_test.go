@@ -7,6 +7,7 @@ import (
 	"ocelot/store/setup"
 	"ocelot/store/tools"
 	"ocelot/store/users"
+	"ocelot/store/versions"
 	"testing"
 	"time"
 
@@ -110,7 +111,7 @@ func TestUploadOfInvalidZipContent(t *testing.T) {
 	assert.Nil(t, err)
 	_, err = hub.UploadVersion(appId, tools.SampleVersion, content)
 	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, "zip: not a valid zip file")
+	u.AssertDeepStackErrorFromRequest(t, err, versions.NotAZipFileError)
 }
 
 func TestCookieAndHostProtection(t *testing.T) {

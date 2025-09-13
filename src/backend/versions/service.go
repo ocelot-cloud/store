@@ -16,6 +16,7 @@ var (
 	VersionDoesNotExistError  = "version does not exist"
 	VersionAlreadyExist       = "version already exists"
 	AppDoesNotExist           = "app does not exist"
+	NotAZipFileError          = "zip: not a valid zip file"
 )
 
 type VersionService struct {
@@ -76,6 +77,7 @@ func (s *VersionService) UploadVersion(user *tools.User, versionUpload *store.Ve
 	if err != nil {
 		return err
 	}
+	
 	if !isOwner {
 		return u.Logger.NewError(NotOwningThisVersionError)
 	}

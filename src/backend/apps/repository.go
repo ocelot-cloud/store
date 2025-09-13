@@ -2,19 +2,20 @@ package apps
 
 import (
 	"database/sql"
-	"github.com/ocelot-cloud/deepstack"
-	"github.com/ocelot-cloud/shared/store"
-	u "github.com/ocelot-cloud/shared/utils"
 	"ocelot/store/tools"
 	"ocelot/store/users"
 	"strconv"
+
+	"github.com/ocelot-cloud/deepstack"
+	"github.com/ocelot-cloud/shared/store"
+	u "github.com/ocelot-cloud/shared/utils"
 )
 
 type AppRepository interface {
 	DoesAppIdExist(appId int) (bool, error)
 	CreateApp(userId int, app string) error
 	DeleteApp(appId int) error
-	GetAppList(userId int) ([]AppItem, error)
+	GetAppList(userId int) ([]tools.AppItem, error)
 	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error) // TODO !! not sure whether it makes sense to maybe improve my search function, like explicitly say have a field for maintainer and app you can search for; if empty, its ignored
 	GetAppById(appId int) (*tools.App, error)                                                 // TODO !! dont use DTO, ID should be integer
 	DoesAppExist(userID int, app string) (bool, error)
@@ -155,19 +156,14 @@ func (r *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 	return apps, nil
 }
 
-type AppItem struct {
-	Id   int
-	Name string
-}
-
-func (r *AppRepositoryImpl) GetAppList(userId int) ([]AppItem, error) {
+func (r *AppRepositoryImpl) GetAppList(userId int) ([]tools.AppItem, error) {
 	rows, err := r.DatabaseProvider.GetDb().Query("SELECT app_name, app_id FROM apps WHERE user_id = $1", userId)
 	if err != nil {
 		return nil, u.Logger.NewError(err.Error())
 	}
 	defer u.Close(rows)
 
-	var apps []AppItem
+	var apps []tools.AppItem
 	for rows.Next() {
 		// TODO !! simplify
 		var name string
@@ -175,7 +171,7 @@ func (r *AppRepositoryImpl) GetAppList(userId int) ([]AppItem, error) {
 		if err = rows.Scan(&name, &id); err != nil {
 			return nil, u.Logger.NewError(err.Error())
 		}
-		apps = append(apps, AppItem{Name: name, Id: id})
+		apps = append(apps, tools.AppItem{Name: name, Id: id})
 	}
 
 	if err = rows.Err(); err != nil {

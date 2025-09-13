@@ -68,7 +68,7 @@ func (a *AppsHandler) AppGetListHandler(w http.ResponseWriter, r *http.Request) 
 	u.SendJsonResponse(w, appDtoList)
 }
 
-func convertToAppDtos(list []AppItem) []store.AppItemDto {
+func convertToAppDtos(list []tools.AppItem) []store.AppItemDto {
 	var appDtoList []store.AppItemDto
 	for _, appItem := range list {
 		appDtoList = append(appDtoList, store.AppItemDto{

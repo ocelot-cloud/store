@@ -1,7 +1,5 @@
 package tools
 
-// TODO !! centrally collect data structures here
-
 var (
 	SampleUser     = "samplemaintainer"
 	SampleApp      = "sampleapp"
@@ -24,4 +22,9 @@ type App struct {
 	Id      int
 	OwnerId int
 	Name    string
+}
+
+type AppItem struct {
+	Id   int
+	Name string
 }

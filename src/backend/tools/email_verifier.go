@@ -1,7 +1,6 @@
 package tools
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/ocelot-cloud/shared/store"
@@ -20,13 +19,12 @@ func (e *EmailVerifierImpl) Store(code string, form *store.RegistrationForm) {
 func (e *EmailVerifierImpl) Load(code string) (*store.RegistrationForm, error) {
 	value, ok := e.WaitingList.Load(code)
 	if !ok {
-		return nil, fmt.Errorf("code not found")
+		return nil, u.Logger.NewError("code not found")
 	}
 
 	form, ok := value.(*store.RegistrationForm)
 	if !ok {
-		u.Logger.Error("Invalid type for registration form")
-		return nil, fmt.Errorf("invalid type for registration form")
+		return nil, u.Logger.NewError("invalid type for registration form")
 	}
 	return form, nil
 }

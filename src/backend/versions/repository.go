@@ -38,7 +38,7 @@ func (r *VersionRepositoryImpl) GetVersion(versionId int) (*store.Version, error
 		WHERE versions.version_id = $1
 	`, versionId).Scan(&version.Maintainer, &version.AppName, &version.VersionName, &version.Content, &version.Id, &version.VersionCreationTimestamp)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get full version info: %w", err)
+		return nil, u.Logger.NewError(err.Error())
 	}
 	return &version, nil
 }

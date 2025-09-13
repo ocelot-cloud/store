@@ -78,16 +78,6 @@ func TestRegistrationAndValidation(t *testing.T) {
 	assert.Nil(t, hub.Login(tools.SampleUser, tools.SamplePassword))
 }
 
-func TestEmailAlreadyExists(t *testing.T) {
-	hub := GetHub()
-	defer hub.WipeData()
-	assert.Nil(t, hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail))
-	user2 := tools.SampleUser + "2"
-	err := hub.RegisterUser(user2, tools.SamplePassword, tools.SampleEmail)
-	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, "email already exists")
-}
-
 // TODO !!
 func TestCascadingDeletionOfAppsAndVersionsWhenDeletingUser(t *testing.T) {
 

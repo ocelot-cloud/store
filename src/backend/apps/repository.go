@@ -96,6 +96,7 @@ func (r *AppRepositoryImpl) SumUpBytesOfAllAppVersions(appID int) (int, error) {
 
 func (r *AppRepositoryImpl) SearchForApps(request store.SearchRequest) ([]store.AppWithLatestVersion, error) {
 	var apps []store.AppWithLatestVersion
+
 	query := `
 		SELECT u.user_name, a.app_id, a.app_name, v.version_id, v.version_name
 		FROM users u
@@ -109,13 +110,24 @@ func (r *AppRepositoryImpl) SearchForApps(request store.SearchRequest) ([]store.
 		) v ON true
 		WHERE (u.user_name LIKE $1 AND a.app_name LIKE $2)
 	`
-
 	if !request.ShowUnofficialApps {
 		query += queryFilterForOfficialMaintainer
 	}
-	query += " LIMIT 100"
+	query += `
+		ORDER BY
+			(LOWER(u.user_name) = LOWER($3)) DESC,
+			(LOWER(a.app_name) = LOWER($4)) DESC,
+			u.user_name, a.app_name
+		LIMIT 100
+	`
 
-	rows, err := r.DatabaseProvider.GetDb().Query(query, "%"+request.MaintainerSearchTerm+"%", "%"+request.AppSearchTerm+"%")
+	rows, err := r.DatabaseProvider.GetDb().Query(
+		query,
+		"%"+request.MaintainerSearchTerm+"%",
+		"%"+request.AppSearchTerm+"%",
+		request.MaintainerSearchTerm,
+		request.AppSearchTerm,
+	)
 	if err != nil {
 		return nil, u.Logger.NewError(err.Error())
 	}
@@ -124,8 +136,7 @@ func (r *AppRepositoryImpl) SearchForApps(request store.SearchRequest) ([]store.
 	for rows.Next() {
 		var maintainer, appName, versionName string
 		var appId, versionId int
-		err = rows.Scan(&maintainer, &appId, &appName, &versionId, &versionName)
-		if err != nil {
+		if err = rows.Scan(&maintainer, &appId, &appName, &versionId, &versionName); err != nil {
 			u.Logger.Error("Error scanning app row", deepstack.ErrorField, err)
 			continue
 		}
@@ -137,8 +148,7 @@ func (r *AppRepositoryImpl) SearchForApps(request store.SearchRequest) ([]store.
 			LatestVersionName: versionName,
 		})
 	}
-	err = rows.Err()
-	if err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, u.Logger.NewError(err.Error())
 	}
 	return apps, nil

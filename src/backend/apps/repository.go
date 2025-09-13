@@ -115,6 +115,7 @@ func (r *AppRepositoryImpl) SearchForApps(request store.SearchRequest) ([]store.
 	}
 	query += `
 		ORDER BY
+			-- this prioritizes exact maintainer/app matches before partial matched
 			(LOWER(u.user_name) = LOWER($3)) DESC,
 			(LOWER(a.app_name) = LOWER($4)) DESC,
 			u.user_name, a.app_name

@@ -80,17 +80,13 @@ func (h *UserHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "error when trying to change password", http.StatusBadRequest)
 		return
 	}
-
-	u.Logger.Info("user changed his password", tools.UserField, user)
-	w.WriteHeader(http.StatusOK)
 }
 
 func (h *UserHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-	err := h.UserRepo.Logout(user.Name)
+	err := h.UserRepo.Logout(user.Id)
 	if err != nil {
-		u.Logger.Error("logout of user failed", tools.UserField, user, deepstack.ErrorField, err)
-		http.Error(w, "logout failed", http.StatusBadRequest)
+		u.WriteResponseError(w, nil, err)
 		return
 	}
 }

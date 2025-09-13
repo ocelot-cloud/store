@@ -21,7 +21,7 @@ type UserRepository interface {
 	DeleteUser(user string) error
 	GetUserViaCookie(hashedCookieValue string) (*tools.User, error)
 	ChangePassword(userId int, newPassword string) error
-	Logout(user string) error
+	Logout(userId int) error
 	GetUserByName(user string) (*tools.User, error)
 	UpdateUser(*tools.User) error
 	GetUserById(userId int) (*tools.User, error)
@@ -197,8 +197,8 @@ func (r *UserRepositoryImpl) WipeUsers() {
 	}
 }
 
-func (r *UserRepositoryImpl) Logout(user string) error {
-	_, err := r.DatabaseProvider.GetDb().Exec("UPDATE users SET hashed_cookie_value = $1, expiration_date = $2 WHERE user_name = $3", nil, nil, user)
+func (r *UserRepositoryImpl) Logout(userId int) error {
+	_, err := r.DatabaseProvider.GetDb().Exec("UPDATE users SET hashed_cookie_value = $1, expiration_date = $2 WHERE user_id = $3", nil, nil, userId)
 	if err != nil {
 		u.Logger.Error("failed to logout", deepstack.ErrorField, err)
 		return errors.New("failed to logout")

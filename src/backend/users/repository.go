@@ -1,6 +1,7 @@
 package users
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"ocelot/store/tools"
@@ -168,15 +169,12 @@ func (r *UserRepositoryImpl) GetUserViaCookie(hashedCookieValue string) (*tools.
 		&user.ExpirationDate,
 		&user.UsedSpaceInBytes,
 	)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			u.Logger.Info("Cookie not found")
-			return nil, fmt.Errorf("cookie not found")
-		}
-		u.Logger.Error("Failed to fetch user", deepstack.ErrorField, err)
-		return nil, fmt.Errorf("failed to fetch user")
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, u.Logger.NewError("cookie not found")
 	}
-
+	if err != nil {
+		return nil, u.Logger.NewError(err.Error())
+	}
 	return &user, nil
 }
 

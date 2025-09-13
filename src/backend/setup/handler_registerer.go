@@ -13,6 +13,10 @@ import (
 	u "github.com/ocelot-cloud/shared/utils"
 )
 
+var (
+	CookieNotSetInRequest = "cookie not set in request"
+)
+
 type Route struct {
 	path    string
 	handler http.HandlerFunc
@@ -78,14 +82,11 @@ func (h *HandlerInitializer) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(tools.CookieName)
 		if err != nil {
-			// TODO !! get rif of such duplication, search for "http.Error"
-			u.Logger.Info("cookie not set in request", deepstack.ErrorField, err)
-			http.Error(w, "cookie not set in request", http.StatusBadRequest)
+			LogInfoAndRespond(w, CookieNotSetInRequest, err)
 			return
 		}
 		user, updatedCookie, err := h.UserService.CheckAuthentication(cookie)
 		if err != nil {
-			// TODO !! abstract
 			u.WriteResponseError(w, u.MapOf(users.InvalidCookieError, users.CookieExpiredError, users.CookieNotFoundError), err)
 			return
 		}
@@ -102,4 +103,9 @@ type healthInfo struct {
 
 func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	u.SendJsonResponse(w, healthInfo{Status: "ok"})
+}
+
+func LogInfoAndRespond(w http.ResponseWriter, errorMessage string, err error) {
+	u.Logger.Error(errorMessage, deepstack.ErrorField, err)
+	http.Error(w, errorMessage, http.StatusBadRequest)
 }

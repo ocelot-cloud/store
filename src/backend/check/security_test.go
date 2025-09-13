@@ -109,60 +109,27 @@ func TestUploadOfInvalidZipContent(t *testing.T) {
 	u.AssertDeepStackErrorFromRequest(t, err, "zip: not a valid zip file")
 }
 
-/* TODO !! -> use two sample endpoints for protection, one for anonymous and one for authenticated users
 func TestCookieAndHostProtection(t *testing.T) {
-	hub := GetHub()
-	tests := []func() error{
-		hub.DeleteUser,
-		hub.CreateApp,
-		hub.DeleteApp,
-		hub.UploadVersion,
-		hub.DeleteVersion,
-		hub.ChangePassword,
-		hub.CheckAuth,
-	}
-	for _, test := range tests {
-		doCookieAndHostPolicyChecks(t, hub, test)
-	}
-}
+	client := GetHubAndLogin(t)
+	defer client.WipeData()
 
-func doCookieAndHostPolicyChecks(t *testing.T, hub *store.AppStoreClient, operation func() error) {
-	defer hub.WipeData()
-	assert.Nil(t, hub.RegisterAndValidateUser())
-	assert.Nil(t, hub.Login())
+	client.Parent.SetCookieHeader = false
+	_, err := client.ListOwnApps()
+	// TODO !! abstract error
+	u.AssertDeepStackErrorFromRequest(t, err, "cookie not set in request")
 
-	hub.Parent.SetCookieHeader = false
-
-	err := operation()
-	assert.NotNil(t, err)
-	assert.Equal(t, u.GetErrMsg(400, "cookie not set in request"), err.Error())
-
-	hub.Parent.SetCookieHeader = true
-	hub.Parent.Cookie.Value = "some-invalid-cookie-value"
-	err = operation()
-	assert.NotNil(t, err)
-	assert.Equal(t, u.GetErrMsg(400, InvalidCookieError), err.Error())
+	client.Parent.SetCookieHeader = true
+	client.Parent.Cookie.Value = "some-invalid-cookie-value"
+	_, err = client.ListOwnApps()
+	u.AssertDeepStackErrorFromRequest(t, err, users.InvalidCookieError)
 
 	validButNonExistentCookie := "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
-	hub.Parent.Cookie.Value = validButNonExistentCookie
-	err = operation()
-	assert.NotNil(t, err)
-	assert.Equal(t, u.GetErrMsg(400, CookieNotFoundError), err.Error())
+	client.Parent.Cookie.Value = validButNonExistentCookie
+	_, err = client.ListOwnApps()
+	u.AssertDeepStackErrorFromRequest(t, err, users.CookieNotFoundError)
 
-	assert.Nil(t, hub.Login())
-
-	hub.Parent.User = users.TestUserWithExpiredCookie
-	hub.Email = hub.Email + "x"
-	assert.Nil(t, hub.RegisterAndValidateUser())
-	assert.Nil(t, hub.Login())
-	err = operation()
-	assert.NotNil(t, err)
-	assert.Equal(t, u.GetErrMsg(400, CookieExpiredError), err.Error())
-	assert.True(t, time.Now().UTC().After(hub.Parent.Cookie.Expires))
-	hub.Parent.User = tools.SampleUser
-	hub.Email = tools.SampleEmail
+	assert.Nil(t, client.Login(tools.SampleUser, tools.SamplePassword))
 }
-*/
 
 func TestCookie(t *testing.T) {
 	hub := GetHubAndLogin(t)

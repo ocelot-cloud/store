@@ -4,8 +4,6 @@ import (
 	"net/http"
 )
 
-// TODO !! to small, merge with others
-
 type ContextKey string
 
 const UserCtxKey ContextKey = "user"

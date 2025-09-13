@@ -17,7 +17,7 @@ type AppRepository interface {
 	DeleteApp(appId int) error
 	GetAppList(userId int) ([]tools.AppItem, error)
 	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error) // TODO !! not sure whether it makes sense to maybe improve my search function, like explicitly say have a field for maintainer and app you can search for; if empty, its ignored
-	GetAppById(appId int) (*tools.App, error)                                                 // TODO !! dont use DTO, ID should be integer
+	GetAppById(appId int) (*tools.App, error)
 	DoesAppExist(userID int, app string) (bool, error)
 	GetUserIdOfApp(appId int) (int, error)
 }

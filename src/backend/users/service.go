@@ -146,12 +146,10 @@ func (r *UserServiceImpl) RegisterUser(form *store.RegistrationForm) error {
 		return u.Logger.NewError(UserAlreadyExistsError)
 	}
 
-	// TODO !! I also need to check presence in r.EmailVerifier
 	doesEmailExist, err := r.UserRepo.DoesEmailExist(form.Email)
 	if err != nil {
 		return err
 	}
-
 	if doesEmailExist {
 		return u.Logger.NewError(EmailAlreadyExistsError)
 	}

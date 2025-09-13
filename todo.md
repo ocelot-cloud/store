@@ -1,5 +1,6 @@
 TODO
 
+* test case: two users register with same email address, first user validated is accepted, second one is denied (email already exists)
 * when creating account, mention that other users using the store cant see the email address
   * or rather get rid of email?
 * replace used_space by used_space_in_bytes

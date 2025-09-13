@@ -126,10 +126,9 @@ func (r *UserRepositoryImpl) DoesUserExist(user string) (bool, error) {
 }
 
 func (r *UserRepositoryImpl) CreateUser(form *store.RegistrationForm) error {
-	// TODO !! can this operation ever fail? if not, remove the error returned
 	hashedPassword, err := u.SaltAndHash(form.Password)
 	if err != nil {
-		return u.Logger.NewError(err.Error())
+		return err
 	}
 	_, err = r.DatabaseProvider.GetDb().Exec("INSERT INTO users (user_name, email, hashed_password, used_space_in_bytes) VALUES ($1, $2, $3, $4)", form.User, form.Email, hashedPassword, 0)
 	if err != nil {

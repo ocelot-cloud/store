@@ -34,9 +34,6 @@ func getAbsoluteParentDir() string {
 
 func main() {
 	tr.EnableAbortForKeystrokeControlPlusC()
-	// TODO !! re-add production tests
-	tr.Config.DefaultEnvironmentVariables = []string{"USE_MOCK_EMAIL_CLIENT=true", "RUN_NATIVELY=true", "LOG_LEVEL=DEBUG"}
-
 	rootCmd := &cobra.Command{
 		Use:   "ci-runner",
 		Short: "ci-runner is a service that runs CI jobs",

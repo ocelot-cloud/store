@@ -10,6 +10,7 @@ TODO
 * make an API call like updateApps which delivers a list of apps, and is responded with just the new or updated apps (one total request is more efficient than one request per app) -> uploading multiple versions at once with a single request
 * via unit tests, check that a user cant upload a version > 1 MB, or apps with total size of > 10 MB
 * add option to change email address -> do this in memory, if code is provided, then change email address
+* re-add production tests
 
 ### frontend 
 

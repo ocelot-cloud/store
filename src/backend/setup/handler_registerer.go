@@ -24,6 +24,7 @@ type HandlerInitializer struct {
 	UserHandler     *users.UserHandler
 	Config          *tools.Config
 	Mux             *http.ServeMux
+	UserService     *users.UserServiceImpl
 }
 
 func (h *HandlerInitializer) InitializeHandlers() {
@@ -77,11 +78,12 @@ func (h *HandlerInitializer) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(tools.CookieName)
 		if err != nil {
+			// TODO !! get rif of such duplication, search for "http.Error"
 			u.Logger.Info("cookie not set in request", deepstack.ErrorField, err)
 			http.Error(w, "cookie not set in request", http.StatusBadRequest)
 			return
 		}
-		user, updatedCookie, err := h.UserHandler.CheckAuthentication(cookie)
+		user, updatedCookie, err := h.UserService.CheckAuthentication(cookie)
 		if err != nil {
 			// TODO !! abstract
 			u.WriteResponseError(w, u.MapOf("invalid cookie", "cookie expired", "cookie not found"), err)

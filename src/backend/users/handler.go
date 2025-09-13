@@ -93,9 +93,6 @@ func (h *UserHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "logout failed", http.StatusBadRequest)
 		return
 	}
-
-	u.Logger.Info("user logged out", tools.UserField, user)
-	w.WriteHeader(http.StatusOK)
 }
 
 func (h *UserHandler) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
@@ -119,41 +116,4 @@ func (h *UserHandler) ValidationCodeHandler(w http.ResponseWriter, r *http.Reque
 		u.WriteResponseError(w, u.MapOf("invalid input"), err)
 		return
 	}
-}
-
-func (h *UserHandler) CheckAuthentication(cookie *http.Cookie) (*tools.User, *http.Cookie, error) {
-	if err := validation.ValidateSecret(cookie.Value); err != nil {
-		return nil, nil, u.Logger.NewError("invalid cookie")
-	}
-
-	hashedCookieValue := u.GetSHA256Hash(cookie.Value)
-	user, err := h.UserRepo.GetUserViaCookie(hashedCookieValue)
-	if err != nil {
-		// TODO !! this should be thrown by the repo
-		return nil, nil, u.Logger.NewError("cookie not found")
-	}
-
-	isExpired, err := h.UserService.IsCookieExpired(cookie.Value)
-	if err != nil {
-		return nil, nil, err
-	}
-	if isExpired {
-		return nil, nil, u.Logger.NewError("cookie expired")
-	}
-
-	newExpirationTime := u.GetTimeInSevenDays()
-	err = h.UserService.SaveCookie(user.Name, cookie.Value, newExpirationTime)
-	if err != nil {
-		return nil, nil, err
-	}
-	cookie.Expires = newExpirationTime
-	// Note: If no path is given, browsers set the default path one level higher than the
-	// request path. For example, calling "/a" sets the cookie path to "/", and calling
-	// "/a/b" sets the cookie path to "/a". When updating a cookie, two cookies, the old one
-	// and the updated one, with different paths are stored in the browser, causing some
-	// requests to fail with "cookie not found".
-	cookie.Path = "/"
-	cookie.SameSite = http.SameSiteStrictMode
-
-	return user, cookie, nil
 }

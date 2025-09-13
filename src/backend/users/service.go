@@ -61,8 +61,7 @@ func (r *UserServiceImpl) IsPasswordCorrect(userName string, password string) (b
 }
 
 // TODO !! cookie expiration time should be real postgres timestamp type
-// TODO !! can be made lower case?
-func (r *UserServiceImpl) SaveCookie(userName, cookie string, expirationDate time.Time) error {
+func (r *UserServiceImpl) saveCookie(userName, cookie string, expirationDate time.Time) error {
 	user, err := r.UserRepo.GetUserByName(userName)
 	if err != nil {
 		return err
@@ -75,7 +74,7 @@ func (r *UserServiceImpl) SaveCookie(userName, cookie string, expirationDate tim
 	return r.UserRepo.UpdateUser(user)
 }
 
-func (r *UserServiceImpl) IsCookieExpired(cookie string) (bool, error) {
+func (r *UserServiceImpl) isCookieExpired(cookie string) (bool, error) {
 	hashedCookieValue := u.GetSHA256Hash(cookie)
 	user, err := r.UserRepo.GetUserViaCookie(hashedCookieValue)
 	if err != nil {
@@ -127,7 +126,7 @@ func (r *UserServiceImpl) Login(creds *store.LoginCredentials) (*http.Cookie, er
 		return nil, err
 	}
 
-	err = r.SaveCookie(creds.User, cookie.Value, cookie.Expires)
+	err = r.saveCookie(creds.User, cookie.Value, cookie.Expires)
 	if err != nil {
 		return nil, err
 	}
@@ -183,6 +182,43 @@ func (r *UserServiceImpl) ValidateUser(code string) error {
 	}
 	r.EmailVerifier.Delete(code)
 	return nil
+}
+
+func (h *UserServiceImpl) CheckAuthentication(cookie *http.Cookie) (*tools.User, *http.Cookie, error) {
+	if err := validation.ValidateSecret(cookie.Value); err != nil {
+		return nil, nil, u.Logger.NewError("invalid cookie")
+	}
+
+	hashedCookieValue := u.GetSHA256Hash(cookie.Value)
+	user, err := h.UserRepo.GetUserViaCookie(hashedCookieValue)
+	if err != nil {
+		// TODO !! this should be thrown by the repo
+		return nil, nil, u.Logger.NewError("cookie not found")
+	}
+
+	isExpired, err := h.isCookieExpired(cookie.Value)
+	if err != nil {
+		return nil, nil, err
+	}
+	if isExpired {
+		return nil, nil, u.Logger.NewError("cookie expired")
+	}
+
+	newExpirationTime := u.GetTimeInSevenDays()
+	err = h.saveCookie(user.Name, cookie.Value, newExpirationTime)
+	if err != nil {
+		return nil, nil, err
+	}
+	cookie.Expires = newExpirationTime
+	// Note: If no path is given, browsers set the default path one level higher than the
+	// request path. For example, calling "/a" sets the cookie path to "/", and calling
+	// "/a/b" sets the cookie path to "/a". When updating a cookie, two cookies, the old one
+	// and the updated one, with different paths are stored in the browser, causing some
+	// requests to fail with "cookie not found".
+	cookie.Path = "/"
+	cookie.SameSite = http.SameSiteStrictMode
+
+	return user, cookie, nil
 }
 
 // TODO !! does deleting an app free up all space of the versions?

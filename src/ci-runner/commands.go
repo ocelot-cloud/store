@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+var (
+	localImageName = "ocelotcloud/store:local"
+)
+
 func TestAll() {
 	TestUnits()
 	TestComponent()
@@ -17,7 +21,6 @@ func TestAll() {
 func TestUnits() {
 	tr.Log.TaskDescription("Testing units")
 	defer tr.Cleanup()
-	// TODO it should not be necessary to set a profile for unit tests; the TEST profile should become the default; PROD should become the app store packaged in a container I guess?
 	// TODO !! put the "delete mocks and wire_gen" logic from cloud in shared and use it here
 	// TODO !! first wire and then mockery or vise versa? use cloud approach, maybe put to "shared"
 	tr.ExecuteInDir(backendSetupDir, "wire")
@@ -28,9 +31,9 @@ func TestComponent() {
 	tr.Log.TaskDescription("Testing backend")
 	defer tr.Cleanup()
 	tr.ExecuteInDir(backendDir, "go build -installsuffix cgo", "CGO_ENABLED=0", "GOOS=linux", "GOARCH=amd64")
-	// TODO !! abstract paths and image names etc
-	tr.ExecuteInDir(backendDir, "docker build -t ocelotcloud/store:local -f docker/Dockerfile .")
-	tr.ExecuteInDir(backendDockerDir, "docker compose -f docker-compose-dev.yml up -d", "PROFILE=TEST")
+	command := fmt.Sprintf("docker build -t %s -f %s/Dockerfile .", localImageName, backendDockerDir)
+	tr.ExecuteInDir(backendDir, command)
+	tr.ExecuteInDir(backendDockerDir, "docker compose -f docker-compose.yml up -d", "PROFILE=TEST")
 	waitForHealthEndpoint()
 	tr.ExecuteInDir(backendCheckDir, "go test -count=1 -tags=component ./...")
 }

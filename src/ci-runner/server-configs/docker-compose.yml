@@ -1,5 +1,4 @@
 # TODO !! shouldnt the app store service be here? -> yes, should be pulled from dockerhub
-# TODO !! can be merged with other docker files?
 services:
   traefik:
     image: "traefik:latest"
@@ -22,7 +21,6 @@ services:
       # - "--certificatesresolvers.myresolver.acme.caserver=https://acme-sversioning-v02.api.letsencrypt.org/directory"
     volumes:
       - "traefik:/letsencrypt"
-      - "./dynamic.yml:/etc/traefik/dynamic.yml"
 
   watchtower:
     image: containrrr/watchtower:1.7.1
@@ -32,20 +30,29 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --interval 43200 traefik
 
+  store:
+    image: ocelotcloud/store:latest
+    container_name: ocelotcloud_store_store
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.store.rule=Host(`store.ocelot-cloud.org`)"
+      - "traefik.http.routers.store.entrypoints=websecure"
+      - "traefik.http.routers.store.tls.certresolver=myresolver"
+      - "traefik.http.services.store.loadbalancer.server.port=8080"
+
   postgres:
     image: postgres:17.2
     container_name: ocelotcloud_store_postgres
-    ports:
-      - 127.0.0.1:5433:5432
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_HOST_AUTH_METHOD=trust
       - POSTGRES_DB=postgres
     volumes:
-      - ocelotcloud_appstore_database:/var/lib/postgresql/data
+      - ocelotcloud_store_database:/var/lib/postgresql/data
     restart: unless-stopped
 
 volumes:
-  ocelotcloud_appstore_database:
-    name: ocelotcloud_appstore_database
+  ocelotcloud_store_database:
+    name: ocelotcloud_store_database
   traefik:

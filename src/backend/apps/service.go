@@ -17,7 +17,6 @@ type AppServiceImpl struct {
 	UserRepo users.UserRepository
 }
 
-// TODO !! can be made hidden?
 func (a *AppServiceImpl) DoesUserOwnApp(requestingUsersId, appId int) (bool, error) {
 	actualUserId, err := a.AppRepo.GetUserIdOfApp(appId)
 	if err != nil {

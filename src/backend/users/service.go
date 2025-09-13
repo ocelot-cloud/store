@@ -190,14 +190,7 @@ func (h *UserServiceImpl) CheckAuthentication(cookie *http.Cookie) (*tools.User,
 		return nil, nil, err
 	}
 	cookie.Expires = newExpirationTime
-	// Note: If no path is given, browsers set the default path one level higher than the
-	// request path. For example, calling "/a" sets the cookie path to "/", and calling
-	// "/a/b" sets the cookie path to "/a". When updating a cookie, two cookies, the old one
-	// and the updated one, with different paths are stored in the browser, causing some
-	// requests to fail with "cookie not found".
-	cookie.Path = "/"
 	cookie.SameSite = http.SameSiteStrictMode
-
 	return user, cookie, nil
 }
 

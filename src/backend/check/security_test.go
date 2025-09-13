@@ -96,7 +96,6 @@ func TestLoginSecurity(t *testing.T) {
 }
 
 func checkCookie(t *testing.T, hub *store.AppStoreClientImpl) {
-	assert.Equal(t, "/", hub.Parent.Cookie.Path)
 	assert.Equal(t, http.SameSiteStrictMode, hub.Parent.Cookie.SameSite)
 	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration-1).Before(hub.Parent.Cookie.Expires))
 	assert.True(t, time.Now().UTC().AddDate(0, 0, DaysToCookieExpiration+1).After(hub.Parent.Cookie.Expires))

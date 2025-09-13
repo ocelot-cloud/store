@@ -5,8 +5,6 @@ TODO
   * or rather get rid of email?
   * when an admin uploads a new configuration of email settings, an automatic connection should be made to check whether it works; if not, email config is denied
 * maybe make an implementation for user registration/validation like: if test mode -> return static sample registration code, otherwise create a random one
-* introduce deepstack error wrapping in repos
-* remove "log/respond" duplication in handlers
 * replace repo tests by component tests to not leave out important use cases in test suite
 * get rid of "data" folders (using same logger approach as in cloud)
 * two deployments:

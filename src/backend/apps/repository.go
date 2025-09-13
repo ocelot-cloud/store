@@ -16,7 +16,7 @@ type AppRepository interface {
 	CreateApp(userId int, app string) error
 	DeleteApp(appId int) error
 	GetAppList(userId int) ([]tools.AppItem, error)
-	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error) // TODO !! not sure whether it makes sense to maybe improve my search function, like explicitly say have a field for maintainer and app you can search for; if empty, its ignored
+	SearchForApps(searchRequest store.SearchRequest) ([]store.AppWithLatestVersion, error)
 	GetAppById(appId int) (*tools.App, error)
 	DoesAppExist(userID int, app string) (bool, error)
 	GetUserIdOfApp(appId int) (int, error)
@@ -88,7 +88,7 @@ func (r *AppRepositoryImpl) SumUpBytesOfAllAppVersions(appID int) (int, error) {
 	return int(totalSize.Int64), nil
 }
 
-func (r *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]store.AppWithLatestVersion, error) {
+func (r *AppRepositoryImpl) SearchForApps(request store.SearchRequest) ([]store.AppWithLatestVersion, error) {
 	var apps []store.AppWithLatestVersion
 	query := `
 		SELECT u.user_name, a.app_id, a.app_name, v.version_id, v.version_name
@@ -101,7 +101,7 @@ func (r *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 			ORDER BY creation_timestamp DESC
 			LIMIT 1
 		) v ON true
-		WHERE (u.user_name LIKE $1 OR a.app_name LIKE $2)
+		WHERE (u.user_name LIKE $1 AND a.app_name LIKE $2)
 	`
 
 	if !request.ShowUnofficialApps {
@@ -109,7 +109,7 @@ func (r *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 	}
 	query += " LIMIT 100"
 
-	rows, err := r.DatabaseProvider.GetDb().Query(query, "%"+request.SearchTerm+"%", "%"+request.SearchTerm+"%")
+	rows, err := r.DatabaseProvider.GetDb().Query(query, "%"+request.MaintainerSearchTerm+"%", "%"+request.AppSearchTerm+"%")
 	if err != nil {
 		return nil, u.Logger.NewError(err.Error())
 	}

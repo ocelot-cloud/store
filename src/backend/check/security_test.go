@@ -22,7 +22,8 @@ func TestFindAppsSecurity(t *testing.T) {
 	defer hub.WipeData()
 	hub.Parent.SetCookieHeader = false
 
-	_, err := hub.SearchForApps("notexistingapp", true)
+	// TODO !! also test non-existing maintainer
+	_, err := hub.SearchForApps("", "notexistingapp", true)
 	assert.Nil(t, err)
 }
 

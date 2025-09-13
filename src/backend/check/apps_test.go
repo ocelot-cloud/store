@@ -55,6 +55,7 @@ func TestCreationOfOcelotCloudAppIsForbidden(t *testing.T) {
 }
 
 // TODO !! all search cases covered?
+// TODO !! make sure that new search method is tested sufficiently; search via maintainer AND app separately, and one test should cover both at the same time
 
 func TestUnofficialAppFilteringWhenSearching(t *testing.T) {
 	hub := GetHubAndLogin(t)
@@ -64,12 +65,12 @@ func TestUnofficialAppFilteringWhenSearching(t *testing.T) {
 	_, err = hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
 	assert.Nil(t, err)
 
-	apps, err := hub.SearchForApps(tools.SampleApp, true)
+	apps, err := hub.SearchForApps("", tools.SampleApp, true)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(apps))
 	assert.Equal(t, appId, apps[0].AppId)
 
-	apps, err = hub.SearchForApps(tools.SampleApp, false)
+	apps, err = hub.SearchForApps("", tools.SampleApp, false)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(apps))
 }
@@ -77,7 +78,7 @@ func TestUnofficialAppFilteringWhenSearching(t *testing.T) {
 func TestAllowEmptyStringAsSearchTerm(t *testing.T) {
 	hub := GetHubAndLogin(t)
 	defer hub.WipeData()
-	apps, err := hub.SearchForApps("", true)
+	apps, err := hub.SearchForApps("", "", true)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(apps))
 
@@ -86,7 +87,7 @@ func TestAllowEmptyStringAsSearchTerm(t *testing.T) {
 	_, err = hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
 	assert.Nil(t, err)
 
-	apps, err = hub.SearchForApps("", true)
+	apps, err = hub.SearchForApps("", "", true)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(apps))
 }

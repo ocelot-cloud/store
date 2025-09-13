@@ -80,11 +80,10 @@ func convertToAppDtos(list []tools.AppItem) []store.AppItemDto {
 }
 
 func (a *AppsHandler) SearchForAppsHandler(w http.ResponseWriter, r *http.Request) {
-	appSearchRequest, err := validation.ReadBody[store.AppSearchRequest](w, r)
+	appSearchRequest, err := validation.ReadBody[store.SearchRequest](w, r)
 	if err != nil {
 		return
 	}
-
 	apps, err := a.AppRepo.SearchForApps(*appSearchRequest)
 	if err != nil {
 		u.WriteResponseError(w, nil, err)

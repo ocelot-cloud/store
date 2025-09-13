@@ -90,7 +90,7 @@ func TestDownloadDummyVersion(t *testing.T) {
 	assert.Nil(t, err)
 	versionId, err := hub.UploadVersion(appId, tools.SampleVersion, SampleVersionFileContent)
 	assert.Nil(t, err)
-	apps, err := hub.SearchForApps(tools.SampleApp, true)
+	apps, err := hub.SearchForApps("", tools.SampleApp, true)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(apps))
 	versions, err := hub.GetVersions(appId)

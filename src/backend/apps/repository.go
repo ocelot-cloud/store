@@ -20,6 +20,7 @@ type AppRepository interface {
 	GetAppById(appId int) (*tools.App, error)
 	DoesAppExist(userID int, app string) (bool, error)
 	GetUserIdOfApp(appId int) (int, error)
+	SumUpBytesOfAllAppVersions(appID int) (int, error)
 }
 
 type AppRepositoryImpl struct {
@@ -58,28 +59,11 @@ func (r *AppRepositoryImpl) DoesAppIdExist(appId int) (bool, error) {
 	return exists, nil
 }
 
-// TODO !! this is business logic
 func (r *AppRepositoryImpl) DeleteApp(appId int) error {
-	userId, err := r.GetUserIdOfApp(appId)
-	if err != nil {
-		return err
-	}
-
-	totalDataSize, err := r.sumBlobSizes(appId)
-	if err != nil {
-		return err
-	}
-
-	_, err = r.DatabaseProvider.GetDb().Exec(`DELETE FROM apps WHERE app_id = $1`, appId)
+	_, err := r.DatabaseProvider.GetDb().Exec(`DELETE FROM apps WHERE app_id = $1`, appId)
 	if err != nil {
 		return u.Logger.NewError(err.Error())
 	}
-
-	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET used_space_in_bytes = used_space_in_bytes - $1 WHERE user_id = $2", totalDataSize, userId)
-	if err != nil {
-		return u.Logger.NewError(err.Error())
-	}
-
 	return nil
 }
 
@@ -92,18 +76,16 @@ func (r *AppRepositoryImpl) GetUserIdOfApp(appId int) (int, error) {
 	return userId, nil
 }
 
-func (r *AppRepositoryImpl) sumBlobSizes(appID int) (int64, error) {
+func (r *AppRepositoryImpl) SumUpBytesOfAllAppVersions(appID int) (int, error) {
 	var totalSize sql.NullInt64
 	err := r.DatabaseProvider.GetDb().QueryRow("SELECT SUM(LENGTH(data)) FROM versions WHERE app_id = $1", appID).Scan(&totalSize)
 	if err != nil {
 		return 0, u.Logger.NewError(err.Error())
 	}
-
 	if !totalSize.Valid {
 		return 0, nil
 	}
-
-	return totalSize.Int64, nil
+	return int(totalSize.Int64), nil
 }
 
 func (r *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]store.AppWithLatestVersion, error) {

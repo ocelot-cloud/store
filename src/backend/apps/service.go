@@ -51,8 +51,36 @@ func (a *AppServiceImpl) DeleteAppWithChecks(requestingUsersId, appId int) error
 	if err != nil {
 		return err
 	}
+
 	if !isOwner {
 		return u.Logger.NewError(YouDoNotOwnThisAppError)
 	}
-	return a.AppRepo.DeleteApp(appId)
+
+	userId, err := a.AppRepo.GetUserIdOfApp(appId)
+	if err != nil {
+		return err
+	}
+
+	numberOfBytesToBeFreedUpAfterDeletion, err := a.AppRepo.SumUpBytesOfAllAppVersions(appId)
+	if err != nil {
+		return err
+	}
+
+	user, err := a.UserRepo.GetUserById(userId)
+	if err != nil {
+		return err
+	}
+
+	err = a.AppRepo.DeleteApp(appId)
+	if err != nil {
+		return err
+	}
+
+	user.UsedSpaceInBytes -= numberOfBytesToBeFreedUpAfterDeletion
+	err = a.UserRepo.UpdateUser(user)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

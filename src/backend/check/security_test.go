@@ -106,11 +106,8 @@ func TestUploadOfInvalidZipContent(t *testing.T) {
 	assert.Nil(t, err)
 	_, err = hub.UploadVersion(appId, tools.SampleVersion, content)
 	assert.NotNil(t, err)
-	// TODO !! can status code context be removed? I think "zip: not a valid zip file" should be the errors message
 	u.AssertDeepStackErrorFromRequest(t, err, "zip: not a valid zip file")
 }
-
-// TODO !! when integration tests are applied to docker deployment, then there is not need to expose the database port to the host any longer
 
 /* TODO !! -> use two sample endpoints for protection, one for anonymous and one for authenticated users
 func TestCookieAndHostProtection(t *testing.T) {

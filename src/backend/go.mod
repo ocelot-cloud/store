@@ -4,7 +4,7 @@ go 1.24.5
 
 require (
 	github.com/google/wire v0.7.0
-	github.com/jackc/pgx/v5 v5.7.5
+	github.com/jackc/pgx/v5 v5.7.6
 	github.com/ocelot-cloud/deepstack v0.0.10
 	github.com/ocelot-cloud/shared v0.0.136
 	golang.org/x/crypto v0.42.0

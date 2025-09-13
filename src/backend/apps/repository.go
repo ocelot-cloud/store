@@ -124,7 +124,7 @@ func (r *AppRepositoryImpl) SearchForApps(request store.SearchRequest) ([]store.
 	for rows.Next() {
 		var maintainer, appName, versionName string
 		var appId, versionId int
-		err := rows.Scan(&maintainer, &appId, &appName, &versionId, &versionName)
+		err = rows.Scan(&maintainer, &appId, &appName, &versionId, &versionName)
 		if err != nil {
 			u.Logger.Error("Error scanning app row", deepstack.ErrorField, err)
 			continue

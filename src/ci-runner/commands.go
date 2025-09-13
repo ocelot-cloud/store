@@ -21,8 +21,6 @@ func TestAll() {
 func TestUnits() {
 	tr.Log.TaskDescription("Testing units")
 	defer tr.Cleanup()
-	// TODO !! put the "delete mocks and wire_gen" logic from cloud in shared and use it here
-	// TODO !! first wire and then mockery or vise versa? use cloud approach, maybe put to "shared"
 	tr.ExecuteInDir(backendSetupDir, "wire")
 	tr.ExecuteInDir(backendDir, "go test -count=1 -tags=unit ./...", "PROFILE=TEST")
 }
@@ -63,8 +61,6 @@ func waitForHealthEndpoint() {
 	os.Exit(1)
 }
 
-// TODO !! re-check, which assets can be deleted; also make sure that sample assets are not loaded in production mode (maybe write a test that database is empty or so in prod mode?)
-
 func update() {
 	tr.ExecuteInDir(ciRunnerDir, "go get -u ./...")
 	tr.ExecuteInDir(ciRunnerDir, "go mod tidy")
@@ -93,5 +89,3 @@ func executeOnServer(command string) {
 	sshCommand := fmt.Sprintf("ssh %s %s", sshHost, command)
 	tr.Execute(sshCommand)
 }
-
-// TODO !! implement "deploy local prod" command, delete "data" folder after test was run

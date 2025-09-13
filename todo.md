@@ -32,3 +32,6 @@ TODO
 
 * replace by CLI tool entirely; introduce cobra, so one cobra command runs the app store backend, another interacts with it, which makes sharing the library very easy
 * cloud should import app store in order to get access to app store client, so move that from "shared" to this repo
+
+
+* in the end, deploy to hetzner server

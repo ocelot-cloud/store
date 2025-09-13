@@ -49,19 +49,19 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 
 func (v *VersionsHandler) VersionDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-	versionId, err := apps.ReadBodyAsStringNumber(w, r)
-	if err != nil {
+	versionId, ok := apps.ReadBodyAsStringNumber(w, r)
+	if !ok {
 		return
 	}
-	err = v.VersionService.DeleteVersionWithChecks(user.Id, versionId)
+	err := v.VersionService.DeleteVersionWithChecks(user.Id, versionId)
 	if err != nil {
 		u.WriteResponseError(w, u.MapOf(NotOwningThisVersionError, VersionDoesNotExistError), err, tools.UserField, user, tools.VersionIdField, versionId)
 	}
 }
 
 func (v *VersionsHandler) GetVersionsHandler(w http.ResponseWriter, r *http.Request) {
-	appId, err := apps.ReadBodyAsStringNumber(w, r)
-	if err != nil {
+	appId, ok := apps.ReadBodyAsStringNumber(w, r)
+	if !ok {
 		return
 	}
 	versionsList, err := v.VersionService.ListVersions(appId)
@@ -73,8 +73,8 @@ func (v *VersionsHandler) GetVersionsHandler(w http.ResponseWriter, r *http.Requ
 }
 
 func (v *VersionsHandler) VersionDownloadHandler(w http.ResponseWriter, r *http.Request) {
-	versionId, err := apps.ReadBodyAsStringNumber(w, r)
-	if err != nil {
+	versionId, ok := apps.ReadBodyAsStringNumber(w, r)
+	if !ok {
 		return
 	}
 	versionInfo, err := v.VersionService.GetVersionForDownload(versionId)

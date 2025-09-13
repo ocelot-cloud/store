@@ -1,7 +1,6 @@
 package apps
 
 import (
-	"fmt"
 	"net/http"
 	"ocelot/store/tools"
 	"ocelot/store/users"
@@ -33,29 +32,29 @@ func (a *AppsHandler) AppCreationHandler(w http.ResponseWriter, r *http.Request)
 
 func (a *AppsHandler) AppDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	user := tools.GetUserFromContext(r)
-	appId, err := ReadBodyAsStringNumber(w, r)
-	if err != nil {
+	appId, ok := ReadBodyAsStringNumber(w, r)
+	if !ok {
 		return
 	}
-	err = a.AppService.DeleteAppWithChecks(user.Id, appId)
+	err := a.AppService.DeleteAppWithChecks(user.Id, appId)
 	if err != nil {
 		u.WriteResponseError(w, u.MapOf(YouDoNotOwnThisAppError), err)
 		return
 	}
 }
 
-func ReadBodyAsStringNumber(w http.ResponseWriter, r *http.Request) (int, error) {
+func ReadBodyAsStringNumber(w http.ResponseWriter, r *http.Request) (int, bool) {
 	appIdString, err := validation.ReadBody[store.NumberString](w, r)
 	if err != nil {
-		return -1, fmt.Errorf("")
+		return -1, false
 	}
 	appId, err := strconv.Atoi(appIdString.Value)
 	if err != nil {
 		u.Logger.Warn("request body string conversion error", tools.AppIdField, appIdString)
 		http.Error(w, users.InvalidInputError, http.StatusBadRequest)
-		return -1, fmt.Errorf("")
+		return -1, false
 	}
-	return appId, nil
+	return appId, true
 }
 
 func (a *AppsHandler) AppGetListHandler(w http.ResponseWriter, r *http.Request) {

@@ -34,14 +34,18 @@ func TestChangePassword(t *testing.T) {
 	assert.NotNil(t, hub.Parent.Cookie)
 }
 
-// TODO !! better name: test user cannot be registered twice
-func TestRegistration(t *testing.T) {
+func TestCanNotCreateUserWhoseNameOrEmailIsAlreadyUsed(t *testing.T) {
 	hub := GetHub()
 	defer hub.WipeData()
 	assert.Nil(t, hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail))
-	err := hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail)
+
+	err := hub.RegisterAndValidateUser(tools.SampleUser, tools.SamplePassword, tools.SampleEmail+"x")
 	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, "user already exists")
+	u.AssertDeepStackErrorFromRequest(t, err, users.UserAlreadyExistsError)
+
+	err = hub.RegisterAndValidateUser(tools.SampleUser+"x", tools.SamplePassword, tools.SampleEmail)
+	assert.NotNil(t, err)
+	u.AssertDeepStackErrorFromRequest(t, err, users.EmailAlreadyExistsError)
 }
 
 func TestLogout(t *testing.T) {

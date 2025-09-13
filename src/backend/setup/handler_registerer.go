@@ -91,7 +91,7 @@ func (h *HandlerInitializer) authMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		http.SetCookie(w, updatedCookie)
-		ctx := context.WithValue(r.Context(), tools.UserCtxKey, *user)
+		ctx := context.WithValue(r.Context(), tools.UserCtxKey, user)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})

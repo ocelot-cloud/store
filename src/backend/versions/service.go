@@ -2,6 +2,7 @@ package versions
 
 import (
 	"ocelot/store/apps"
+	"ocelot/store/tools"
 	"ocelot/store/users"
 	"strconv"
 
@@ -20,7 +21,7 @@ var (
 type VersionService struct {
 	VersionRepo VersionRepository
 	UserService *users.UserServiceImpl
-	AppRepo     apps.AppRepository // TODO !! not sure if needed
+	AppRepo     apps.AppRepository
 	AppService  *apps.AppServiceImpl
 	UserRepo    users.UserRepository
 }
@@ -46,13 +47,13 @@ func (s *VersionService) DeleteVersionWithChecks(userId, versionId int) error {
 	return err
 }
 
-func (s *VersionService) UploadVersion(userId int, versionUpload *store.VersionUploadDto) error {
+func (s *VersionService) UploadVersion(user *tools.User, versionUpload *store.VersionUploadDto) error {
 	err := validation.ValidateStruct(versionUpload)
 	if err != nil {
 		return err
 	}
 
-	err = s.UserService.IsThereEnoughSpaceToAddVersion(userId, len(versionUpload.Content))
+	err = s.UserService.IsThereEnoughSpaceToAddVersion(user.Id, len(versionUpload.Content))
 	if err != nil {
 		return err
 	}
@@ -71,7 +72,7 @@ func (s *VersionService) UploadVersion(userId int, versionUpload *store.VersionU
 		return u.Logger.NewError(AppDoesNotExist)
 	}
 
-	isOwner, err := s.AppService.DoesUserOwnApp(userId, appId)
+	isOwner, err := s.AppService.DoesUserOwnApp(user.Id, appId)
 	if err != nil {
 		return err
 	}
@@ -80,11 +81,6 @@ func (s *VersionService) UploadVersion(userId int, versionUpload *store.VersionU
 	}
 
 	app, err := s.AppRepo.GetAppById(appId)
-	if err != nil {
-		return err
-	}
-	// TODO !! rather directly pass the user object, so that this step is not needed
-	user, err := s.UserRepo.GetUserById(userId)
 	if err != nil {
 		return err
 	}

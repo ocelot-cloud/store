@@ -37,7 +37,7 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 		u.WriteResponseError(w, nil, err)
 		return
 	}
-	err = v.VersionService.UploadVersion(user.Id, &versionUpload)
+	err = v.VersionService.UploadVersion(user, &versionUpload)
 	if err != nil {
 		// TODO !! space use case to be covered by component tests I guess? also NotOwningThisVersionError
 		// TODO !! expected error "zip: not a valid zip file" -> make this a an error in "shared" for reuse?

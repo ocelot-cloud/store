@@ -194,7 +194,7 @@ func (h *UserServiceImpl) CheckAuthentication(cookie *http.Cookie) (*tools.User,
 	return user, cookie, nil
 }
 
-func (r *UserServiceImpl) ChangePassword(user tools.User, form *store.ChangePasswordForm) error {
+func (r *UserServiceImpl) ChangePassword(user *tools.User, form *store.ChangePasswordForm) error {
 	isCorrect, err := r.IsPasswordCorrect(user.Name, form.OldPassword)
 	if err != nil {
 		return err

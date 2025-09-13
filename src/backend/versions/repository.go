@@ -122,16 +122,6 @@ func (r *VersionRepositoryImpl) getBlobSize(versionId int) (int64, error) {
 }
 
 func (r *VersionRepositoryImpl) ListVersionsOfApp(appId int) ([]store.LeanVersionDto, error) {
-	// TODO !! this kind of check is business logic
-	var exists bool
-	err := r.DatabaseProvider.GetDb().QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE app_id = $1)", appId).Scan(&exists)
-	if err != nil {
-		return nil, u.Logger.NewError(err.Error())
-	}
-	if !exists {
-		return nil, u.Logger.NewError(AppDoesNotExist)
-	}
-
 	rows, err := r.DatabaseProvider.GetDb().Query("SELECT version_name, version_id, creation_timestamp FROM versions WHERE app_id = $1", appId)
 	if err != nil {
 		return nil, u.Logger.NewError(err.Error())

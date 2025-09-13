@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"ocelot/store/tools"
 
-	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
 	"github.com/ocelot-cloud/shared/validation"
@@ -30,7 +29,7 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cookie, err := h.UserService.Login(creds)
 	if err != nil {
-		u.WriteResponseError(w, u.MapOf(UserDoesNotExistError, IncorrectUsernameAndPasswordError), err)
+		u.WriteResponseError(w, u.MapOf(UserDoesNotExistError, IncorrectUsernameOrPasswordError), err)
 		return
 	}
 	http.SetCookie(w, cookie)
@@ -46,13 +45,9 @@ func (h *UserHandler) UserDeleteHandler(w http.ResponseWriter, r *http.Request) 
 	user := tools.GetUserFromContext(r)
 	err := h.UserRepo.DeleteUser(user.Name)
 	if err != nil {
-		u.Logger.Error("user deletion failed", tools.UserField, err)
-		http.Error(w, "user deletion failed", http.StatusBadRequest)
+		u.WriteResponseError(w, nil, err)
 		return
 	}
-
-	u.Logger.Info("deleted user", tools.UserField, user)
-	w.WriteHeader(http.StatusOK)
 }
 
 func (h *UserHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Request) {
@@ -61,23 +56,9 @@ func (h *UserHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		return
 	}
-
-	isCorrect, err := h.UserService.IsPasswordCorrect(user.Name, form.OldPassword)
+	err = h.UserService.ChangePassword(user, form)
 	if err != nil {
-		u.Logger.Error("checking password of user failed", deepstack.ErrorField, err)
-		http.Error(w, "error when checking password", http.StatusBadRequest)
-		return
-	}
-	if !isCorrect {
-		u.Logger.Info("incorrect credentials for user when trying to change password", tools.UserField, user)
-		http.Error(w, IncorrectUsernameAndPasswordError, http.StatusBadRequest)
-		return
-	}
-
-	err = h.UserRepo.ChangePassword(user.Id, form.NewPassword)
-	if err != nil {
-		u.Logger.Error("changing password for user failed", tools.UserField, user, deepstack.ErrorField, err)
-		http.Error(w, "error when trying to change password", http.StatusBadRequest)
+		u.WriteResponseError(w, u.MapOf(IncorrectUsernameOrPasswordError), err)
 		return
 	}
 }
@@ -108,8 +89,7 @@ func (h *UserHandler) ValidationCodeHandler(w http.ResponseWriter, r *http.Reque
 	code := queryParams.Get("code")
 	err := h.UserService.ValidateUser(code)
 	if err != nil {
-		// TODO !! abstract error?
-		u.WriteResponseError(w, u.MapOf("invalid input"), err)
+		u.WriteResponseError(w, u.MapOf(InvalidInputError), err)
 		return
 	}
 }

@@ -26,7 +26,7 @@ func TestChangePassword(t *testing.T) {
 	assert.Nil(t, hub.ChangePassword(tools.SamplePassword, newPassword))
 	err := hub.Login(tools.SampleUser, tools.SamplePassword)
 	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, users.IncorrectUsernameAndPasswordError)
+	u.AssertDeepStackErrorFromRequest(t, err, users.IncorrectUsernameOrPasswordError)
 
 	hub.Parent.Cookie = nil
 	err = hub.Login(tools.SampleUser, newPassword)

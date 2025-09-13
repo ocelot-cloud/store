@@ -17,13 +17,14 @@ import (
 )
 
 var (
-	UserDoesNotExistError             = "user does not exist"
-	IncorrectUsernameAndPasswordError = "incorrect username or password"
-	UserAlreadyExistsError            = "user already exists"
-	EmailAlreadyExistsError           = "email already exists"
-	InvalidCookieError                = "invalid cookie"
-	CookieExpiredError                = "cookie expired"
-	CookieNotFoundError               = "cookie not found"
+	UserDoesNotExistError            = "user does not exist"
+	IncorrectUsernameOrPasswordError = "incorrect username or password"
+	UserAlreadyExistsError           = "user already exists"
+	EmailAlreadyExistsError          = "email already exists"
+	InvalidCookieError               = "invalid cookie"
+	CookieExpiredError               = "cookie expired"
+	CookieNotFoundError              = "cookie not found"
+	InvalidInputError                = "invalid input"
 )
 
 type UserServiceImpl struct {
@@ -119,7 +120,7 @@ func (r *UserServiceImpl) Login(creds *store.LoginCredentials) (*http.Cookie, er
 	}
 
 	if !isCorrect {
-		return nil, u.Logger.NewError(IncorrectUsernameAndPasswordError)
+		return nil, u.Logger.NewError(IncorrectUsernameOrPasswordError)
 	}
 
 	// TODO !! test that cookies have expiration date of 7 days; test that cookie is renewed on every authenticated request
@@ -221,5 +222,20 @@ func (h *UserServiceImpl) CheckAuthentication(cookie *http.Cookie) (*tools.User,
 	return user, cookie, nil
 }
 
-// TODO !! does deleting an app free up all space of the versions?
+func (r *UserServiceImpl) ChangePassword(user tools.User, form *store.ChangePasswordForm) error {
+	isCorrect, err := r.IsPasswordCorrect(user.Name, form.OldPassword)
+	if err != nil {
+		return err
+	}
+	if !isCorrect {
+		return u.Logger.NewError(IncorrectUsernameOrPasswordError)
+	}
+	err = r.UserRepo.ChangePassword(user.Id, form.NewPassword)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// TODO !! does deleting an app free up all space of the versions? -> maybe make it delete versions step by step so used space is calculated correctly?
 // TODO feature idea: install an app via direct upload via ocelotcloud web interface -> e.g. for local testing?

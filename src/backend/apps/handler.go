@@ -52,7 +52,7 @@ func ReadBodyAsStringNumber(w http.ResponseWriter, r *http.Request) (int, error)
 	appId, err := strconv.Atoi(appIdString.Value)
 	if err != nil {
 		u.Logger.Warn("request body string conversion error", tools.AppIdField, appIdString)
-		http.Error(w, "invalid input", http.StatusBadRequest)
+		http.Error(w, users.InvalidInputError, http.StatusBadRequest)
 		return -1, fmt.Errorf("")
 	}
 	return appId, nil

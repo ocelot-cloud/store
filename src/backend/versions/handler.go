@@ -44,7 +44,7 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 		// TODO !! should be put in "shared"
 		// TODO !! space use case to be covered by component tests I guess? also NotOwningThisVersionError
 		// TODO !! expected error: "zip: not a valid zip file" -> make this a an error in "shared" for reuse?
-		expectedErrors := u.MapOf("invalid input", users.NotEnoughSpacePrefix, NotOwningThisVersionError, "zip: not a valid zip file", VersionAlreadyExist, AppDoesNotExist)
+		expectedErrors := u.MapOf(users.InvalidInputError, users.NotEnoughSpacePrefix, NotOwningThisVersionError, "zip: not a valid zip file", VersionAlreadyExist, AppDoesNotExist)
 		u.WriteResponseError(w, expectedErrors, err)
 		return
 	}

@@ -144,13 +144,13 @@ func doCookieAndHostPolicyChecks(t *testing.T, hub *store.AppStoreClient, operat
 	hub.Parent.Cookie.Value = "some-invalid-cookie-value"
 	err = operation()
 	assert.NotNil(t, err)
-	assert.Equal(t, u.GetErrMsg(400, "invalid cookie"), err.Error())
+	assert.Equal(t, u.GetErrMsg(400, InvalidCookieError), err.Error())
 
 	validButNonExistentCookie := "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
 	hub.Parent.Cookie.Value = validButNonExistentCookie
 	err = operation()
 	assert.NotNil(t, err)
-	assert.Equal(t, u.GetErrMsg(400, "cookie not found"), err.Error())
+	assert.Equal(t, u.GetErrMsg(400, CookieNotFoundError), err.Error())
 
 	assert.Nil(t, hub.Login())
 
@@ -160,7 +160,7 @@ func doCookieAndHostPolicyChecks(t *testing.T, hub *store.AppStoreClient, operat
 	assert.Nil(t, hub.Login())
 	err = operation()
 	assert.NotNil(t, err)
-	assert.Equal(t, u.GetErrMsg(400, "cookie expired"), err.Error())
+	assert.Equal(t, u.GetErrMsg(400, CookieExpiredError), err.Error())
 	assert.True(t, time.Now().UTC().After(hub.Parent.Cookie.Expires))
 	hub.Parent.User = tools.SampleUser
 	hub.Email = tools.SampleEmail

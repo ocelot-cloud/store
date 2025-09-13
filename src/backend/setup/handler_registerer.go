@@ -86,7 +86,7 @@ func (h *HandlerInitializer) authMiddleware(next http.Handler) http.Handler {
 		user, updatedCookie, err := h.UserService.CheckAuthentication(cookie)
 		if err != nil {
 			// TODO !! abstract
-			u.WriteResponseError(w, u.MapOf("invalid cookie", "cookie expired", "cookie not found"), err)
+			u.WriteResponseError(w, u.MapOf(users.InvalidCookieError, users.CookieExpiredError, users.CookieNotFoundError), err)
 			return
 		}
 		http.SetCookie(w, updatedCookie)

@@ -21,6 +21,9 @@ var (
 	IncorrectUsernameAndPasswordError = "incorrect username or password"
 	UserAlreadyExistsError            = "user already exists"
 	EmailAlreadyExistsError           = "email already exists"
+	InvalidCookieError                = "invalid cookie"
+	CookieExpiredError                = "cookie expired"
+	CookieNotFoundError               = "cookie not found"
 )
 
 type UserServiceImpl struct {
@@ -186,14 +189,13 @@ func (r *UserServiceImpl) ValidateUser(code string) error {
 
 func (h *UserServiceImpl) CheckAuthentication(cookie *http.Cookie) (*tools.User, *http.Cookie, error) {
 	if err := validation.ValidateSecret(cookie.Value); err != nil {
-		return nil, nil, u.Logger.NewError("invalid cookie")
+		return nil, nil, u.Logger.NewError(InvalidCookieError)
 	}
 
 	hashedCookieValue := u.GetSHA256Hash(cookie.Value)
 	user, err := h.UserRepo.GetUserViaCookie(hashedCookieValue)
 	if err != nil {
-		// TODO !! this should be thrown by the repo
-		return nil, nil, u.Logger.NewError("cookie not found")
+		return nil, nil, err
 	}
 
 	isExpired, err := h.isCookieExpired(cookie.Value)
@@ -201,7 +203,7 @@ func (h *UserServiceImpl) CheckAuthentication(cookie *http.Cookie) (*tools.User,
 		return nil, nil, err
 	}
 	if isExpired {
-		return nil, nil, u.Logger.NewError("cookie expired")
+		return nil, nil, u.Logger.NewError(CookieExpiredError)
 	}
 
 	newExpirationTime := u.GetTimeInSevenDays()

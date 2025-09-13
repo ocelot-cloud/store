@@ -166,7 +166,7 @@ func (r *UserRepositoryImpl) GetUserViaCookie(hashedCookieValue string) (*tools.
 		&user.UsedSpaceInBytes,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, u.Logger.NewError("cookie not found")
+		return nil, u.Logger.NewError(CookieNotFoundError)
 	}
 	if err != nil {
 		return nil, u.Logger.NewError(err.Error())

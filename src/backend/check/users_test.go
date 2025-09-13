@@ -52,7 +52,7 @@ func TestLogout(t *testing.T) {
 	assert.Nil(t, hub.Logout())
 	_, err = hub.CreateApp(tools.SampleApp)
 	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, "cookie not found")
+	u.AssertDeepStackErrorFromRequest(t, err, users.CookieNotFoundError)
 }
 
 // TODO !! cant register twice with same 1) name or 2) email

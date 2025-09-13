@@ -18,7 +18,7 @@ func GetValidVersionBytesOfSampleMaintainerApp() []byte {
 	if err != nil {
 		panic("Failed to find assets directory")
 	}
-	sampleAppDir := assetsDir + "/sample-app"
+	sampleAppDir := assetsDir + "/sampleapp"
 	versionBytes, err := validation.ZipDirectory(sampleAppDir)
 	if err != nil {
 		panic("Failed to read sample version file")

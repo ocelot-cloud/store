@@ -26,7 +26,7 @@ func (a *AppServiceImpl) DoesUserOwnApp(requestingUsersId, appId int) (bool, err
 }
 
 func (a *AppServiceImpl) CreateAppWithChecks(userId int, appName string) error {
-	if appName == "ocelotcloud" {
+	if appName == "ocelotcloud" || appName == "store" {
 		return u.Logger.NewError(AppNameReservedError)
 	}
 

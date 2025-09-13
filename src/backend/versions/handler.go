@@ -39,8 +39,7 @@ func (v *VersionsHandler) VersionUploadHandler(w http.ResponseWriter, r *http.Re
 	}
 	err = v.VersionService.UploadVersion(user, &versionUpload)
 	if err != nil {
-		// TODO !! space use case to be covered by component tests I guess? also NotOwningThisVersionError
-		expectedErrors := u.MapOf(users.InvalidInputError, users.NotEnoughSpacePrefix, NotOwningThisVersionError, NotAZipFileError, VersionAlreadyExist, AppDoesNotExist)
+		expectedErrors := u.MapOf(users.InvalidInputError, users.NotEnoughSpacePrefix, NotOwningThisAppError, NotAZipFileError, VersionAlreadyExist, AppDoesNotExist)
 		u.WriteResponseError(w, expectedErrors, err)
 		return
 	}

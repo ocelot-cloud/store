@@ -13,6 +13,7 @@ import (
 
 var (
 	NotOwningThisVersionError = "you do not own this version"
+	NotOwningThisAppError     = "you do not own this app"
 	VersionDoesNotExistError  = "version does not exist"
 	VersionAlreadyExist       = "version already exists"
 	AppDoesNotExist           = "app does not exist"
@@ -77,9 +78,9 @@ func (s *VersionService) UploadVersion(user *tools.User, versionUpload *store.Ve
 	if err != nil {
 		return err
 	}
-	
+
 	if !isOwner {
-		return u.Logger.NewError(NotOwningThisVersionError)
+		return u.Logger.NewError(NotOwningThisAppError)
 	}
 
 	app, err := s.AppRepo.GetAppById(appId)

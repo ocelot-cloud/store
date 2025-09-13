@@ -97,3 +97,5 @@ func TestCascadingDeletionOfAppsAndVersionsWhenDeletingUser(t *testing.T) {
 func TestTolerateTwoUsersWithSamePassword(t *testing.T) {
 
 }
+
+// TODO !! introduce request for user info including username, email, used space -> make a test uploading a version and checking whether the usedSpace field adapted accordingly; same when deleting the version/app, then used space should become zero again

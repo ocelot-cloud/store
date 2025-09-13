@@ -15,6 +15,7 @@ import (
 // TODO !! test cases from this: you can not operate on apps or versions you dont own -> deletion/creation(or upload) etc. make research which operations are affected
 
 // TODO !! use case: delete version you dont own; upload version to app you dont own
+// TODO !! use case: NotOwningThisVersionError when uploading a version to an app that you dont own
 
 func TestDeleteAppYouDoNotOwn(t *testing.T) {
 	client1 := GetHub()

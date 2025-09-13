@@ -12,6 +12,7 @@ import (
 	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
+	"github.com/ocelot-cloud/shared/validation"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -46,20 +47,6 @@ func (r *UserServiceImpl) createUserAndReturnRegistrationCode(form *store.Regist
 	u.Logger.Info("adding user to validation list", tools.UserField, form.User)
 	r.EmailVerifier.Store(key, form)
 	return key, nil
-}
-
-func (r *UserServiceImpl) ValidateUserViaRegistrationCode(code string) error {
-	form, err := r.EmailVerifier.Load(code)
-	if err != nil {
-		return err
-	}
-
-	err = r.UserRepo.CreateUser(form)
-	if err != nil {
-		return err
-	}
-	r.EmailVerifier.Delete(code)
-	return nil
 }
 
 // TODO !! can be made lower case I guess?
@@ -176,6 +163,25 @@ func (r *UserServiceImpl) RegisterUser(form *store.RegistrationForm) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (r *UserServiceImpl) ValidateUser(code string) error {
+	err := validation.ValidateSecret(code)
+	if err != nil {
+		return err
+	}
+
+	form, err := r.EmailVerifier.Load(code)
+	if err != nil {
+		return err
+	}
+
+	err = r.UserRepo.CreateUser(form)
+	if err != nil {
+		return err
+	}
+	r.EmailVerifier.Delete(code)
 	return nil
 }
 

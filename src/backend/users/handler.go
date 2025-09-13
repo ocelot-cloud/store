@@ -114,22 +114,12 @@ func (h *UserHandler) RegistrationHandler(w http.ResponseWriter, r *http.Request
 func (h *UserHandler) ValidationCodeHandler(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 	code := queryParams.Get("code")
-
-	err := validation.ValidateSecret(code)
+	err := h.UserService.ValidateUser(code)
 	if err != nil {
+		// TODO !! abstract error?
 		u.WriteResponseError(w, u.MapOf("invalid input"), err)
 		return
 	}
-
-	err = h.UserService.ValidateUserViaRegistrationCode(code)
-	if err != nil {
-		u.Logger.Error("validation process of user failed", deepstack.ErrorField, err)
-		http.Error(w, "validation process failed", http.StatusBadRequest)
-		return
-	}
-
-	u.Logger.Info("user validation code accepted")
-	w.WriteHeader(http.StatusOK)
 }
 
 // TODO !! fmt.Errorf("") looks as if it should be refctored away?

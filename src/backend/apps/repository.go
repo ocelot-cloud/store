@@ -2,6 +2,7 @@ package apps
 
 import (
 	"database/sql"
+	"fmt"
 	"ocelot/store/tools"
 	"ocelot/store/users"
 	"strconv"
@@ -9,6 +10,10 @@ import (
 	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
+)
+
+var (
+	queryFilterForOfficialMaintainer = fmt.Sprintf(" AND u.user_name = 'ocelotcloud'")
 )
 
 type AppRepository interface {
@@ -105,7 +110,7 @@ func (r *AppRepositoryImpl) SearchForApps(request store.SearchRequest) ([]store.
 	`
 
 	if !request.ShowUnofficialApps {
-		query += " AND u.user_name = 'ocelotcloud'"
+		query += queryFilterForOfficialMaintainer
 	}
 	query += " LIMIT 100"
 

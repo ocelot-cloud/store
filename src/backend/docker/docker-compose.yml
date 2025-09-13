@@ -3,8 +3,7 @@ services:
     image: ocelotcloud/store:local
     container_name: ocelotcloud_store_store
     environment:
-      - PROFILE=${PROFILE}
-    # TODO !! port should actually be hidden by traefik in production, so I need two configs
+      - PROFILE=TEST
     ports:
       - 80:8080
 

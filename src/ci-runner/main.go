@@ -34,10 +34,7 @@ func getAbsoluteParentDir() string {
 
 func main() {
 	tr.EnableAbortForKeystrokeControlPlusC()
-
-	// TODO !! get rid of those env variables; only use "PROFILE=TEST" when doing component test
-	// TODO !! also re-add production test
-	// TODO !! when deploying to hetzner server, I should have a
+	// TODO !! re-add production tests
 	tr.Config.DefaultEnvironmentVariables = []string{"USE_MOCK_EMAIL_CLIENT=true", "RUN_NATIVELY=true", "LOG_LEVEL=DEBUG"}
 
 	rootCmd := &cobra.Command{

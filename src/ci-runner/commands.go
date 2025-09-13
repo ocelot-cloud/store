@@ -22,7 +22,7 @@ func TestUnits() {
 	tr.Log.TaskDescription("Testing units")
 	defer tr.Cleanup()
 	tr.ExecuteInDir(backendSetupDir, "wire")
-	tr.ExecuteInDir(backendDir, "go test -count=1 -tags=unit ./...", "PROFILE=TEST")
+	tr.ExecuteInDir(backendDir, "go test -count=1 -tags=unit ./...")
 }
 
 func TestComponent() {
@@ -31,7 +31,7 @@ func TestComponent() {
 	tr.ExecuteInDir(backendDir, "go build -installsuffix cgo", "CGO_ENABLED=0", "GOOS=linux", "GOARCH=amd64")
 	command := fmt.Sprintf("docker build -t %s -f %s/Dockerfile .", localImageName, backendDockerDir)
 	tr.ExecuteInDir(backendDir, command)
-	tr.ExecuteInDir(backendDockerDir, "docker compose -f docker-compose.yml up -d", "PROFILE=TEST")
+	tr.ExecuteInDir(backendDockerDir, "docker compose -f docker-compose.yml up -d")
 	waitForHealthEndpoint()
 	tr.ExecuteInDir(backendCheckDir, "go test -count=1 -tags=component ./...")
 }

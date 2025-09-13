@@ -61,7 +61,12 @@ func (s *VersionService) UploadVersion(userId int, versionUpload *store.VersionU
 		return u.Logger.NewError("could not convert to number")
 	}
 
-	if !s.AppRepo.DoesAppIdExist(appId) {
+	doesExist, err := s.AppRepo.DoesAppIdExist(appId)
+	if err != nil {
+		return err
+	}
+
+	if !doesExist {
 		return u.Logger.NewError(AppDoesNotExist)
 	}
 
@@ -100,7 +105,11 @@ func (s *VersionService) UploadVersion(userId int, versionUpload *store.VersionU
 }
 
 func (s *VersionService) ListVersions(appId int) ([]store.LeanVersionDto, error) {
-	if !s.AppRepo.DoesAppIdExist(appId) {
+	doesExist, err := s.AppRepo.DoesAppIdExist(appId)
+	if err != nil {
+		return nil, err
+	}
+	if !doesExist {
 		return nil, u.Logger.NewError(AppDoesNotExist)
 	}
 	versionsList, err := s.VersionRepo.ListVersionsOfApp(appId)

@@ -109,7 +109,7 @@ func (r *UserRepositoryImpl) GetUserByName(userName string) (*tools.User, error)
 		&user.UsedSpaceInBytes,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, errors.New(UserDoesNotExistError)
+		return nil, u.Logger.NewError(UserDoesNotExistError)
 	}
 	if err != nil {
 		return nil, err
@@ -200,8 +200,7 @@ func (r *UserRepositoryImpl) WipeUsers() {
 func (r *UserRepositoryImpl) Logout(userId int) error {
 	_, err := r.DatabaseProvider.GetDb().Exec("UPDATE users SET hashed_cookie_value = $1, expiration_date = $2 WHERE user_id = $3", nil, nil, userId)
 	if err != nil {
-		u.Logger.Error("failed to logout", deepstack.ErrorField, err)
-		return errors.New("failed to logout")
+		return u.Logger.NewError(err.Error())
 	}
 	return nil
 }

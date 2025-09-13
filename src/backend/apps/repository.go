@@ -2,7 +2,6 @@ package apps
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/ocelot-cloud/deepstack"
 	"github.com/ocelot-cloud/shared/store"
 	u "github.com/ocelot-cloud/shared/utils"
@@ -12,12 +11,12 @@ import (
 )
 
 type AppRepository interface {
-	DoesAppIdExist(appId int) bool
+	DoesAppIdExist(appId int) (bool, error)
 	CreateApp(userId int, app string) error
 	DeleteApp(appId int) error
 	GetAppList(userId int) ([]store.AppDto, error)
 	SearchForApps(searchRequest store.AppSearchRequest) ([]store.AppWithLatestVersion, error) // TODO !! not sure whether it makes sense to maybe improve my search function, like explicitly say have a field for maintainer and app you can search for; if empty, its ignored
-	GetAppById(appId int) (store.AppDto, error)
+	GetAppById(appId int) (*store.AppDto, error)                                              // TODO !! dont use DTO, ID should be integer
 	DoesAppExist(userID int, app string) (bool, error)
 	GetUserIdOfApp(appId int) (int, error)
 }
@@ -28,8 +27,8 @@ type AppRepositoryImpl struct {
 }
 
 // TODO !! this is an AppDto. Within my application the ID should remain an integer, so I need store.App and AppDto
-func (r *AppRepositoryImpl) GetAppById(appId int) (store.AppDto, error) {
-	var app store.AppDto // TODO !! dont use DTO
+func (r *AppRepositoryImpl) GetAppById(appId int) (*store.AppDto, error) {
+	var app store.AppDto
 	err := r.DatabaseProvider.GetDb().QueryRow(
 		`SELECT u.user_name, a.app_name, a.app_id
 		 FROM apps a
@@ -38,32 +37,30 @@ func (r *AppRepositoryImpl) GetAppById(appId int) (store.AppDto, error) {
 		appId,
 	).Scan(&app.Maintainer, &app.Name, &app.Id)
 	if err != nil {
-		// TODO !! dont use DTO
-		return store.AppDto{}, fmt.Errorf("failed to get app by id: %w", err)
+		return nil, u.Logger.NewError(err.Error())
 	}
-	app.Id = strconv.Itoa(appId) // TODO !! remove this, should be an integer
-	return app, nil
+	app.Id = strconv.Itoa(appId)
+	return &app, nil
 }
 
 func (r *AppRepositoryImpl) CreateApp(userId int, app string) error {
 	_, err := r.DatabaseProvider.GetDb().Exec(`INSERT INTO apps (user_id, app_name) VALUES ($1, $2)`, userId, app)
 	if err != nil {
-		u.Logger.Error("Failed to create app", deepstack.ErrorField, err)
-		return fmt.Errorf("failed to create app")
+		return u.Logger.NewError(err.Error())
 	}
 	return nil
 }
 
-func (r *AppRepositoryImpl) DoesAppIdExist(appId int) bool {
+func (r *AppRepositoryImpl) DoesAppIdExist(appId int) (bool, error) {
 	var exists bool
 	err := r.DatabaseProvider.GetDb().QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE app_id = $1)", appId).Scan(&exists)
 	if err != nil {
-		u.Logger.Error("Failed to check app existence for app", tools.AppIdField, appId, deepstack.ErrorField, err)
-		return false
+		return false, u.Logger.NewError(err.Error())
 	}
-	return exists
+	return exists, nil
 }
 
+// TODO !! this is business logic
 func (r *AppRepositoryImpl) DeleteApp(appId int) error {
 	userId, err := r.GetUserIdOfApp(appId)
 	if err != nil {
@@ -77,25 +74,22 @@ func (r *AppRepositoryImpl) DeleteApp(appId int) error {
 
 	_, err = r.DatabaseProvider.GetDb().Exec(`DELETE FROM apps WHERE app_id = $1`, appId)
 	if err != nil {
-		u.Logger.Error("Failed to delete app", deepstack.ErrorField, err)
-		return fmt.Errorf("failed to delete app")
+		return u.Logger.NewError(err.Error())
 	}
 
 	_, err = r.DatabaseProvider.GetDb().Exec("UPDATE users SET used_space_in_bytes = used_space_in_bytes - $1 WHERE user_id = $2", totalDataSize, userId)
 	if err != nil {
-		return fmt.Errorf("failed to update user space: %w", err)
+		return u.Logger.NewError(err.Error())
 	}
 
 	return nil
 }
 
-// TODO !! or better in user repo?
 func (r *AppRepositoryImpl) GetUserIdOfApp(appId int) (int, error) {
 	var userId int
 	err := r.DatabaseProvider.GetDb().QueryRow(`SELECT user_id FROM apps WHERE app_id = $1`, appId).Scan(&userId)
 	if err != nil {
-		u.Logger.Error("Failed to get user ID of app", tools.AppIdField, appId, deepstack.ErrorField, err)
-		return -1, fmt.Errorf("failed to get user ID of app")
+		return -1, u.Logger.NewError(err.Error())
 	}
 	return userId, nil
 }
@@ -104,7 +98,7 @@ func (r *AppRepositoryImpl) sumBlobSizes(appID int) (int64, error) {
 	var totalSize sql.NullInt64
 	err := r.DatabaseProvider.GetDb().QueryRow("SELECT SUM(LENGTH(data)) FROM versions WHERE app_id = $1", appID).Scan(&totalSize)
 	if err != nil {
-		return 0, fmt.Errorf("failed to calculate total BLOB size: %w", err)
+		return 0, u.Logger.NewError(err.Error())
 	}
 
 	if !totalSize.Valid {
@@ -137,8 +131,7 @@ func (r *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 
 	rows, err := r.DatabaseProvider.GetDb().Query(query, "%"+request.SearchTerm+"%", "%"+request.SearchTerm+"%")
 	if err != nil {
-		u.Logger.Error("Failed to find apps", deepstack.ErrorField, err)
-		return nil, fmt.Errorf("failed to find apps")
+		return nil, u.Logger.NewError(err.Error())
 	}
 	defer u.Close(rows)
 
@@ -160,8 +153,7 @@ func (r *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 	}
 	err = rows.Err()
 	if err != nil {
-		u.Logger.Error("Error iterating over rows", deepstack.ErrorField, err)
-		return nil, fmt.Errorf("error iterating over rows")
+		return nil, u.Logger.NewError(err.Error())
 	}
 	return apps, nil
 }
@@ -170,12 +162,12 @@ func (r *AppRepositoryImpl) SearchForApps(request store.AppSearchRequest) ([]sto
 func (r *AppRepositoryImpl) GetAppList(userId int) ([]store.AppDto, error) {
 	user, err := r.UserRepo.GetUserById(userId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user: %w", err)
+		return nil, u.Logger.NewError(err.Error())
 	}
 
 	rows, err := r.DatabaseProvider.GetDb().Query("SELECT app_name, app_id FROM apps WHERE user_id = $1", userId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get apps: %w", err)
+		return nil, u.Logger.NewError(err.Error())
 	}
 	defer u.Close(rows)
 
@@ -184,14 +176,14 @@ func (r *AppRepositoryImpl) GetAppList(userId int) ([]store.AppDto, error) {
 		var app string
 		var appId int
 		if err = rows.Scan(&app, &appId); err != nil {
-			return nil, fmt.Errorf("failed to scan app: %w", err)
+			return nil, u.Logger.NewError(err.Error())
 		}
 		// TODO !! I think the username is not necessary here, since the use case here is that a user sees his own apps of which he is the maintainer
 		apps = append(apps, store.AppDto{Maintainer: user.Name, Name: app, Id: strconv.Itoa(appId)})
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("rows iteration error: %w", err)
+		return nil, u.Logger.NewError(err.Error())
 	}
 
 	return apps, nil
@@ -203,7 +195,7 @@ func (r *AppRepositoryImpl) DoesAppExist(userID int, appName string) (bool, erro
 		QueryRow("SELECT EXISTS(SELECT 1 FROM apps WHERE user_id = $1 AND app_name = $2)", userID, appName).
 		Scan(&exists)
 	if err != nil {
-		return false, fmt.Errorf("failed to check app existence: %v", err)
+		return false, u.Logger.NewError(err.Error())
 	}
 	return exists, nil
 }

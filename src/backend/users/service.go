@@ -3,7 +3,6 @@ package users
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"net/http"
 	"ocelot/store/tools"
@@ -99,11 +98,11 @@ func (r *UserServiceImpl) IsThereEnoughSpaceToAddVersion(userId, bytesToAdd int)
 		return err
 	}
 	if user.UsedSpaceInBytes+bytesToAdd > tools.MaxStorageSize {
-		u.Logger.Info("user tried to upload version, but storage limit would be exceeded")
 		usedStorageInPercent := user.UsedSpaceInBytes * 100 / tools.MaxStorageSize
 		// TODO !! the "10" should come from a global constant
 		msg := fmt.Sprintf(NotEnoughSpacePrefix+", you can't store more then 10MiB of version content, currently used storage in bytes: %d/%d (%d percent)", user.UsedSpaceInBytes, tools.MaxStorageSize, usedStorageInPercent)
-		return errors.New(msg)
+		// TODO !! this is some information I want to see as user. Maybe keep this a generic message like "data space limit exceeded, see 'status'", introduce a "status" command, showing your account details, including space used absolutely and in percent
+		return u.Logger.NewError(msg)
 	}
 	return nil
 }

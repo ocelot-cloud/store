@@ -17,7 +17,7 @@ var NotEnoughSpacePrefix = "not enough space"
 type UserRepository interface {
 	CreateUser(form *store.RegistrationForm) error
 	DoesUserExist(user string) (bool, error)
-	DoesEmailExist(email string) bool // TODO !! add error
+	DoesEmailExist(email string) (bool, error)
 	DeleteUser(user string) error
 	GetUserViaCookie(hashedCookieValue string) (*tools.User, error)
 	ChangePassword(userId int, newPassword string) error
@@ -206,12 +206,11 @@ func (r *UserRepositoryImpl) Logout(user string) error {
 	return nil
 }
 
-func (r *UserRepositoryImpl) DoesEmailExist(email string) bool {
+func (r *UserRepositoryImpl) DoesEmailExist(email string) (bool, error) {
 	var exists bool
 	err := r.DatabaseProvider.GetDb().QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)", email).Scan(&exists)
 	if err != nil {
-		u.Logger.Error("Failed to check email existence", deepstack.ErrorField, err)
-		return false
+		return false, u.Logger.NewError(err.Error())
 	}
-	return exists
+	return exists, nil
 }

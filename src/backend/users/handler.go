@@ -118,7 +118,14 @@ func (h *UserHandler) RegistrationHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if h.UserRepo.DoesEmailExist(form.Email) {
+	doesEmailExist, err := h.UserRepo.DoesEmailExist(form.Email)
+	if err != nil {
+		u.Logger.Error("checking if email exists failed", deepstack.ErrorField, err)
+		http.Error(w, "error when checking if email exists", http.StatusBadRequest)
+		return
+	}
+
+	if doesEmailExist {
 		u.Logger.Info("user tried to register but email already exists", tools.UserField, form.User, tools.EmailField, form.Email)
 		http.Error(w, "email already exists", http.StatusBadRequest)
 		return
